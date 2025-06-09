@@ -1,0 +1,664 @@
+import {
+    CalendarToday as CalendarIcon,
+    PictureAsPdf as PdfIcon,
+    Person as PersonIcon,
+    Preview as PreviewIcon,
+    Print as PrintIcon,
+    Assignment as ReportIcon
+} from '@mui/icons-material';
+import {
+    Alert,
+    Box,
+    Button,
+    Card,
+    CardContent,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogTitle,
+    FormControl,
+    Grid,
+    InputLabel,
+    MenuItem,
+    Select,
+    Snackbar,
+    Tab,
+    Tabs,
+    TextField,
+    Typography
+} from '@mui/material';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { addDays, endOfMonth, format, startOfMonth } from 'date-fns';
+import { ja } from 'date-fns/locale';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
+import React, { useRef, useState } from 'react';
+import { useReactToPrint } from 'react-to-print';
+
+interface PrintReportsProps {
+    users: any[];
+    mealHistory: any[];
+    facilityInfo: any;
+}
+
+interface TabPanelProps {
+    children?: React.ReactNode;
+    index: number;
+    value: number;
+}
+
+function TabPanel(props: TabPanelProps) {
+    const { children, value, index, ...other } = props;
+    return (
+        <div role="tabpanel" hidden={value !== index} {...other}>
+            {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
+        </div>
+    );
+}
+
+const PrintReports: React.FC<PrintReportsProps> = ({
+    users,
+    mealHistory,
+    facilityInfo
+}) => {
+    const [tabValue, setTabValue] = useState(0);
+    const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+    const [selectedUser, setSelectedUser] = useState<string>('');
+    const [previewDialog, setPreviewDialog] = useState({ open: false, content: '', title: '' });
+    const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' as 'success' | 'error' | 'info' });
+
+    const printRef = useRef<HTMLDivElement>(null);
+
+    // Handle print using react-to-print
+    const handlePrint = useReactToPrint({
+        content: () => printRef.current,
+        documentTitle: 'あおば事業所レポート',
+        onAfterPrint: () => {
+            setSnackbar({
+                open: true,
+                message: '印刷を実行しました',
+                severity: 'success'
+            });
+        }
+    });
+
+    // Generate daily report
+    const generateDailyReport = async (date: Date) => {
+        const dateStr = format(date, 'yyyy-MM-dd');
+        const dayRecords = mealHistory.filter(record =>
+            record.date.split('T')[0] === dateStr
+        );
+
+        const reportContent = `
+      <div style="font-family: 'Yu Gothic', sans-serif; padding: 20px;">
+        <div style="text-align: center; margin-bottom: 30px;">
+          <h1 style="color: #1976d2; margin: 0;">${facilityInfo?.name || 'あおば障害者支援事業所'}</h1>
+          <h2 style="margin: 10px 0;">日次給食利用レポート</h2>
+          <p style="font-size: 18px; color: #666;">${format(date, 'yyyy年MM月dd日（E）', { locale: ja })}</p>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 30px;">
+          <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; text-align: center;">
+            <h3 style="margin: 0; color: #1976d2;">総利用者数</h3>
+            <p style="font-size: 24px; margin: 5px 0; font-weight: bold;">${dayRecords.length}名</p>
+          </div>
+          <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; text-align: center;">
+            <h3 style="margin: 0; color: #4caf50;">平均評価</h3>
+            <p style="font-size: 24px; margin: 5px 0; font-weight: bold;">
+              ${dayRecords.length > 0 ? (dayRecords.reduce((sum, r) => sum + (r.rating || 0), 0) / dayRecords.length).toFixed(1) : '0.0'}★
+            </p>
+          </div>
+          <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; text-align: center;">
+            <h3 style="margin: 0; color: #ff9800;">総売上</h3>
+            <p style="font-size: 24px; margin: 5px 0; font-weight: bold;">
+              ¥${dayRecords.reduce((sum, r) => sum + (r.price || 0), 0).toLocaleString()}
+            </p>
+          </div>
+        </div>
+
+        <div style="margin-bottom: 30px;">
+          <h3 style="color: #1976d2; border-bottom: 2px solid #1976d2; padding-bottom: 5px;">利用者一覧</h3>
+          <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
+            <thead>
+              <tr style="background: #f5f5f5;">
+                <th style="border: 1px solid #ddd; padding: 10px; text-align: left;">利用者名</th>
+                <th style="border: 1px solid #ddd; padding: 10px; text-align: left;">グループ</th>
+                <th style="border: 1px solid #ddd; padding: 10px; text-align: center;">評価</th>
+                <th style="border: 1px solid #ddd; padding: 10px; text-align: right;">料金</th>
+                <th style="border: 1px solid #ddd; padding: 10px; text-align: left;">備考</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${dayRecords.map(record => `
+                <tr>
+                  <td style="border: 1px solid #ddd; padding: 8px;">${record.userName}</td>
+                  <td style="border: 1px solid #ddd; padding: 8px;">${record.userGroup}</td>
+                  <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${'★'.repeat(record.rating || 0)}</td>
+                  <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">¥${(record.price || 0).toLocaleString()}</td>
+                  <td style="border: 1px solid #ddd; padding: 8px;">${record.notes || ''}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+
+        <div style="margin-top: 50px; font-size: 12px; color: #888; text-align: center;">
+          <p>印刷日時: ${format(new Date(), 'yyyy年MM月dd日 HH:mm')}</p>
+          <p>${facilityInfo?.address || ''} | ${facilityInfo?.phone || ''}</p>
+        </div>
+      </div>
+    `;
+
+        return reportContent;
+    };
+
+    // Generate monthly report
+    const generateMonthlyReport = async (date: Date) => {
+        const monthStart = startOfMonth(date);
+        const monthEnd = endOfMonth(date);
+
+        const monthRecords = mealHistory.filter(record => {
+            const recordDate = new Date(record.date);
+            return recordDate >= monthStart && recordDate <= monthEnd;
+        });
+
+        const groupStats = users.reduce((acc, user) => {
+            const userRecords = monthRecords.filter(r => r.userId === user.id);
+            if (!acc[user.group]) {
+                acc[user.group] = { count: 0, revenue: 0, avgRating: 0 };
+            }
+            acc[user.group].count += userRecords.length;
+            acc[user.group].revenue += userRecords.reduce((sum, r) => sum + (r.price || 0), 0);
+            acc[user.group].avgRating = userRecords.length > 0 ?
+                userRecords.reduce((sum, r) => sum + (r.rating || 0), 0) / userRecords.length : 0;
+            return acc;
+        }, {} as any);
+
+        const reportContent = `
+      <div style="font-family: 'Yu Gothic', sans-serif; padding: 20px;">
+        <div style="text-align: center; margin-bottom: 30px;">
+          <h1 style="color: #1976d2; margin: 0;">${facilityInfo?.name || 'あおば障害者支援事業所'}</h1>
+          <h2 style="margin: 10px 0;">月次給食利用レポート</h2>
+          <p style="font-size: 18px; color: #666;">${format(date, 'yyyy年MM月', { locale: ja })}</p>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px;">
+          <div>
+            <h3 style="color: #1976d2;">月間統計</h3>
+            <div style="background: #f5f5f5; padding: 15px; border-radius: 8px;">
+              <p><strong>総利用回数:</strong> ${monthRecords.length}回</p>
+              <p><strong>実利用者数:</strong> ${new Set(monthRecords.map(r => r.userId)).size}名</p>
+              <p><strong>月間売上:</strong> ¥${monthRecords.reduce((sum, r) => sum + (r.price || 0), 0).toLocaleString()}</p>
+              <p><strong>平均評価:</strong> ${monthRecords.length > 0 ? (monthRecords.reduce((sum, r) => sum + (r.rating || 0), 0) / monthRecords.length).toFixed(1) : '0.0'}★</p>
+            </div>
+          </div>
+          
+          <div>
+            <h3 style="color: #1976d2;">グループ別統計</h3>
+            <div style="background: #f5f5f5; padding: 15px; border-radius: 8px;">
+              ${Object.entries(groupStats).map(([group, stats]: [string, any]) => `
+                <div style="margin-bottom: 10px; padding: 10px; background: white; border-radius: 4px;">
+                  <strong>${group}</strong><br>
+                  利用: ${stats.count}回 | 売上: ¥${stats.revenue.toLocaleString()} | 評価: ${stats.avgRating.toFixed(1)}★
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-bottom: 30px;">
+          <h3 style="color: #1976d2; border-bottom: 2px solid #1976d2; padding-bottom: 5px;">日別利用状況</h3>
+          <table style="width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 12px;">
+            <thead>
+              <tr style="background: #f5f5f5;">
+                <th style="border: 1px solid #ddd; padding: 8px;">日付</th>
+                <th style="border: 1px solid #ddd; padding: 8px;">利用者数</th>
+                <th style="border: 1px solid #ddd; padding: 8px;">売上</th>
+                <th style="border: 1px solid #ddd; padding: 8px;">平均評価</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${Array.from({ length: monthEnd.getDate() }, (_, i) => {
+            const day = addDays(monthStart, i);
+            const dayStr = format(day, 'yyyy-MM-dd');
+            const dayRecords = monthRecords.filter(r => r.date.split('T')[0] === dayStr);
+            return `
+                  <tr>
+                    <td style="border: 1px solid #ddd; padding: 6px;">${format(day, 'MM/dd（E）', { locale: ja })}</td>
+                    <td style="border: 1px solid #ddd; padding: 6px; text-align: center;">${dayRecords.length}名</td>
+                    <td style="border: 1px solid #ddd; padding: 6px; text-align: right;">¥${dayRecords.reduce((sum, r) => sum + (r.price || 0), 0).toLocaleString()}</td>
+                    <td style="border: 1px solid #ddd; padding: 6px; text-align: center;">
+                      ${dayRecords.length > 0 ? (dayRecords.reduce((sum, r) => sum + (r.rating || 0), 0) / dayRecords.length).toFixed(1) : '-'}
+                    </td>
+                  </tr>
+                `;
+        }).join('')}
+            </tbody>
+          </table>
+        </div>
+
+        <div style="margin-top: 50px; font-size: 12px; color: #888; text-align: center;">
+          <p>印刷日時: ${format(new Date(), 'yyyy年MM月dd日 HH:mm')}</p>
+          <p>${facilityInfo?.address || ''} | ${facilityInfo?.phone || ''}</p>
+        </div>
+      </div>
+    `;
+
+        return reportContent;
+    };
+
+    // Generate user card
+    const generateUserCard = async (userId: string) => {
+        const user = users.find(u => u.id === userId);
+        if (!user) return '';
+
+        const userRecords = mealHistory.filter(r => r.userId === userId);
+        const recentRecords = userRecords.slice(-10); // 最近10件
+
+        const reportContent = `
+      <div style="font-family: 'Yu Gothic', sans-serif; padding: 20px; max-width: 400px; margin: 0 auto;">
+        <div style="text-align: center; margin-bottom: 20px; border: 2px solid #1976d2; padding: 15px; border-radius: 10px;">
+          <h2 style="color: #1976d2; margin: 0;">利用者カード</h2>
+          <div style="background: #f5f5f5; margin: 15px 0; padding: 15px; border-radius: 8px;">
+            <h1 style="margin: 0; color: #333;">${user.name}</h1>
+            <p style="margin: 5px 0; color: #666; font-size: 16px;">${user.group}</p>
+            <p style="margin: 5px 0; font-weight: bold; color: #1976d2;">料金: ¥${user.price}</p>
+            ${user.trialUser ? '<p style="margin: 5px 0; color: #ff9800;">お試しユーザー</p>' : ''}
+          </div>
+        </div>
+
+        <div style="margin-bottom: 20px;">
+          <h3 style="color: #1976d2; margin-bottom: 10px;">利用統計</h3>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div style="background: #f5f5f5; padding: 10px; border-radius: 5px; text-align: center;">
+              <strong>総利用回数</strong><br>
+              <span style="font-size: 18px; color: #1976d2;">${userRecords.length}回</span>
+            </div>
+            <div style="background: #f5f5f5; padding: 10px; border-radius: 5px; text-align: center;">
+              <strong>平均評価</strong><br>
+              <span style="font-size: 18px; color: #4caf50;">
+                ${userRecords.length > 0 ? (userRecords.reduce((sum, r) => sum + (r.rating || 0), 0) / userRecords.length).toFixed(1) : '0.0'}★
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-bottom: 20px;">
+          <h3 style="color: #1976d2; margin-bottom: 10px;">最近の利用履歴</h3>
+          <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+            <thead>
+              <tr style="background: #f5f5f5;">
+                <th style="border: 1px solid #ddd; padding: 6px;">日付</th>
+                <th style="border: 1px solid #ddd; padding: 6px;">評価</th>
+                <th style="border: 1px solid #ddd; padding: 6px;">料金</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${recentRecords.map(record => `
+                <tr>
+                  <td style="border: 1px solid #ddd; padding: 4px;">${format(new Date(record.date), 'MM/dd')}</td>
+                  <td style="border: 1px solid #ddd; padding: 4px; text-align: center;">${'★'.repeat(record.rating || 0)}</td>
+                  <td style="border: 1px solid #ddd; padding: 4px; text-align: right;">¥${(record.price || 0).toLocaleString()}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+
+        <div style="text-align: center; font-size: 10px; color: #888; margin-top: 20px; border-top: 1px solid #ddd; padding-top: 10px;">
+          <p>発行日: ${format(new Date(), 'yyyy年MM月dd日')}</p>
+          <p>${facilityInfo?.name || 'あおば障害者支援事業所'}</p>
+        </div>
+      </div>
+    `;
+
+        return reportContent;
+    };
+
+    // Handle preview
+    const handlePreview = async (type: string) => {
+        let content = '';
+        let title = '';
+
+        switch (type) {
+            case 'daily':
+                content = await generateDailyReport(selectedDate);
+                title = `日次レポート - ${format(selectedDate, 'yyyy/MM/dd')}`;
+                break;
+            case 'monthly':
+                content = await generateMonthlyReport(selectedDate);
+                title = `月次レポート - ${format(selectedDate, 'yyyy/MM')}`;
+                break;
+            case 'user-card':
+                if (!selectedUser) {
+                    setSnackbar({
+                        open: true,
+                        message: '利用者を選択してください',
+                        severity: 'error'
+                    });
+                    return;
+                }
+                content = await generateUserCard(selectedUser);
+                title = '利用者カード';
+                break;
+        }
+
+        setPreviewDialog({ open: true, content, title });
+    };
+
+    // Handle PDF download
+    const handleDownloadPDF = async (type: string) => {
+        let content = '';
+        let filename = '';
+
+        switch (type) {
+            case 'daily':
+                content = await generateDailyReport(selectedDate);
+                filename = `daily-report-${format(selectedDate, 'yyyy-MM-dd')}.pdf`;
+                break;
+            case 'monthly':
+                content = await generateMonthlyReport(selectedDate);
+                filename = `monthly-report-${format(selectedDate, 'yyyy-MM')}.pdf`;
+                break;
+            case 'user-card':
+                if (!selectedUser) {
+                    setSnackbar({
+                        open: true,
+                        message: '利用者を選択してください',
+                        severity: 'error'
+                    });
+                    return;
+                }
+                content = await generateUserCard(selectedUser);
+                filename = `user-card-${selectedUser}.pdf`;
+                break;
+        }
+
+        // Create temporary div for PDF generation
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = content;
+        tempDiv.style.position = 'absolute';
+        tempDiv.style.left = '-9999px';
+        document.body.appendChild(tempDiv);
+
+        try {
+            const canvas = await html2canvas(tempDiv, {
+                scale: 2,
+                useCORS: true,
+                allowTaint: true
+            });
+
+            const imgData = canvas.toDataURL('image/png');
+            const pdf = new jsPDF();
+            const imgWidth = 210;
+            const pageHeight = 295;
+            const imgHeight = (canvas.height * imgWidth) / canvas.width;
+            let heightLeft = imgHeight;
+
+            let position = 0;
+
+            pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+            heightLeft -= pageHeight;
+
+            while (heightLeft >= 0) {
+                position = heightLeft - imgHeight;
+                pdf.addPage();
+                pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                heightLeft -= pageHeight;
+            }
+
+            pdf.save(filename);
+
+            setSnackbar({
+                open: true,
+                message: 'PDFをダウンロードしました',
+                severity: 'success'
+            });
+        } catch (error) {
+            console.error('PDF generation failed:', error);
+            setSnackbar({
+                open: true,
+                message: 'PDF生成に失敗しました',
+                severity: 'error'
+            });
+        } finally {
+            document.body.removeChild(tempDiv);
+        }
+    };
+
+    return (
+        <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ja}>
+            <Box sx={{ p: 3 }}>
+                <Typography variant="h4" sx={{ mb: 3 }}>
+                    <PrintIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
+                    印刷・帳票出力
+                </Typography>
+
+                <Tabs value={tabValue} onChange={(_, newValue) => setTabValue(newValue)} sx={{ mb: 3 }}>
+                    <Tab label="日次レポート" />
+                    <Tab label="月次レポート" />
+                    <Tab label="利用者カード" />
+                </Tabs>
+
+                <TabPanel value={tabValue} index={0}>
+                    <Card>
+                        <CardContent>
+                            <Typography variant="h6" sx={{ mb: 2 }}>
+                                <CalendarIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
+                                日次レポート
+                            </Typography>
+
+                            <Grid container spacing={2} alignItems="center" sx={{ mb: 3 }}>
+                                <Grid item>
+                                    <DatePicker
+                                        label="レポート日"
+                                        value={selectedDate}
+                                        onChange={(newDate) => newDate && setSelectedDate(newDate)}
+                                        renderInput={(params) => <TextField {...params} />}
+                                    />
+                                </Grid>
+
+                                <Grid item>
+                                    <Button
+                                        variant="outlined"
+                                        startIcon={<PreviewIcon />}
+                                        onClick={() => handlePreview('daily')}
+                                    >
+                                        プレビュー
+                                    </Button>
+                                </Grid>
+
+                                <Grid item>
+                                    <Button
+                                        variant="contained"
+                                        startIcon={<PrintIcon />}
+                                        onClick={() => handlePreview('daily')}
+                                    >
+                                        印刷
+                                    </Button>
+                                </Grid>
+
+                                <Grid item>
+                                    <Button
+                                        variant="outlined"
+                                        startIcon={<PdfIcon />}
+                                        onClick={() => handleDownloadPDF('daily')}
+                                    >
+                                        PDF出力
+                                    </Button>
+                                </Grid>
+                            </Grid>
+
+                            <Alert severity="info">
+                                選択した日付の給食利用状況、売上、評価等の詳細レポートを出力します。
+                            </Alert>
+                        </CardContent>
+                    </Card>
+                </TabPanel>
+
+                <TabPanel value={tabValue} index={1}>
+                    <Card>
+                        <CardContent>
+                            <Typography variant="h6" sx={{ mb: 2 }}>
+                                <ReportIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
+                                月次レポート
+                            </Typography>
+
+                            <Grid container spacing={2} alignItems="center" sx={{ mb: 3 }}>
+                                <Grid item>
+                                    <DatePicker
+                                        label="レポート月"
+                                        views={['year', 'month']}
+                                        value={selectedDate}
+                                        onChange={(newDate) => newDate && setSelectedDate(newDate)}
+                                        renderInput={(params) => <TextField {...params} />}
+                                    />
+                                </Grid>
+
+                                <Grid item>
+                                    <Button
+                                        variant="outlined"
+                                        startIcon={<PreviewIcon />}
+                                        onClick={() => handlePreview('monthly')}
+                                    >
+                                        プレビュー
+                                    </Button>
+                                </Grid>
+
+                                <Grid item>
+                                    <Button
+                                        variant="contained"
+                                        startIcon={<PrintIcon />}
+                                        onClick={() => handlePreview('monthly')}
+                                    >
+                                        印刷
+                                    </Button>
+                                </Grid>
+
+                                <Grid item>
+                                    <Button
+                                        variant="outlined"
+                                        startIcon={<PdfIcon />}
+                                        onClick={() => handleDownloadPDF('monthly')}
+                                    >
+                                        PDF出力
+                                    </Button>
+                                </Grid>
+                            </Grid>
+
+                            <Alert severity="info">
+                                月間の利用統計、グループ別分析、日別推移などの包括的なレポートを出力します。
+                            </Alert>
+                        </CardContent>
+                    </Card>
+                </TabPanel>
+
+                <TabPanel value={tabValue} index={2}>
+                    <Card>
+                        <CardContent>
+                            <Typography variant="h6" sx={{ mb: 2 }}>
+                                <PersonIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
+                                利用者カード
+                            </Typography>
+
+                            <Grid container spacing={2} alignItems="center" sx={{ mb: 3 }}>
+                                <Grid item xs={12} sm={6} md={3}>
+                                    <FormControl fullWidth>
+                                        <InputLabel>利用者選択</InputLabel>
+                                        <Select
+                                            value={selectedUser}
+                                            onChange={(e) => setSelectedUser(e.target.value)}
+                                            label="利用者選択"
+                                        >
+                                            {users.map((user) => (
+                                                <MenuItem key={user.id} value={user.id}>
+                                                    {user.name} ({user.group})
+                                                </MenuItem>
+                                            ))}
+                                        </Select>
+                                    </FormControl>
+                                </Grid>
+
+                                <Grid item>
+                                    <Button
+                                        variant="outlined"
+                                        startIcon={<PreviewIcon />}
+                                        onClick={() => handlePreview('user-card')}
+                                    >
+                                        プレビュー
+                                    </Button>
+                                </Grid>
+
+                                <Grid item>
+                                    <Button
+                                        variant="contained"
+                                        startIcon={<PrintIcon />}
+                                        onClick={() => handlePreview('user-card')}
+                                    >
+                                        印刷
+                                    </Button>
+                                </Grid>
+
+                                <Grid item>
+                                    <Button
+                                        variant="outlined"
+                                        startIcon={<PdfIcon />}
+                                        onClick={() => handleDownloadPDF('user-card')}
+                                    >
+                                        PDF出力
+                                    </Button>
+                                </Grid>
+                            </Grid>
+
+                            <Alert severity="info">
+                                個別利用者の基本情報、利用統計、履歴などをカード形式で出力します。
+                            </Alert>
+                        </CardContent>
+                    </Card>
+                </TabPanel>
+
+                {/* Preview Dialog */}
+                <Dialog
+                    open={previewDialog.open}
+                    onClose={() => setPreviewDialog({ ...previewDialog, open: false })}
+                    maxWidth="md"
+                    fullWidth
+                >
+                    <DialogTitle>{previewDialog.title}</DialogTitle>
+                    <DialogContent>
+                        <div ref={printRef}>
+                            <div dangerouslySetInnerHTML={{ __html: previewDialog.content }} />
+                        </div>
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={() => setPreviewDialog({ ...previewDialog, open: false })}>
+                            閉じる
+                        </Button>
+                        <Button onClick={handlePrint} variant="contained" startIcon={<PrintIcon />}>
+                            印刷実行
+                        </Button>
+                    </DialogActions>
+                </Dialog>
+
+                {/* Snackbar */}
+                <Snackbar
+                    open={snackbar.open}
+                    autoHideDuration={6000}
+                    onClose={() => setSnackbar({ ...snackbar, open: false })}
+                >
+                    <Alert
+                        onClose={() => setSnackbar({ ...snackbar, open: false })}
+                        severity={snackbar.severity}
+                        sx={{ width: '100%' }}
+                    >
+                        {snackbar.message}
+                    </Alert>
+                </Snackbar>
+            </Box>
+        </LocalizationProvider>
+    );
+};
+
+export default PrintReports; 
