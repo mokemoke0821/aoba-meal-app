@@ -2,6 +2,7 @@
   "name": "aoba-meal-app",
   "version": "0.1.0",
   "private": true,
+  "homepage": "https://mokemoke0821.github.io/aoba-meal-app",
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
@@ -42,7 +43,9 @@
     "eject": "react-scripts eject",
     "check-encoding": "file -i src/**/*.{ts,tsx} && echo 'All files should show charset=utf-8'",
     "lint": "eslint src --ext .ts,.tsx --max-warnings 0",
-    "format": "prettier --write src/**/*.{ts,tsx,json,css,md}"
+    "format": "prettier --write src/**/*.{ts,tsx,json,css,md}",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build"
   },
   "eslintConfig": {
     "extends": [
@@ -66,6 +69,7 @@
     "@types/file-saver": "^2.0.7",
     "@types/testing-library__user-event": "^4.1.1",
     "babel-jest": "^29.7.0",
+    "gh-pages": "^6.3.0",
     "identity-obj-proxy": "^3.0.0",
     "ts-jest": "^29.3.4",
     "webpack-cli": "^6.0.1"
