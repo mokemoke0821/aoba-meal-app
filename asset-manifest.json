@@ -1,17 +1,17 @@
 {
   "files": {
     "main.css": "/aoba-meal-app/static/css/main.e6c13ad2.css",
-    "main.js": "/aoba-meal-app/static/js/main.7a2dfdf1.js",
+    "main.js": "/aoba-meal-app/static/js/main.a5b2a87e.js",
     "static/js/816.3a28e3e5.chunk.js": "/aoba-meal-app/static/js/816.3a28e3e5.chunk.js",
     "static/js/453.2dc9be90.chunk.js": "/aoba-meal-app/static/js/453.2dc9be90.chunk.js",
     "index.html": "/aoba-meal-app/index.html",
     "main.e6c13ad2.css.map": "/aoba-meal-app/static/css/main.e6c13ad2.css.map",
-    "main.7a2dfdf1.js.map": "/aoba-meal-app/static/js/main.7a2dfdf1.js.map",
+    "main.a5b2a87e.js.map": "/aoba-meal-app/static/js/main.a5b2a87e.js.map",
     "816.3a28e3e5.chunk.js.map": "/aoba-meal-app/static/js/816.3a28e3e5.chunk.js.map",
     "453.2dc9be90.chunk.js.map": "/aoba-meal-app/static/js/453.2dc9be90.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.e6c13ad2.css",
-    "static/js/main.7a2dfdf1.js"
+    "static/js/main.a5b2a87e.js"
   ]
 }
