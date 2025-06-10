@@ -122,7 +122,7 @@ const AppContent: React.FC = () => {
 
   // Facility info
   const facilityInfo = {
-    name: 'あおば障害者支援事業所',
+    name: 'あおば就労移行支援事業所',
     address: '〒123-4567 東京都あおば区...',
     phone: '03-1234-5678',
     email: 'info@aoba-facility.jp'

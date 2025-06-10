@@ -150,7 +150,7 @@ export const exportMonthlyReport = (
 
         // CSV作成
         const csvContent = [
-            `あおば事業所 ${year}年${month}月 利用統計レポート`,
+            `あおば就労移行支援事業所 ${year}年${month}月 利用統計レポート`,
             `作成日時: ${format(new Date(), 'yyyy年MM月dd日 HH:mm', { locale: ja })}`,
             '',
             '■ 利用者別統計',
@@ -208,7 +208,7 @@ export const exportRatingAnalysis = (
         ]);
 
         const csvContent = [
-            `あおば事業所 評価分析レポート (${period})`,
+            `あおば就労移行支援事業所 評価分析レポート (${period})`,
             `作成日時: ${format(new Date(), 'yyyy年MM月dd日 HH:mm', { locale: ja })}`,
             `分析期間: ${analysis.period}`,
             `総レコード数: ${analysis.totalRecords}`,
@@ -287,7 +287,7 @@ export const exportBillingData = (
         ]);
 
         const csvContent = [
-            `あおば事業所 ${year}年${month}月 請求データ`,
+            `あおば就労移行支援事業所 ${year}年${month}月 請求データ`,
             `作成日時: ${format(new Date(), 'yyyy年MM月dd日 HH:mm', { locale: ja })}`,
             `請求対象者: ${billingStats.length}名`,
             `総売上: ¥${totalAmount.toLocaleString()}`,
@@ -370,7 +370,7 @@ export const exportComprehensiveReport = (
         const averageRating = records.reduce((sum, r) => sum + r.rating, 0) / records.length;
 
         const csvContent = [
-            `あおば事業所 統合レポート`,
+            `あおば就労移行支援事業所 統合レポート`,
             `作成日時: ${format(currentDate, 'yyyy年MM月dd日 HH:mm', { locale: ja })}`,
             '',
             '■ 全体統計',
@@ -467,7 +467,7 @@ export const exportStatisticsReport = (
 
         // CSV作成
         const csvContent = [
-            `あおば事業所 統計分析レポート`,
+            `あおば就労移行支援事業所 統計分析レポート`,
             `作成日時: ${format(new Date(), 'yyyy年MM月dd日 HH:mm')}`,
             '',
             '■ 基本統計情報',

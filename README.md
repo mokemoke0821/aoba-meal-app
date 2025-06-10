@@ -45,14 +45,15 @@ You can learn more in the [Create React App documentation](https://facebook.gith
 
 To learn React, check out the [React documentation](https://reactjs.org/).
 
-# あおば事業所給食管理アプリ
+# あおば就労移行支援事業所給食管理アプリ
 
 ## 🌐 デプロイ情報
 本アプリケーションはGitHub Pagesにデプロイされています：
 **URL**: https://mokemoke0821.github.io/aoba-meal-app
 
 ## 📋 概要
-あおば事業所の給食管理を効率化するWebアプリケーションです。
+あおば就労移行支援事業所の給食管理を効率化するWebアプリケーションです。
+就労移行支援サービス利用者の健康管理と栄養バランスの向上を支援します。
 
 ## ✨ 主な機能
 - 給食メニュー管理
