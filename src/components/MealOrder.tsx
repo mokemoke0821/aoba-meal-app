@@ -25,7 +25,7 @@ import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import React, { useState } from 'react';
 import { useApp } from '../contexts/AppContext';
-import { GROUP_COLORS } from '../types';
+import { GROUP_COLORS, getGroupDisplayName } from '../types';
 
 const MealOrder: React.FC = () => {
     const { state, navigateToView, getTodayMealRecords, dispatch } = useApp();
@@ -169,7 +169,7 @@ const MealOrder: React.FC = () => {
                                 {selectedUser.name} さん
                             </Typography>
                             <Chip
-                                label={selectedUser.group}
+                                label={getGroupDisplayName(selectedUser.group)}
                                 sx={{
                                     backgroundColor: GROUP_COLORS[selectedUser.group],
                                     color: 'white',
@@ -294,7 +294,7 @@ const MealOrder: React.FC = () => {
                             {selectedUser.name} さん
                         </Typography>
                         <Chip
-                            label={selectedUser.group}
+                            label={getGroupDisplayName(selectedUser.group)}
                             sx={{
                                 backgroundColor: GROUP_COLORS[selectedUser.group],
                                 color: 'white',
@@ -375,7 +375,7 @@ const MealOrder: React.FC = () => {
                             {selectedUser.name} さん
                         </Typography>
                         <Chip
-                            label={selectedUser.group}
+                            label={getGroupDisplayName(selectedUser.group)}
                             sx={{
                                 backgroundColor: GROUP_COLORS[selectedUser.group],
                                 color: 'white',

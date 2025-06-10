@@ -23,7 +23,7 @@ import {
 import { format } from 'date-fns';
 import React, { useEffect, useState } from 'react';
 import { useApp } from '../contexts/AppContext';
-import { GROUP_COLORS, User } from '../types';
+import { GROUP_COLORS, User, getGroupDisplayName } from '../types';
 import HelpButton from './HelpButton';
 
 // 50音順ソート
@@ -83,7 +83,8 @@ const UserSelector: React.FC = () => {
     // グループ別の統計情報
     const getGroupStats = () => {
         const stats = filteredUsers.reduce((acc, user) => {
-            acc[user.group] = (acc[user.group] || 0) + 1;
+            const displayName = getGroupDisplayName(user.group);
+            acc[displayName] = (acc[displayName] || 0) + 1;
             return acc;
         }, {} as Record<string, number>);
         return stats;
@@ -163,12 +164,12 @@ const UserSelector: React.FC = () => {
 
                 {/* グループ別統計 */}
                 <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mb: 3, flexWrap: 'wrap' }}>
-                    {Object.entries(groupStats).map(([group, count]) => (
+                    {Object.entries(groupStats).map(([displayName, count]) => (
                         <Chip
-                            key={group}
-                            label={`${group}: ${count}人`}
+                            key={displayName}
+                            label={`${displayName}: ${count}人`}
                             sx={{
-                                backgroundColor: GROUP_COLORS[group as keyof typeof GROUP_COLORS],
+                                backgroundColor: 'primary.main',
                                 color: 'white',
                                 fontSize: '1.1rem',
                                 fontWeight: 600,
@@ -207,31 +208,19 @@ const UserSelector: React.FC = () => {
             </Box>
 
             {/* 利用者リスト */}
-            {filteredUsers.length === 0 ? (
-                <Alert
-                    severity="info"
-                    sx={{
-                        fontSize: '1.25rem',
-                        py: 3,
-                        textAlign: 'center'
-                    }}
-                >
-                    {searchTerm ? '該当する利用者が見つかりません' : '利用者が登録されていません'}
-                </Alert>
-            ) : (
-                <Box sx={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-                    gap: 3
-                }}>
-                    {filteredUsers.map((user) => {
+            <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 3, mb: 4 }}>
+                {filteredUsers.length === 0 ? (
+                    <Box sx={{ gridColumn: '1 / -1', textAlign: 'center', py: 8 }}>
+                        <Alert severity="info" sx={{ fontSize: '1.2rem', py: 2 }}>
+                            {searchTerm ? '検索条件に一致する利用者が見つかりません' : '利用者が登録されていません'}
+                        </Alert>
+                    </Box>
+                ) : (
+                    filteredUsers.map(user => {
                         const status = getUserStatus(user);
-                        const statusColor = status === 'no_order' ? 'grey.300' :
-                            status === 'ordered' ? 'warning.main' : 'success.main';
-                        const statusText = status === 'no_order' ? '未注文' :
-                            status === 'ordered' ? '注文済み' : '評価済み';
-                        const statusIcon = status === 'no_order' ? <RestaurantIcon /> :
-                            status === 'ordered' ? <StarIcon /> : <CheckCircleIcon />;
+                        const statusText = status === 'no_order' ? '未注文' : status === 'ordered' ? '注文済み' : '評価済み';
+                        const statusColor = status === 'no_order' ? 'grey.300' : status === 'ordered' ? 'warning.main' : 'success.main';
+                        const statusIcon = status === 'no_order' ? <RestaurantIcon /> : status === 'ordered' ? <StarIcon /> : <CheckCircleIcon />;
 
                         return (
                             <Card
@@ -260,7 +249,7 @@ const UserSelector: React.FC = () => {
                                     }}
                                 />
 
-                                <CardContent sx={{ p: 3 }}>
+                                <CardContent sx={{ p: 3, height: '100%', display: 'flex', flexDirection: 'column' }}>
                                     {/* アイコンと基本情報 */}
                                     <Box sx={{ textAlign: 'center', mb: 3 }}>
                                         <Avatar
@@ -289,7 +278,7 @@ const UserSelector: React.FC = () => {
                                         </Typography>
 
                                         <Chip
-                                            label={user.group}
+                                            label={getGroupDisplayName(user.group)}
                                             sx={{
                                                 backgroundColor: GROUP_COLORS[user.group],
                                                 color: 'white',
@@ -311,7 +300,7 @@ const UserSelector: React.FC = () => {
                                     </Box>
 
                                     {/* アクションボタン */}
-                                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                                    <Box sx={{ mt: 'auto', display: 'flex', gap: 1, flexDirection: 'column' }}>
                                         {status === 'no_order' && (
                                             <Button
                                                 variant="contained"
@@ -319,71 +308,62 @@ const UserSelector: React.FC = () => {
                                                 onClick={() => handleUserSelectForOrder(user)}
                                                 startIcon={<RestaurantIcon />}
                                                 sx={{
-                                                    fontSize: '1rem',
+                                                    minHeight: '50px',
+                                                    fontSize: '1.1rem',
                                                     fontWeight: 600,
-                                                    py: 1.5,
+                                                    borderRadius: '12px',
+                                                    backgroundColor: 'primary.main',
                                                 }}
                                             >
-                                                給食を注文
+                                                給食注文
                                             </Button>
                                         )}
 
                                         {status === 'ordered' && (
-                                            <>
-                                                <Button
-                                                    variant="contained"
-                                                    color="warning"
-                                                    size="large"
-                                                    onClick={() => handleUserSelectForRating(user)}
-                                                    startIcon={<StarIcon />}
-                                                    sx={{
-                                                        fontSize: '1rem',
-                                                        fontWeight: 600,
-                                                        py: 1.5,
-                                                        mb: 1,
-                                                    }}
-                                                >
-                                                    評価を入力
-                                                </Button>
-                                                <Button
-                                                    variant="outlined"
-                                                    size="small"
-                                                    onClick={() => handleUserSelectForOrder(user)}
-                                                    sx={{
-                                                        fontSize: '0.85rem',
-                                                        py: 0.5,
-                                                    }}
-                                                >
-                                                    注文変更
-                                                </Button>
-                                            </>
+                                            <Button
+                                                variant="contained"
+                                                size="large"
+                                                onClick={() => handleUserSelectForRating(user)}
+                                                startIcon={<StarIcon />}
+                                                sx={{
+                                                    minHeight: '50px',
+                                                    fontSize: '1.1rem',
+                                                    fontWeight: 600,
+                                                    borderRadius: '12px',
+                                                    backgroundColor: 'warning.main',
+                                                }}
+                                            >
+                                                評価入力
+                                            </Button>
                                         )}
 
                                         {status === 'rated' && (
                                             <Button
-                                                variant="contained"
-                                                color="success"
+                                                variant="outlined"
                                                 size="large"
-                                                disabled
+                                                onClick={() => handleUserSelectForRating(user)}
                                                 startIcon={<CheckCircleIcon />}
                                                 sx={{
-                                                    fontSize: '1rem',
+                                                    minHeight: '50px',
+                                                    fontSize: '1.1rem',
                                                     fontWeight: 600,
-                                                    py: 1.5,
+                                                    borderRadius: '12px',
+                                                    color: 'success.main',
+                                                    borderColor: 'success.main',
                                                 }}
                                             >
-                                                完了
+                                                評価確認・修正
                                             </Button>
                                         )}
                                     </Box>
                                 </CardContent>
                             </Card>
                         );
-                    })}
-                </Box>
-            )}
+                    })
+                )}
+            </Box>
 
-            {/* 管理者用ボタン */}
+            {/* 管理画面ボタン */}
             <Box sx={{ position: 'fixed', bottom: 32, right: 32, display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <Fab
                     color="secondary"

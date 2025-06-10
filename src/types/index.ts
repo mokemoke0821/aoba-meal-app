@@ -13,6 +13,19 @@ export interface User {
 // グループ型定義
 export type Group = 'グループA' | 'グループB' | 'グループC' | 'グループD';
 
+// グループ表示名マッピング（職員にとって分かりやすい名前）
+export const GROUP_DISPLAY_NAMES = {
+  'グループA': 'A型作業所',
+  'グループB': 'B型作業所',
+  'グループC': '職員',
+  'グループD': '体験利用者'
+} as const;
+
+// グループ表示名を取得する関数
+export const getGroupDisplayName = (group: Group): string => {
+  return GROUP_DISPLAY_NAMES[group] || group;
+};
+
 // 給食記録情報
 export interface MealRecord {
   id: string;

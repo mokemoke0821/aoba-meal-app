@@ -19,7 +19,7 @@ import {
 import { format } from 'date-fns';
 import React, { useState } from 'react';
 import { useApp } from '../contexts/AppContext';
-import { GROUP_COLORS, RATING_EMOJIS } from '../types';
+import { GROUP_COLORS, RATING_EMOJIS, getGroupDisplayName } from '../types';
 
 const RatingInput: React.FC = () => {
     const { state, addMealRecord, navigateToView, dispatch } = useApp();
@@ -189,7 +189,7 @@ const RatingInput: React.FC = () => {
                                 {selectedUser.name} さん
                             </Typography>
                             <Chip
-                                label={selectedUser.group}
+                                label={getGroupDisplayName(selectedUser.group)}
                                 sx={{
                                     backgroundColor: GROUP_COLORS[selectedUser.group],
                                     color: 'white',

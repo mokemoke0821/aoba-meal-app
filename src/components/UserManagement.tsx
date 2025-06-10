@@ -45,7 +45,7 @@ import {
 import { saveAs } from 'file-saver';
 import React, { useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { Group, User } from '../types';
+import { Group, User, getGroupDisplayName } from '../types';
 
 interface UserFormData {
     name: string;
@@ -478,7 +478,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers, o
             editable: true,
             renderCell: (params) => (
                 <Chip
-                    label={params.value}
+                    label={getGroupDisplayName(params.value)}
                     size="small"
                     variant="outlined"
                     color={params.row.isActive === false ? 'default' : 'primary'}
@@ -628,10 +628,10 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers, o
                             startAdornment={<FilterIcon sx={{ mr: 1, color: 'action.active' }} />}
                         >
                             <MenuItem value="">すべて</MenuItem>
-                            <MenuItem value="グループA">グループA</MenuItem>
-                            <MenuItem value="グループB">グループB</MenuItem>
-                            <MenuItem value="グループC">グループC</MenuItem>
-                            <MenuItem value="グループD">グループD</MenuItem>
+                            <MenuItem value="グループA">A型作業所</MenuItem>
+                            <MenuItem value="グループB">B型作業所</MenuItem>
+                            <MenuItem value="グループC">職員</MenuItem>
+                            <MenuItem value="グループD">体験利用者</MenuItem>
                         </Select>
                     </FormControl>
 
@@ -770,10 +770,10 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers, o
                                     <FormControl fullWidth>
                                         <InputLabel>グループ</InputLabel>
                                         <Select {...field} label="グループ">
-                                            <MenuItem value="グループA">グループA</MenuItem>
-                                            <MenuItem value="グループB">グループB</MenuItem>
-                                            <MenuItem value="グループC">グループC</MenuItem>
-                                            <MenuItem value="グループD">グループD</MenuItem>
+                                            <MenuItem value="グループA">A型作業所</MenuItem>
+                                            <MenuItem value="グループB">B型作業所</MenuItem>
+                                            <MenuItem value="グループC">職員</MenuItem>
+                                            <MenuItem value="グループD">体験利用者</MenuItem>
                                         </Select>
                                     </FormControl>
                                 )}
