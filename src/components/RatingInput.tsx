@@ -3,6 +3,7 @@ import {
     ThumbUp as ThumbUpIcon,
 } from '@mui/icons-material';
 import {
+    Alert,
     Avatar,
     Box,
     Button,
@@ -13,15 +14,15 @@ import {
     Container,
     Dialog,
     DialogContent,
-    Grid,
-    Typography,
+    Typography
 } from '@mui/material';
+import { format } from 'date-fns';
 import React, { useState } from 'react';
 import { useApp } from '../contexts/AppContext';
 import { GROUP_COLORS, RATING_EMOJIS } from '../types';
 
 const RatingInput: React.FC = () => {
-    const { state, addMealRecord, navigateToView } = useApp();
+    const { state, addMealRecord, navigateToView, dispatch } = useApp();
     const [selectedRating, setSelectedRating] = useState<number | null>(null);
     const [showThankYou, setShowThankYou] = useState(false);
 
@@ -35,8 +36,21 @@ const RatingInput: React.FC = () => {
     // 評価送信ハンドラー
     const handleSubmit = async () => {
         if (selectedRating && selectedUser) {
-            // 給食記録を追加
-            addMealRecord(selectedUser.id, selectedRating);
+            // 既存の給食記録を更新（評価を追加）
+            const todayRecords = state.mealRecords;
+            const recordIndex = todayRecords.findIndex(
+                record => record.userId === selectedUser.id &&
+                    record.date === format(new Date(), 'yyyy-MM-dd')
+            );
+
+            if (recordIndex !== -1) {
+                const updatedRecords = [...todayRecords];
+                updatedRecords[recordIndex] = {
+                    ...updatedRecords[recordIndex],
+                    rating: selectedRating
+                };
+                dispatch({ type: 'SET_MEAL_RECORDS', payload: updatedRecords });
+            }
 
             // ありがとうメッセージを表示
             setShowThankYou(true);
@@ -58,9 +72,25 @@ const RatingInput: React.FC = () => {
     if (!selectedUser) {
         return (
             <Container maxWidth="md" sx={{ py: 4 }}>
-                <Typography variant="h4" sx={{ textAlign: 'center', color: 'error.main' }}>
-                    利用者が選択されていません
-                </Typography>
+                <Alert severity="error" sx={{ fontSize: '1.25rem', textAlign: 'center', mb: 4 }}>
+                    利用者が選択されていません。最初の画面に戻ります。
+                </Alert>
+                <Box sx={{ textAlign: 'center' }}>
+                    <Button
+                        variant="contained"
+                        size="large"
+                        onClick={handleBackToHome}
+                        sx={{
+                            minHeight: '80px',
+                            fontSize: '1.5rem',
+                            fontWeight: 600,
+                            borderRadius: '12px',
+                        }}
+                        startIcon={<HomeIcon sx={{ fontSize: '2rem' }} />}
+                    >
+                        最初に戻る
+                    </Button>
+                </Box>
             </Container>
         );
     }
@@ -73,49 +103,48 @@ const RatingInput: React.FC = () => {
             const isSelected = selectedRating === i;
 
             buttons.push(
-                <Grid item xs={6} sm={4} md={3} key={i}>
-                    <ButtonBase
-                        onClick={() => handleRatingSelect(i)}
+                <ButtonBase
+                    key={i}
+                    onClick={() => handleRatingSelect(i)}
+                    sx={{
+                        width: '100%',
+                        minHeight: '120px',
+                        borderRadius: '16px',
+                        border: isSelected ? '4px solid' : '2px solid',
+                        borderColor: isSelected ? 'primary.main' : 'grey.300',
+                        backgroundColor: isSelected ? 'primary.light' : 'background.paper',
+                        transition: 'all 0.3s ease',
+                        '&:hover': {
+                            transform: 'scale(1.05)',
+                            borderColor: 'primary.main',
+                            backgroundColor: 'primary.light',
+                        },
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        p: 2,
+                    }}
+                    aria-label={`評価 ${i}点`}
+                >
+                    <Typography
                         sx={{
-                            width: '100%',
-                            minHeight: '120px',
-                            borderRadius: '16px',
-                            border: isSelected ? '4px solid' : '2px solid',
-                            borderColor: isSelected ? 'primary.main' : 'grey.300',
-                            backgroundColor: isSelected ? 'primary.light' : 'background.paper',
-                            transition: 'all 0.3s ease',
-                            '&:hover': {
-                                transform: 'scale(1.05)',
-                                borderColor: 'primary.main',
-                                backgroundColor: 'primary.light',
-                            },
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            p: 2,
+                            fontSize: '3rem',
+                            mb: 1,
                         }}
-                        aria-label={`評価 ${i}点`}
                     >
-                        <Typography
-                            sx={{
-                                fontSize: '3rem',
-                                mb: 1,
-                            }}
-                        >
-                            {emoji}
-                        </Typography>
-                        <Typography
-                            variant="h3"
-                            sx={{
-                                fontWeight: 700,
-                                color: isSelected ? 'primary.main' : 'text.primary',
-                            }}
-                        >
-                            {i}
-                        </Typography>
-                    </ButtonBase>
-                </Grid>
+                        {emoji}
+                    </Typography>
+                    <Typography
+                        variant="h3"
+                        sx={{
+                            fontWeight: 700,
+                            color: isSelected ? 'primary.main' : 'text.primary',
+                        }}
+                    >
+                        {i}
+                    </Typography>
+                </ButtonBase>
             );
         }
         return buttons;
@@ -210,9 +239,13 @@ const RatingInput: React.FC = () => {
                     <Typography variant="h4" sx={{ textAlign: 'center', mb: 3, fontWeight: 600 }}>
                         評価を選んでください
                     </Typography>
-                    <Grid container spacing={2}>
+                    <Box sx={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
+                        gap: 2
+                    }}>
                         {renderRatingButtons()}
-                    </Grid>
+                    </Box>
                 </CardContent>
             </Card>
 

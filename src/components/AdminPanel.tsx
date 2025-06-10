@@ -20,7 +20,6 @@ import {
     DialogActions,
     DialogContent,
     DialogTitle,
-    Fab,
     TextField,
     Typography
 } from '@mui/material';
@@ -41,7 +40,6 @@ import {
 interface AdminPanelProps {
     onNavigateToUserManagement: () => void;
     onNavigateToStatistics: () => void;
-    onNavigateToMenuManagement: () => void;
     onNavigateToSettings: () => void;
     onClose: () => void;
 }
@@ -49,7 +47,6 @@ interface AdminPanelProps {
 const AdminPanel: React.FC<AdminPanelProps> = ({
     onNavigateToUserManagement,
     onNavigateToStatistics,
-    onNavigateToMenuManagement,
     onNavigateToSettings,
     onClose,
 }) => {
@@ -176,14 +173,21 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                 <Typography variant="h2" component="h1" sx={{ color: 'primary.main' }}>
                     🛠️ 管理画面
                 </Typography>
-                <Fab
-                    color="secondary"
+                <Button
+                    variant="contained"
+                    startIcon={<HomeIcon />}
                     onClick={onClose}
-                    sx={{ width: 60, height: 60 }}
-                    aria-label="メイン画面に戻る"
+                    size="large"
+                    sx={{
+                        minHeight: '60px',
+                        fontSize: '1.2rem',
+                        fontWeight: 600,
+                        borderRadius: '12px',
+                        px: 3
+                    }}
                 >
-                    <HomeIcon />
-                </Fab>
+                    メイン画面に戻る
+                </Button>
             </Box>
 
             {/* 統計カード */}
@@ -240,8 +244,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                 </Box>
             </Box>
 
-
-
             {/* 管理機能メニュー */}
             <Typography variant="h4" sx={{ mb: 3, fontWeight: 600 }}>
                 管理機能
@@ -283,36 +285,27 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                 </Box>
 
                 <Box sx={{ minWidth: '300px', flex: 1 }}>
-                    <Card sx={{ borderRadius: '16px' }}>
-                        <CardActionArea
-                            onClick={onNavigateToMenuManagement}
-                            sx={{ minHeight: '150px', p: 3, textAlign: 'center' }}
-                        >
-                            <RestaurantIcon sx={{ fontSize: '4rem', color: 'warning.main', mb: 2 }} />
-                            <Typography variant="h5" sx={{ fontWeight: 600, mb: 1 }}>
-                                メニュー管理
-                            </Typography>
-                            <Typography variant="body1" color="text.secondary">
-                                メニューの設定と管理
-                            </Typography>
-                        </CardActionArea>
-                    </Card>
-                </Box>
-
-                <Box sx={{ minWidth: '300px', flex: 1 }}>
-                    <Card sx={{ borderRadius: '16px' }}>
-                        <CardActionArea
-                            onClick={onNavigateToSettings}
-                            sx={{ minHeight: '150px', p: 3, textAlign: 'center' }}
-                        >
-                            <SettingsIcon sx={{ fontSize: '4rem', color: 'info.main', mb: 2 }} />
+                    <Card
+                        sx={{
+                            minHeight: '200px',
+                            cursor: 'pointer',
+                            transition: 'all 0.3s ease',
+                            '&:hover': {
+                                transform: 'scale(1.05)',
+                                boxShadow: 6,
+                            },
+                        }}
+                        onClick={onNavigateToSettings}
+                    >
+                        <CardContent sx={{ textAlign: 'center', p: 4 }}>
+                            <SettingsIcon sx={{ fontSize: '4rem', color: 'warning.main', mb: 2 }} />
                             <Typography variant="h5" sx={{ fontWeight: 600, mb: 1 }}>
                                 設定
                             </Typography>
-                            <Typography variant="body1" color="text.secondary">
-                                システム設定とデータ管理
+                            <Typography variant="body2" color="text.secondary">
+                                システム設定・データ管理
                             </Typography>
-                        </CardActionArea>
+                        </CardContent>
                     </Card>
                 </Box>
             </Box>

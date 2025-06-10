@@ -1,55 +1,55 @@
 import { format } from 'date-fns';
-import { MenuItem, User } from '../types';
+import { Group, MenuItem, User } from '../types';
 
 // サンプル利用者データ
-export const sampleUsers: User[] = [
+export const generateInitialUsers = (): User[] => [
     {
-        id: 'user_001',
-        name: '田中 太郎',
-        group: 'A型',
+        id: '1',
+        name: '佐藤太郎',
+        group: 'グループA',
+        trialUser: false,
         price: 400,
         createdAt: '2024-01-01T00:00:00.000Z',
-        isActive: true,
     },
     {
-        id: 'user_002',
-        name: '佐藤 花子',
-        group: 'B型',
-        price: 350,
-        createdAt: '2024-01-01T00:00:00.000Z',
-        isActive: true,
-    },
-    {
-        id: 'user_003',
-        name: '鈴木 一郎',
-        group: 'A型',
+        id: '2',
+        name: '田中花子',
+        group: 'グループB',
+        trialUser: false,
         price: 400,
-        createdAt: '2024-01-01T00:00:00.000Z',
-        isActive: true,
+        createdAt: '2024-01-15T00:00:00.000Z',
     },
     {
-        id: 'user_004',
-        name: '高橋 美咲',
-        group: 'B型',
-        price: 350,
-        createdAt: '2024-01-01T00:00:00.000Z',
-        isActive: true,
+        id: '3',
+        name: '山田一郎',
+        group: 'グループA',
+        trialUser: true,
+        price: 0,
+        createdAt: '2024-02-01T00:00:00.000Z',
     },
     {
-        id: 'user_005',
-        name: '山田 職員',
-        group: '職員',
+        id: '4',
+        name: '鈴木美咲',
+        group: 'グループB',
+        trialUser: false,
+        price: 400,
+        createdAt: '2024-02-15T00:00:00.000Z',
+    },
+    {
+        id: '5',
+        name: '職員・田中',
+        group: 'グループC',
+        trialUser: false,
         price: 500,
-        createdAt: '2024-01-01T00:00:00.000Z',
-        isActive: true,
+        createdAt: '2024-03-01T00:00:00.000Z',
     },
     {
-        id: 'user_006',
-        name: '体験 次郎',
-        group: '体験者',
-        price: 300,
-        createdAt: '2024-01-01T00:00:00.000Z',
-        isActive: true,
+        id: '6',
+        name: '体験・山本',
+        group: 'グループD',
+        trialUser: true,
+        price: 0,
+        createdAt: '2024-03-10T00:00:00.000Z',
     },
 ];
 
@@ -68,7 +68,7 @@ export const setupInitialData = (): void => {
     const existingMenu = localStorage.getItem('aoba-current-menu');
 
     if (!existingUsers) {
-        localStorage.setItem('aoba-meal-users', JSON.stringify(sampleUsers));
+        localStorage.setItem('aoba-meal-users', JSON.stringify(generateInitialUsers()));
         console.log('サンプル利用者データを設定しました');
     }
 
@@ -81,19 +81,20 @@ export const setupInitialData = (): void => {
 // 追加の利用者作成用のテンプレート
 export const createUserTemplate = (
     name: string,
-    group: 'A型' | 'B型' | '職員' | '体験者',
+    group: Group,
     price?: number
 ): Omit<User, 'id' | 'createdAt'> => {
     const defaultPrices = {
-        'A型': 400,
-        'B型': 350,
-        '職員': 500,
-        '体験者': 300,
+        'グループA': 400,
+        'グループB': 350,
+        'グループC': 500,
+        'グループD': 300,
     };
 
     return {
         name,
         group,
+        trialUser: false,
         price: price || defaultPrices[group],
         isActive: true,
     };
@@ -109,4 +110,22 @@ export const createMenuTemplate = (
     name,
     date: date || format(new Date(), 'yyyy-MM-dd'),
     description,
-}); 
+});
+
+const generateRandomUser = (): Omit<User, 'id' | 'createdAt'> => {
+    const names = ['田中', '佐藤', '鈴木', '高橋', '渡辺', '山田', '中村', '小林', '加藤', '吉田'];
+    const firstNames = ['太郎', '次郎', '花子', '美咲', '健太', '由美', '翔太', '愛子', '大輔', '真理'];
+    const groups = ['グループA', 'グループB', 'グループC', 'グループD'];
+
+    const lastName = names[Math.floor(Math.random() * names.length)];
+    const firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
+    const group = groups[Math.floor(Math.random() * groups.length)] as Group;
+    const trialUser = Math.random() < 0.2; // 20%の確率で体験利用者
+
+    return {
+        name: `${lastName}${firstName}`,
+        group,
+        trialUser,
+        price: trialUser ? 0 : 400,
+    };
+}; 

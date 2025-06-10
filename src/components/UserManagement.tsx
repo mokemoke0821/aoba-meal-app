@@ -1,5 +1,6 @@
 import {
     Add as AddIcon,
+    ArrowBack as ArrowBackIcon,
     Delete as DeleteIcon,
     Download as DownloadIcon,
     Edit as EditIcon,
@@ -24,7 +25,6 @@ import {
     DialogTitle,
     FormControl,
     FormControlLabel,
-    Grid,
     InputAdornment,
     InputLabel,
     MenuItem,
@@ -58,6 +58,7 @@ interface UserFormData {
 interface UserManagementProps {
     users: User[];
     onUpdateUsers: (users: User[]) => void;
+    onBack?: () => void;
 }
 
 interface ValidationResult {
@@ -73,7 +74,7 @@ interface UserStats {
     byGroup: Record<Group, number>;
 }
 
-const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers }) => {
+const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers, onBack }) => {
     // State management
     const [openDialog, setOpenDialog] = useState(false);
     const [editingUser, setEditingUser] = useState<User | null>(null);
@@ -537,7 +538,6 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers })
                     icon={<DeleteIcon />}
                     label="削除"
                     onClick={() => handleDeleteUser(params.row.id)}
-                    sx={{ color: 'error.main' }}
                 />
             ]
         }
@@ -545,41 +545,59 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers })
 
     return (
         <Box sx={{ p: 3 }}>
+            {/* Header */}
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                <Typography variant="h4" sx={{ fontWeight: 600 }}>
+                    👥 利用者管理
+                </Typography>
+                {onBack && (
+                    <Button
+                        variant="outlined"
+                        startIcon={<ArrowBackIcon />}
+                        onClick={onBack}
+                        size="large"
+                        sx={{ minHeight: '50px', fontSize: '1.1rem' }}
+                    >
+                        管理画面に戻る
+                    </Button>
+                )}
+            </Box>
+
             {/* Statistics Cards */}
-            <Grid container spacing={2} sx={{ mb: 3 }}>
-                <Grid item xs={12} sm={6} md={3}>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3 }}>
+                <Box sx={{ flex: '1 1 200px', minWidth: '200px' }}>
                     <Card>
                         <CardContent sx={{ textAlign: 'center' }}>
                             <Typography variant="h4" color="primary">{userStats.totalUsers}</Typography>
                             <Typography variant="body2" color="text.secondary">総利用者数</Typography>
                         </CardContent>
                     </Card>
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
+                </Box>
+                <Box sx={{ flex: '1 1 200px', minWidth: '200px' }}>
                     <Card>
                         <CardContent sx={{ textAlign: 'center' }}>
                             <Typography variant="h4" color="success.main">{userStats.activeUsers}</Typography>
                             <Typography variant="body2" color="text.secondary">有効利用者</Typography>
                         </CardContent>
                     </Card>
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
+                </Box>
+                <Box sx={{ flex: '1 1 200px', minWidth: '200px' }}>
                     <Card>
                         <CardContent sx={{ textAlign: 'center' }}>
                             <Typography variant="h4" color="warning.main">{userStats.trialUsers}</Typography>
-                            <Typography variant="body2" color="text.secondary">お試しユーザー</Typography>
+                            <Typography variant="body2" color="text.secondary">体験利用者</Typography>
                         </CardContent>
                     </Card>
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
+                </Box>
+                <Box sx={{ flex: '1 1 200px', minWidth: '200px' }}>
                     <Card>
                         <CardContent sx={{ textAlign: 'center' }}>
                             <Typography variant="h4" color="info.main">{userStats.paidUsers}</Typography>
-                            <Typography variant="body2" color="text.secondary">有料ユーザー</Typography>
+                            <Typography variant="body2" color="text.secondary">有料利用者</Typography>
                         </CardContent>
                     </Card>
-                </Grid>
-            </Grid>
+                </Box>
+            </Box>
 
             {/* Toolbar */}
             <Toolbar sx={{ px: '0 !important', mb: 2 }}>
@@ -698,16 +716,20 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers })
                 <DataGrid
                     rows={filteredUsers}
                     columns={columns}
-                    pageSize={25}
-                    rowsPerPageOptions={[25, 50, 100]}
+                    initialState={{
+                        pagination: {
+                            paginationModel: { page: 0, pageSize: 25 },
+                        },
+                    }}
+                    pageSizeOptions={[25, 50, 100]}
                     checkboxSelection
-                    disableSelectionOnClick
+                    disableRowSelectionOnClick
                     loading={loading}
-                    onSelectionModelChange={(newSelection) => {
+                    onRowSelectionModelChange={(newSelection: any) => {
                         setSelectedRows(newSelection);
                     }}
-                    components={{
-                        Toolbar: GridToolbar
+                    slots={{
+                        toolbar: GridToolbar
                     }}
                     sx={{
                         '& .MuiDataGrid-row:hover': {

@@ -406,4 +406,95 @@ export const exportComprehensiveReport = (
         console.error('統合レポートCSV出力エラー:', error);
         throw error;
     }
+};
+
+// 統計レポートの出力
+export const exportStatisticsReport = (
+    statisticsData: any,
+    startDate: Date,
+    endDate: Date
+): void => {
+    try {
+        const periodText = startDate && endDate
+            ? `${format(startDate, 'yyyy年MM月dd日')} 〜 ${format(endDate, 'yyyy年MM月dd日')}`
+            : '全期間';
+
+        // 基本統計情報
+        const basicStatsHeaders = ['項目', '値'];
+        const basicStatsRows = [
+            ['分析期間', periodText],
+            ['総利用者数', `${statisticsData.totalUsers}名`],
+            ['総注文数', `${statisticsData.totalOrders}件`],
+            ['総売上', `${statisticsData.totalRevenue.toLocaleString()}円`],
+            ['平均評価', `${statisticsData.averageRating}点`],
+        ];
+
+        // 日別統計
+        const dailyHeaders = ['日付', '注文数', '評価数', '平均評価', '売上'];
+        const dailyRows = statisticsData.dailyOrders.map((day: any) => [
+            format(new Date(day.date), 'yyyy年MM月dd日'),
+            day.orderCount.toString(),
+            day.evaluationCount.toString(),
+            day.averageRating.toFixed(1),
+            `${day.totalRevenue.toLocaleString()}円`
+        ]);
+
+        // 評価分布
+        const ratingHeaders = ['評価', '件数', '割合(%)'];
+        const ratingRows = statisticsData.userRatings.map((rating: any) => [
+            `${rating.rating}点`,
+            rating.count.toString(),
+            `${rating.percentage}%`
+        ]);
+
+        // メニュー人気度
+        const menuHeaders = ['メニュー', '注文数', '平均評価', '割合(%)'];
+        const menuRows = statisticsData.menuPopularity.map((menu: any) => [
+            menu.menuType,
+            menu.count.toString(),
+            menu.averageRating.toFixed(1),
+            `${menu.percentage}%`
+        ]);
+
+        // 月次トレンド
+        const trendHeaders = ['月', '注文数', '平均評価', '売上'];
+        const trendRows = statisticsData.monthlyTrends.map((trend: any) => [
+            format(new Date(trend.month + '-01'), 'yyyy年MM月'),
+            trend.orderCount.toString(),
+            trend.averageRating.toFixed(1),
+            `${trend.revenue.toLocaleString()}円`
+        ]);
+
+        // CSV作成
+        const csvContent = [
+            `あおば事業所 統計分析レポート`,
+            `作成日時: ${format(new Date(), 'yyyy年MM月dd日 HH:mm')}`,
+            '',
+            '■ 基本統計情報',
+            basicStatsHeaders.join(','),
+            ...basicStatsRows.map((row: string[]) => row.map((cell: string) => `"${cell}"`).join(',')),
+            '',
+            '■ 日別統計',
+            dailyHeaders.join(','),
+            ...dailyRows.map((row: string[]) => row.map((cell: string) => `"${cell}"`).join(',')),
+            '',
+            '■ 評価分布',
+            ratingHeaders.join(','),
+            ...ratingRows.map((row: string[]) => row.map((cell: string) => `"${cell}"`).join(',')),
+            '',
+            '■ メニュー人気度',
+            menuHeaders.join(','),
+            ...menuRows.map((row: string[]) => row.map((cell: string) => `"${cell}"`).join(',')),
+            '',
+            '■ 月次トレンド',
+            trendHeaders.join(','),
+            ...trendRows.map((row: string[]) => row.map((cell: string) => `"${cell}"`).join(','))
+        ].join('\n');
+
+        const filename = `統計分析レポート_${format(new Date(), 'yyyyMMdd_HHmm')}.csv`;
+        downloadCSV('\uFEFF' + csvContent, filename);
+    } catch (error) {
+        console.error('統計レポートCSV出力エラー:', error);
+        throw error;
+    }
 }; 

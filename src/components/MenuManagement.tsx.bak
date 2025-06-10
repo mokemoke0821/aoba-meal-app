@@ -1,0 +1,756 @@
+import {
+    Add as AddIcon,
+    ContentCopy as CopyIcon,
+    Delete as DeleteIcon,
+    RestaurantMenu as MenuIcon,
+    Schedule as ScheduleIcon,
+    Assignment as TemplateIcon,
+    TrendingUp as TrendingUpIcon
+} from '@mui/icons-material';
+import {
+    Alert,
+    Box,
+    Button,
+    Card,
+    CardContent,
+    Chip,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogTitle,
+    FormControl,
+    IconButton,
+    InputLabel,
+    List,
+    ListItem,
+    ListItemSecondaryAction,
+    ListItemText,
+    MenuItem,
+    Rating,
+    Select,
+    Snackbar,
+    Tab,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableRow,
+    Tabs,
+    TextField,
+    Typography
+} from '@mui/material';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { addDays, format, startOfWeek } from 'date-fns';
+import { ja } from 'date-fns/locale';
+import React, { useMemo, useState } from 'react';
+import { Cell, Pie, PieChart, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
+
+interface MenuItem {
+    id: string;
+    name: string;
+    description?: string;
+    price: number;
+    category: 'main' | 'side' | 'soup' | 'dessert';
+    allergens?: string[];
+    nutritionInfo?: {
+        calories: number;
+        protein: number;
+        carbs: number;
+        fat: number;
+    };
+}
+
+interface DailyMenu {
+    date: string;
+    menuItems: MenuItem[];
+    specialNotes?: string;
+}
+
+interface MenuTemplate {
+    id: string;
+    name: string;
+    description: string;
+    menuItems: MenuItem[];
+    category: 'weekly' | 'monthly' | 'seasonal' | 'special';
+    createdAt: string;
+}
+
+interface MenuPopularity {
+    menuName: string;
+    frequency: number;
+    averageRating: number;
+    lastServed: string;
+    totalOrders: number;
+}
+
+interface MenuSuggestion {
+    menuName: string;
+    reason: string;
+    confidence: number;
+    suggestedDate: string;
+}
+
+interface MenuManagementProps {
+    dailyMenus: DailyMenu[];
+    menuHistory: any[];
+    onUpdateMenus: (menus: DailyMenu[]) => void;
+}
+
+interface TabPanelProps {
+    children?: React.ReactNode;
+    index: number;
+    value: number;
+}
+
+function TabPanel(props: TabPanelProps) {
+    const { children, value, index, ...other } = props;
+    return (
+        <div role="tabpanel" hidden={value !== index} {...other}>
+            {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
+        </div>
+    );
+}
+
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
+
+const MenuManagement: React.FC<MenuManagementProps> = ({
+    dailyMenus,
+    menuHistory,
+    onUpdateMenus
+}) => {
+    const [tabValue, setTabValue] = useState(0);
+    const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+    const [menuDialog, setMenuDialog] = useState({ open: false, item: null as MenuItem | null });
+    const [templateDialog, setTemplateDialog] = useState({ open: false, template: null as MenuTemplate | null });
+    const [menuTemplates, setMenuTemplates] = useState<MenuTemplate[]>([]);
+    const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' as 'success' | 'error' | 'info' });
+
+    // Sample menu items for demonstration
+    const sampleMenuItems: MenuItem[] = [
+        {
+            id: 'menu_1',
+            name: 'チキンカレー',
+            description: '辛口のスパイシーチキンカレー',
+            price: 450,
+            category: 'main',
+            allergens: ['小麦', '乳製品'],
+            nutritionInfo: { calories: 520, protein: 25, carbs: 65, fat: 18 }
+        },
+        {
+            id: 'menu_2',
+            name: '焼き魚定食',
+            description: '新鮮な魚の塩焼き定食',
+            price: 480,
+            category: 'main',
+            allergens: ['魚'],
+            nutritionInfo: { calories: 420, protein: 30, carbs: 45, fat: 12 }
+        },
+        {
+            id: 'menu_3',
+            name: 'ハンバーグ',
+            description: 'ジューシーなハンバーグステーキ',
+            price: 500,
+            category: 'main',
+            allergens: ['卵', '乳製品'],
+            nutritionInfo: { calories: 580, protein: 28, carbs: 35, fat: 35 }
+        }
+    ];
+
+    // Get current day's menu
+    const currentDayMenu = useMemo(() => {
+        const dateStr = format(selectedDate, 'yyyy-MM-dd');
+        return dailyMenus.find(menu => menu.date === dateStr);
+    }, [dailyMenus, selectedDate]);
+
+    // Calculate menu popularity
+    const menuPopularity: MenuPopularity[] = useMemo(() => {
+        const popularityMap = new Map<string, MenuPopularity>();
+
+        // Analyze menu history
+        menuHistory.forEach(record => {
+            const menuName = record.menuName || 'チキンカレー'; // fallback
+
+            if (!popularityMap.has(menuName)) {
+                popularityMap.set(menuName, {
+                    menuName,
+                    frequency: 0,
+                    averageRating: 0,
+                    lastServed: '',
+                    totalOrders: 0
+                });
+            }
+
+            const popularity = popularityMap.get(menuName)!;
+            popularity.frequency += 1;
+            popularity.totalOrders += 1;
+            popularity.averageRating = (popularity.averageRating * (popularity.frequency - 1) + (record.rating || 3)) / popularity.frequency;
+            popularity.lastServed = record.date > popularity.lastServed ? record.date : popularity.lastServed;
+        });
+
+        return Array.from(popularityMap.values()).sort((a, b) => b.frequency - a.frequency);
+    }, [menuHistory]);
+
+    // Generate menu suggestions
+    const menuSuggestions: MenuSuggestion[] = useMemo(() => {
+        const suggestions: MenuSuggestion[] = [];
+        const today = new Date();
+
+        menuPopularity.forEach(menu => {
+            const daysSinceLastServed = menu.lastServed
+                ? Math.floor((today.getTime() - new Date(menu.lastServed).getTime()) / (1000 * 60 * 60 * 24))
+                : 30;
+
+            if (daysSinceLastServed > 7 && menu.averageRating > 3.5) {
+                suggestions.push({
+                    menuName: menu.menuName,
+                    reason: `高評価（${menu.averageRating.toFixed(1)}★）で${daysSinceLastServed}日間提供されていません`,
+                    confidence: Math.min(90, menu.averageRating * 20 + daysSinceLastServed),
+                    suggestedDate: format(addDays(today, Math.ceil(Math.random() * 7)), 'yyyy-MM-dd')
+                });
+            }
+        });
+
+        return suggestions.sort((a, b) => b.confidence - a.confidence);
+    }, [menuPopularity]);
+
+    // Handle menu operations
+    const handleAddMenuItem = (item: MenuItem) => {
+        const dateStr = format(selectedDate, 'yyyy-MM-dd');
+        const existingMenuIndex = dailyMenus.findIndex(menu => menu.date === dateStr);
+
+        if (existingMenuIndex >= 0) {
+            const updatedMenus = [...dailyMenus];
+            updatedMenus[existingMenuIndex].menuItems.push(item);
+            onUpdateMenus(updatedMenus);
+        } else {
+            const newMenu: DailyMenu = {
+                date: dateStr,
+                menuItems: [item],
+                specialNotes: ''
+            };
+            onUpdateMenus([...dailyMenus, newMenu]);
+        }
+
+        setSnackbar({
+            open: true,
+            message: `メニュー「${item.name}」を追加しました`,
+            severity: 'success'
+        });
+    };
+
+    const handleRemoveMenuItem = (itemId: string) => {
+        const dateStr = format(selectedDate, 'yyyy-MM-dd');
+        const menuIndex = dailyMenus.findIndex(menu => menu.date === dateStr);
+
+        if (menuIndex >= 0) {
+            const updatedMenus = [...dailyMenus];
+            updatedMenus[menuIndex].menuItems = updatedMenus[menuIndex].menuItems.filter(item => item.id !== itemId);
+            onUpdateMenus(updatedMenus);
+
+            setSnackbar({
+                open: true,
+                message: 'メニューを削除しました',
+                severity: 'success'
+            });
+        }
+    };
+
+    const handleCopyToNextDay = () => {
+        if (!currentDayMenu) return;
+
+        const nextDay = addDays(selectedDate, 1);
+        const nextDateStr = format(nextDay, 'yyyy-MM-dd');
+        const existingMenuIndex = dailyMenus.findIndex(menu => menu.date === nextDateStr);
+
+        if (existingMenuIndex >= 0) {
+            const updatedMenus = [...dailyMenus];
+            updatedMenus[existingMenuIndex] = {
+                ...currentDayMenu,
+                date: nextDateStr,
+                specialNotes: `${format(selectedDate, 'MM/dd')}からコピー`
+            };
+            onUpdateMenus(updatedMenus);
+        } else {
+            const newMenu: DailyMenu = {
+                ...currentDayMenu,
+                date: nextDateStr,
+                specialNotes: `${format(selectedDate, 'MM/dd')}からコピー`
+            };
+            onUpdateMenus([...dailyMenus, newMenu]);
+        }
+
+        setSnackbar({
+            open: true,
+            message: '翌日にメニューをコピーしました',
+            severity: 'success'
+        });
+    };
+
+    // Template operations
+    const handleCreateTemplate = (template: Omit<MenuTemplate, 'id' | 'createdAt'>) => {
+        const newTemplate: MenuTemplate = {
+            ...template,
+            id: `template_${Date.now()}`,
+            createdAt: new Date().toISOString()
+        };
+
+        setMenuTemplates(prev => [...prev, newTemplate]);
+        setSnackbar({
+            open: true,
+            message: `テンプレート「${newTemplate.name}」を作成しました`,
+            severity: 'success'
+        });
+    };
+
+    const handleApplyTemplate = (template: MenuTemplate, dates: Date[]) => {
+        const updatedMenus = [...dailyMenus];
+
+        dates.forEach(date => {
+            const dateStr = format(date, 'yyyy-MM-dd');
+            const existingIndex = updatedMenus.findIndex(menu => menu.date === dateStr);
+
+            const newMenu: DailyMenu = {
+                date: dateStr,
+                menuItems: template.menuItems,
+                specialNotes: `テンプレート「${template.name}」から適用`
+            };
+
+            if (existingIndex >= 0) {
+                updatedMenus[existingIndex] = newMenu;
+            } else {
+                updatedMenus.push(newMenu);
+            }
+        });
+
+        onUpdateMenus(updatedMenus);
+        setSnackbar({
+            open: true,
+            message: `${dates.length}日分にテンプレートを適用しました`,
+            severity: 'success'
+        });
+    };
+
+    // Rating distribution data for chart
+    const ratingDistribution = useMemo(() => {
+        const distribution = [0, 0, 0, 0, 0];
+        menuHistory.forEach(record => {
+            const rating = Math.floor(record.rating || 3);
+            if (rating >= 1 && rating <= 5) {
+                distribution[rating - 1]++;
+            }
+        });
+
+        return distribution.map((count, index) => ({
+            name: `${index + 1}★`,
+            value: count,
+            rating: index + 1
+        }));
+    }, [menuHistory]);
+
+    // Daily menu setting tab
+    const renderDailyMenuTab = () => (
+        <Box>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ja}>
+                    <DatePicker
+                        label="日付選択"
+                        value={selectedDate}
+                        onChange={(newDate) => newDate && setSelectedDate(newDate)}
+                        renderInput={(params) => <TextField {...params} />}
+                    />
+                </LocalizationProvider>
+
+                {currentDayMenu && (
+                    <Button
+                        variant="outlined"
+                        startIcon={<CopyIcon />}
+                        onClick={handleCopyToNextDay}
+                        sx={{
+                            height: '56px',
+                            minWidth: '120px'
+                        }}
+                    >
+                        翌日にコピー
+                    </Button>
+                )}
+            </Box>
+
+            <Typography variant="h6" sx={{ mb: 2 }}>
+                {format(selectedDate, 'yyyy年MM月dd日（E）', { locale: ja })}のメニュー
+            </Typography>
+
+            {currentDayMenu && currentDayMenu.menuItems.length > 0 ? (
+                <List>
+                    {currentDayMenu.menuItems.map((item, index) => (
+                        <ListItem key={item.id} divider>
+                            <ListItemText
+                                primary={item.name}
+                                secondary={
+                                    <Box>
+                                        {item.description && <Typography variant="body2">{item.description}</Typography>}
+                                        <Typography variant="caption">¥{item.price}</Typography>
+                                        {item.allergens && item.allergens.length > 0 && (
+                                            <Box sx={{ mt: 1 }}>
+                                                {item.allergens.map(allergen => (
+                                                    <Chip key={allergen} label={allergen} size="small" sx={{ mr: 1 }} />
+                                                ))}
+                                            </Box>
+                                        )}
+                                    </Box>
+                                }
+                            />
+                            <ListItemSecondaryAction>
+                                <IconButton
+                                    edge="end"
+                                    onClick={() => handleRemoveMenuItem(item.id)}
+                                    color="error"
+                                >
+                                    <DeleteIcon />
+                                </IconButton>
+                            </ListItemSecondaryAction>
+                        </ListItem>
+                    ))}
+                </List>
+            ) : (
+                <Alert severity="info">
+                    この日のメニューはまだ設定されていません。「メニュー追加」ボタンからメニューを追加してください。
+                </Alert>
+            )}
+
+            <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center' }}>
+                <Button
+                    variant="contained"
+                    startIcon={<AddIcon />}
+                    onClick={() => setMenuDialog({ open: true, item: null })}
+                    sx={{
+                        height: '56px',
+                        minWidth: '160px',
+                        fontSize: '16px'
+                    }}
+                >
+                    メニュー追加
+                </Button>
+            </Box>
+        </Box>
+    );
+
+    // Popularity analysis tab
+    const renderPopularityTab = () => (
+        <Box>
+            <Typography variant="h6" sx={{ mb: 3 }}>メニュー人気度分析</Typography>
+
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
+                    <Card sx={{ flex: 1, minWidth: '300px' }}>
+                        <CardContent>
+                            <Typography variant="h6" sx={{ mb: 2 }}>評価別分布</Typography>
+                            <ResponsiveContainer width="100%" height={300}>
+                                <PieChart>
+                                    <Pie
+                                        data={ratingDistribution}
+                                        cx="50%"
+                                        cy="50%"
+                                        labelLine={false}
+                                        label={({ name, value }) => `${name}: ${value}`}
+                                        outerRadius={80}
+                                        fill="#8884d8"
+                                        dataKey="value"
+                                    >
+                                        {ratingDistribution.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                        ))}
+                                    </Pie>
+                                    <RechartsTooltip />
+                                </PieChart>
+                            </ResponsiveContainer>
+                        </CardContent>
+                    </Card>
+
+                    <Card sx={{ flex: 2, minWidth: '400px' }}>
+                        <CardContent>
+                            <Typography variant="h6" sx={{ mb: 2 }}>詳細統計</Typography>
+                            <TableContainer>
+                                <Table>
+                                    <TableHead>
+                                        <TableRow>
+                                            <TableCell>メニュー名</TableCell>
+                                            <TableCell align="right">提供回数</TableCell>
+                                            <TableCell align="right">平均評価</TableCell>
+                                            <TableCell align="right">最終提供日</TableCell>
+                                            <TableCell align="right">総注文数</TableCell>
+                                        </TableRow>
+                                    </TableHead>
+                                    <TableBody>
+                                        {menuPopularity.slice(0, 10).map((menu) => (
+                                            <TableRow key={menu.menuName}>
+                                                <TableCell component="th" scope="row">
+                                                    {menu.menuName}
+                                                </TableCell>
+                                                <TableCell align="right">{menu.frequency}回</TableCell>
+                                                <TableCell align="right">
+                                                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
+                                                        <Rating value={menu.averageRating} readOnly size="small" />
+                                                        <Typography variant="caption" sx={{ ml: 1 }}>
+                                                            {menu.averageRating.toFixed(1)}
+                                                        </Typography>
+                                                    </Box>
+                                                </TableCell>
+                                                <TableCell align="right">
+                                                    {menu.lastServed ? format(new Date(menu.lastServed), 'MM/dd') : '-'}
+                                                </TableCell>
+                                                <TableCell align="right">{menu.totalOrders}</TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </TableContainer>
+                        </CardContent>
+                    </Card>
+                </Box>
+            </Box>
+        </Box>
+    );
+
+    // Suggestions and rotation tab
+    const renderSuggestionsTab = () => (
+        <Box>
+            <Typography variant="h6" sx={{ mb: 3 }}>メニュー提案・ローテーション</Typography>
+
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
+                    <Card sx={{ flex: 1, minWidth: '300px' }}>
+                        <CardContent>
+                            <Typography variant="h6" sx={{ mb: 2 }}>
+                                <TrendingUpIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
+                                おすすめメニュー
+                            </Typography>
+                            <Alert severity="info" sx={{ mb: 2 }}>
+                                評価と提供間隔を考慮したAI提案です
+                            </Alert>
+
+                            <List>
+                                {menuSuggestions.slice(0, 5).map((suggestion, index) => (
+                                    <ListItem key={index} divider>
+                                        <ListItemText
+                                            primary={suggestion.menuName}
+                                            secondary={
+                                                <Box>
+                                                    <Typography variant="body2">{suggestion.reason}</Typography>
+                                                    <Typography variant="caption">
+                                                        信頼度: {suggestion.confidence}% | 提案日: {format(new Date(suggestion.suggestedDate), 'MM/dd')}
+                                                    </Typography>
+                                                </Box>
+                                            }
+                                        />
+                                        <Button size="small" variant="outlined">採用</Button>
+                                    </ListItem>
+                                ))}
+                            </List>
+                        </CardContent>
+                    </Card>
+
+                    <Card sx={{ flex: 1, minWidth: '300px' }}>
+                        <CardContent>
+                            <Typography variant="h6" sx={{ mb: 2 }}>
+                                <ScheduleIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
+                                ローテーション提案
+                            </Typography>
+                            <Alert severity="info" sx={{ mb: 2 }}>
+                                人気メニューのバランスを考慮したローテーションプランです
+                            </Alert>
+
+                            {/* Weekly rotation suggestion */}
+                            <Typography variant="subtitle1" sx={{ mb: 1 }}>今週の提案</Typography>
+                            {Array.from({ length: 7 }, (_, i) => {
+                                const date = addDays(startOfWeek(new Date()), i);
+                                const dayMenu = dailyMenus.find(menu => menu.date === format(date, 'yyyy-MM-dd'));
+
+                                return (
+                                    <Box key={i} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 1 }}>
+                                        <Typography variant="body2">
+                                            {format(date, 'MM/dd（E）', { locale: ja })}
+                                        </Typography>
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                            <Typography variant="body2">
+                                                {dayMenu?.menuItems[0]?.name || 'チキンカレー'}
+                                            </Typography>
+                                            <Button size="small" variant="text">設定</Button>
+                                        </Box>
+                                    </Box>
+                                );
+                            })}
+                        </CardContent>
+                    </Card>
+                </Box>
+            </Box>
+        </Box>
+    );
+
+    // Template management tab
+    const renderTemplateTab = () => (
+        <Box>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                <Typography variant="h6">メニューテンプレート</Typography>
+                <Button
+                    variant="contained"
+                    startIcon={<TemplateIcon />}
+                    onClick={() => setTemplateDialog({ open: true, template: null })}
+                >
+                    新規テンプレート
+                </Button>
+            </Box>
+
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                {menuTemplates.map((template) => (
+                    <Card key={template.id}>
+                        <CardContent>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                <Box sx={{ flex: 1 }}>
+                                    <Typography variant="h6">{template.name}</Typography>
+                                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                                        {template.description}
+                                    </Typography>
+
+                                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2 }}>
+                                        作成日: {format(new Date(template.createdAt), 'yyyy/MM/dd')}
+                                    </Typography>
+
+                                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                                        {template.menuItems.map((item) => (
+                                            <Chip key={item.id} label={item.name} size="small" />
+                                        ))}
+                                    </Box>
+                                </Box>
+
+                                <Box sx={{ display: 'flex', gap: 1 }}>
+                                    <Button
+                                        size="small"
+                                        variant="outlined"
+                                        onClick={() => setTemplateDialog({ open: true, template })}
+                                    >
+                                        編集
+                                    </Button>
+                                </Box>
+                            </Box>
+                        </CardContent>
+                    </Card>
+                ))}
+            </Box>
+
+            {menuTemplates.length === 0 && (
+                <Alert severity="info">
+                    メニューテンプレートがありません。「新規テンプレート」ボタンから作成してください。
+                </Alert>
+            )}
+        </Box>
+    );
+
+    return (
+        <Box sx={{ p: 3 }}>
+            <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+                <Typography variant="h4" sx={{ mb: 3 }}>
+                    <MenuIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
+                    メニュー管理
+                </Typography>
+
+                <Tabs value={tabValue} onChange={(_, newValue) => setTabValue(newValue)} sx={{ mb: 3 }}>
+                    <Tab label="日別メニュー設定" />
+                    <Tab label="人気度分析" />
+                    <Tab label="提案・ローテーション" />
+                    <Tab label="テンプレート管理" />
+                </Tabs>
+            </Box>
+
+            <TabPanel value={tabValue} index={0}>
+                {renderDailyMenuTab()}
+            </TabPanel>
+
+            <TabPanel value={tabValue} index={1}>
+                {renderPopularityTab()}
+            </TabPanel>
+
+            <TabPanel value={tabValue} index={2}>
+                {renderSuggestionsTab()}
+            </TabPanel>
+
+            <TabPanel value={tabValue} index={3}>
+                {renderTemplateTab()}
+            </TabPanel>
+
+            {/* Menu Item Dialog */}
+            <Dialog
+                open={menuDialog.open}
+                onClose={() => setMenuDialog({ open: false, item: null })}
+                maxWidth="sm"
+                fullWidth
+            >
+                <DialogTitle>
+                    {menuDialog.item ? 'メニュー編集' : 'メニュー追加'}
+                </DialogTitle>
+                <DialogContent>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
+                        <FormControl fullWidth>
+                            <InputLabel>サンプルメニューから選択</InputLabel>
+                            <Select
+                                label="サンプルメニューから選択"
+                                onChange={(e) => {
+                                    const selectedItem = sampleMenuItems.find(item => item.id === e.target.value);
+                                    if (selectedItem) {
+                                        handleAddMenuItem(selectedItem);
+                                        setMenuDialog({ open: false, item: null });
+                                    }
+                                }}
+                            >
+                                {sampleMenuItems.map((item) => (
+                                    <MenuItem key={item.id} value={item.id}>
+                                        {item.name} - ¥{item.price}
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+                    </Box>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setMenuDialog({ open: false, item: null })}>
+                        キャンセル
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Template Dialog */}
+            <Dialog
+                open={templateDialog.open}
+                onClose={() => setTemplateDialog({ open: false, template: null })}
+                maxWidth="md"
+                fullWidth
+            >
+                <DialogTitle>
+                    {templateDialog.template ? 'テンプレート編集' : '新規テンプレート'}
+                </DialogTitle>
+                <DialogContent>
+                    <Typography variant="body2" sx={{ mt: 2 }}>
+                        テンプレート機能は開発中です
+                    </Typography>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setTemplateDialog({ open: false, template: null })}>
+                        キャンセル
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Snackbar */}
+            <Snackbar
+                open={snackbar.open}
+                autoHideDuration={3000}
+                onClose={() => setSnackbar({ ...snackbar, open: false })}
+                message={snackbar.message}
+            />
+        </Box>
+    );
+};
+
+export default MenuManagement; 

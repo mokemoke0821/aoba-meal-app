@@ -1,48 +1,51 @@
 import {
-    Add as AddIcon,
+    CheckCircle as CheckCircleIcon,
     Person as PersonIcon,
+    Restaurant as RestaurantIcon,
     Search as SearchIcon,
+    Settings as SettingsIcon,
+    Star as StarIcon
 } from '@mui/icons-material';
 import {
     Alert,
+    Avatar,
     Box,
+    Button,
     Card,
-    CardActionArea,
     CardContent,
     Chip,
     Container,
     Fab,
-    Grid,
     InputAdornment,
     TextField,
-    Typography,
+    Typography
 } from '@mui/material';
+import { format } from 'date-fns';
 import React, { useEffect, useState } from 'react';
 import { useApp } from '../contexts/AppContext';
 import { GROUP_COLORS, User } from '../types';
+import HelpButton from './HelpButton';
 
-// 50音順ソート用の関数
+// 50音順ソート
 const sortUsersByKana = (users: User[]): User[] => {
-    return users.sort((a, b) => {
-        return a.name.localeCompare(b.name, 'ja', { sensitivity: 'base' });
-    });
+    return users.sort((a, b) => a.name.localeCompare(b.name, 'ja'));
 };
 
-// 利用者検索フィルター
+// ユーザーフィルタリング
 const filterUsers = (users: User[], searchTerm: string): User[] => {
     if (!searchTerm) return users;
-
-    const term = searchTerm.toLowerCase();
     return users.filter(user =>
-        user.name.toLowerCase().includes(term) ||
-        user.group.includes(term)
+        user.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
 };
 
 const UserSelector: React.FC = () => {
-    const { state, selectUser, navigateToView } = useApp();
+    const { state, selectUser, navigateToView, getTodayMealRecords } = useApp();
     const [searchTerm, setSearchTerm] = useState('');
     const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
+
+    // 今日の給食記録を取得
+    const todayRecords = getTodayMealRecords();
 
     // ユーザーリストの更新とフィルタリング
     useEffect(() => {
@@ -52,10 +55,24 @@ const UserSelector: React.FC = () => {
         setFilteredUsers(filtered);
     }, [state.users, searchTerm]);
 
-    // 利用者選択ハンドラー
-    const handleUserSelect = (user: User) => {
+    // 利用者の今日の状態を取得
+    const getUserStatus = (user: User) => {
+        const record = todayRecords.find(r => r.userId === user.id);
+        if (!record) return 'no_order'; // 未注文
+        if (record.rating === 0) return 'ordered'; // 注文済み未評価
+        return 'rated'; // 評価済み
+    };
+
+    // 利用者選択ハンドラー（注文用）
+    const handleUserSelectForOrder = (user: User) => {
         selectUser(user);
         navigateToView('mealOrder');
+    };
+
+    // 利用者選択ハンドラー（評価用）
+    const handleUserSelectForRating = (user: User) => {
+        selectUser(user);
+        navigateToView('rating');
     };
 
     // 新規利用者追加ハンドラー
@@ -72,7 +89,22 @@ const UserSelector: React.FC = () => {
         return stats;
     };
 
+    // 状態別統計
+    const getStatusStats = () => {
+        const stats = {
+            no_order: 0,
+            ordered: 0,
+            rated: 0
+        };
+        filteredUsers.forEach(user => {
+            const status = getUserStatus(user);
+            stats[status]++;
+        });
+        return stats;
+    };
+
     const groupStats = getGroupStats();
+    const statusStats = getStatusStats();
 
     return (
         <Container maxWidth="lg" sx={{ py: 4 }}>
@@ -84,6 +116,50 @@ const UserSelector: React.FC = () => {
                 <Typography variant="h4" component="h2" sx={{ mb: 3 }}>
                     利用者を選んでください
                 </Typography>
+
+                {/* 今日の日付表示 */}
+                <Typography variant="h5" sx={{ mb: 3, color: 'text.secondary' }}>
+                    {format(new Date(), 'yyyy年MM月dd日')}
+                </Typography>
+
+                {/* 状態別統計 */}
+                <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mb: 3, flexWrap: 'wrap' }}>
+                    <Chip
+                        icon={<RestaurantIcon />}
+                        label={`未注文: ${statusStats.no_order}人`}
+                        sx={{
+                            backgroundColor: 'grey.300',
+                            fontSize: '1rem',
+                            fontWeight: 600,
+                            px: 2,
+                            py: 1,
+                        }}
+                    />
+                    <Chip
+                        icon={<StarIcon />}
+                        label={`注文済み: ${statusStats.ordered}人`}
+                        sx={{
+                            backgroundColor: 'warning.main',
+                            color: 'white',
+                            fontSize: '1rem',
+                            fontWeight: 600,
+                            px: 2,
+                            py: 1,
+                        }}
+                    />
+                    <Chip
+                        icon={<CheckCircleIcon />}
+                        label={`評価済み: ${statusStats.rated}人`}
+                        sx={{
+                            backgroundColor: 'success.main',
+                            color: 'white',
+                            fontSize: '1rem',
+                            fontWeight: 600,
+                            px: 2,
+                            py: 1,
+                        }}
+                    />
+                </Box>
 
                 {/* グループ別統計 */}
                 <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mb: 3, flexWrap: 'wrap' }}>
@@ -143,46 +219,64 @@ const UserSelector: React.FC = () => {
                     {searchTerm ? '該当する利用者が見つかりません' : '利用者が登録されていません'}
                 </Alert>
             ) : (
-                <Grid container spacing={3}>
-                    {filteredUsers.map((user) => (
-                        <Grid item xs={12} sm={6} md={4} lg={3} key={user.id}>
+                <Box sx={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+                    gap: 3
+                }}>
+                    {filteredUsers.map((user) => {
+                        const status = getUserStatus(user);
+                        const statusColor = status === 'no_order' ? 'grey.300' :
+                            status === 'ordered' ? 'warning.main' : 'success.main';
+                        const statusText = status === 'no_order' ? '未注文' :
+                            status === 'ordered' ? '注文済み' : '評価済み';
+                        const statusIcon = status === 'no_order' ? <RestaurantIcon /> :
+                            status === 'ordered' ? <StarIcon /> : <CheckCircleIcon />;
+
+                        return (
                             <Card
+                                key={user.id}
                                 sx={{
-                                    minHeight: '180px',
+                                    minHeight: '220px',
                                     border: `3px solid ${GROUP_COLORS[user.group]}`,
                                     borderRadius: '16px',
                                     transition: 'all 0.3s ease',
-                                    '&:hover': {
-                                        transform: 'scale(1.05)',
-                                        boxShadow: `0 8px 24px ${GROUP_COLORS[user.group]}40`,
-                                    },
+                                    position: 'relative',
                                 }}
                             >
-                                <CardActionArea
-                                    onClick={() => handleUserSelect(user)}
+                                {/* 状態表示バッジ */}
+                                <Chip
+                                    icon={statusIcon}
+                                    label={statusText}
                                     sx={{
-                                        height: '100%',
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        justifyContent: 'center',
-                                        alignItems: 'center',
-                                        p: 3,
+                                        position: 'absolute',
+                                        top: 8,
+                                        right: 8,
+                                        backgroundColor: statusColor,
+                                        color: status === 'no_order' ? 'text.primary' : 'white',
+                                        fontSize: '0.9rem',
+                                        fontWeight: 600,
+                                        zIndex: 1,
                                     }}
-                                    aria-label={`${user.name}さんを選択`}
-                                >
-                                    <CardContent sx={{ textAlign: 'center', p: 0 }}>
-                                        {/* アイコン */}
-                                        <PersonIcon
+                                />
+
+                                <CardContent sx={{ p: 3 }}>
+                                    {/* アイコンと基本情報 */}
+                                    <Box sx={{ textAlign: 'center', mb: 3 }}>
+                                        <Avatar
                                             sx={{
-                                                fontSize: '4rem',
-                                                color: GROUP_COLORS[user.group],
+                                                width: 60,
+                                                height: 60,
+                                                bgcolor: GROUP_COLORS[user.group],
+                                                mx: 'auto',
                                                 mb: 2,
                                             }}
-                                        />
+                                        >
+                                            <PersonIcon sx={{ fontSize: '2rem' }} />
+                                        </Avatar>
 
-                                        {/* 利用者名 */}
                                         <Typography
-                                            variant="h4"
+                                            variant="h5"
                                             component="h3"
                                             sx={{
                                                 fontWeight: 700,
@@ -194,21 +288,19 @@ const UserSelector: React.FC = () => {
                                             {user.name}
                                         </Typography>
 
-                                        {/* グループバッジ */}
                                         <Chip
                                             label={user.group}
                                             sx={{
                                                 backgroundColor: GROUP_COLORS[user.group],
                                                 color: 'white',
-                                                fontSize: '1.1rem',
+                                                fontSize: '1rem',
                                                 fontWeight: 600,
                                                 mb: 1,
                                             }}
                                         />
 
-                                        {/* 料金 */}
                                         <Typography
-                                            variant="h5"
+                                            variant="h6"
                                             sx={{
                                                 fontWeight: 600,
                                                 color: 'text.secondary',
@@ -216,30 +308,113 @@ const UserSelector: React.FC = () => {
                                         >
                                             ¥{user.price}
                                         </Typography>
-                                    </CardContent>
-                                </CardActionArea>
+                                    </Box>
+
+                                    {/* アクションボタン */}
+                                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                                        {status === 'no_order' && (
+                                            <Button
+                                                variant="contained"
+                                                size="large"
+                                                onClick={() => handleUserSelectForOrder(user)}
+                                                startIcon={<RestaurantIcon />}
+                                                sx={{
+                                                    fontSize: '1rem',
+                                                    fontWeight: 600,
+                                                    py: 1.5,
+                                                }}
+                                            >
+                                                給食を注文
+                                            </Button>
+                                        )}
+
+                                        {status === 'ordered' && (
+                                            <>
+                                                <Button
+                                                    variant="contained"
+                                                    color="warning"
+                                                    size="large"
+                                                    onClick={() => handleUserSelectForRating(user)}
+                                                    startIcon={<StarIcon />}
+                                                    sx={{
+                                                        fontSize: '1rem',
+                                                        fontWeight: 600,
+                                                        py: 1.5,
+                                                        mb: 1,
+                                                    }}
+                                                >
+                                                    評価を入力
+                                                </Button>
+                                                <Button
+                                                    variant="outlined"
+                                                    size="small"
+                                                    onClick={() => handleUserSelectForOrder(user)}
+                                                    sx={{
+                                                        fontSize: '0.85rem',
+                                                        py: 0.5,
+                                                    }}
+                                                >
+                                                    注文変更
+                                                </Button>
+                                            </>
+                                        )}
+
+                                        {status === 'rated' && (
+                                            <Button
+                                                variant="contained"
+                                                color="success"
+                                                size="large"
+                                                disabled
+                                                startIcon={<CheckCircleIcon />}
+                                                sx={{
+                                                    fontSize: '1rem',
+                                                    fontWeight: 600,
+                                                    py: 1.5,
+                                                }}
+                                            >
+                                                完了
+                                            </Button>
+                                        )}
+                                    </Box>
+                                </CardContent>
                             </Card>
-                        </Grid>
-                    ))}
-                </Grid>
+                        );
+                    })}
+                </Box>
             )}
 
-            {/* 新規利用者追加ボタン（管理者用） */}
-            <Fab
-                color="secondary"
-                aria-label="新規利用者追加"
-                onClick={handleAddUser}
-                sx={{
-                    position: 'fixed',
-                    bottom: 32,
-                    right: 32,
-                    width: 80,
-                    height: 80,
-                    fontSize: '2rem',
-                }}
-            >
-                <AddIcon sx={{ fontSize: '2.5rem' }} />
-            </Fab>
+            {/* 管理者用ボタン */}
+            <Box sx={{ position: 'fixed', bottom: 32, right: 32, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <Fab
+                    color="secondary"
+                    aria-label="管理画面"
+                    onClick={handleAddUser}
+                    sx={{
+                        width: 80,
+                        height: 80,
+                        fontSize: '2rem',
+                    }}
+                >
+                    <SettingsIcon sx={{ fontSize: '2.5rem' }} />
+                </Fab>
+                <Typography
+                    variant="caption"
+                    sx={{
+                        textAlign: 'center',
+                        backgroundColor: 'rgba(0,0,0,0.8)',
+                        color: 'white',
+                        px: 1,
+                        py: 0.5,
+                        borderRadius: 1,
+                        fontSize: '0.75rem'
+                    }}
+                >
+                    管理画面
+                </Typography>
+            </Box>
+
+            {/* ヘルプボタン */}
+            <HelpButton />
         </Container>
     );
 };

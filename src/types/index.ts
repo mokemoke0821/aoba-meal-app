@@ -74,7 +74,7 @@ export type AppAction =
   | { type: 'DELETE_USER'; payload: string }
   | { type: 'SET_MEAL_RECORDS'; payload: MealRecord[] }
   | { type: 'ADD_MEAL_RECORD'; payload: MealRecord }
-  | { type: 'SET_CURRENT_MENU'; payload: MenuItem }
+  | { type: 'SET_CURRENT_MENU'; payload: MenuItem | null }
   | { type: 'SET_SELECTED_USER'; payload: User | null }
   | { type: 'SET_CURRENT_VIEW'; payload: ViewType }
   | { type: 'SET_DAILY_MENUS'; payload: DailyMenu[] }

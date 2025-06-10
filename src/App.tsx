@@ -1,16 +1,54 @@
-import { CssBaseline, ThemeProvider } from '@mui/material';
+import { ArrowBack as ArrowBackIcon, Construction as ConstructionIcon } from '@mui/icons-material';
+import { Button, Card, CardContent, Container, CssBaseline, ThemeProvider, Typography } from '@mui/material';
 import React from 'react';
 import AdminPanel from './components/AdminPanel';
+import ErrorBoundary from './components/ErrorBoundary';
 import MealOrder from './components/MealOrder';
-import MenuManagement from './components/MenuManagement';
-import PrintReports from './components/PrintReports';
+// import MenuManagement from './components/MenuManagement';
+// import PrintReports from './components/PrintReports';
 import RatingInput from './components/RatingInput';
-import Settings from './components/Settings';
-import Statistics from './components/Statistics';
+// import Settings from './components/Settings';
+import StatisticsPanel from './components/StatisticsPanel';
 import UserManagement from './components/UserManagement';
 import UserSelector from './components/UserSelector';
 import { AppProvider, useApp } from './contexts/AppContext';
 import aobaTheme from './theme';
+
+// 準備中画面コンポーネント
+const ComingSoonPage: React.FC<{ title: string; onBack: () => void }> = ({ title, onBack }) => (
+  <Container maxWidth="md" sx={{ py: 8, textAlign: 'center' }}>
+    <Card sx={{ borderRadius: '16px', boxShadow: 4 }}>
+      <CardContent sx={{ p: 6 }}>
+        <ConstructionIcon sx={{ fontSize: '4rem', color: 'warning.main', mb: 3 }} />
+        <Typography variant="h3" sx={{ mb: 3, fontWeight: 600 }}>
+          {title}
+        </Typography>
+        <Typography variant="h5" color="text.secondary" sx={{ mb: 4 }}>
+          この機能は現在準備中です
+        </Typography>
+        <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
+          より良いサービスを提供するため、機能を開発中です。<br />
+          しばらくお待ちください。
+        </Typography>
+        <Button
+          variant="contained"
+          size="large"
+          startIcon={<ArrowBackIcon />}
+          onClick={onBack}
+          sx={{
+            minHeight: '60px',
+            fontSize: '1.25rem',
+            fontWeight: 600,
+            borderRadius: '12px',
+            px: 4,
+          }}
+        >
+          管理画面に戻る
+        </Button>
+      </CardContent>
+    </Card>
+  </Container>
+);
 
 // メインアプリケーションコンポーネント
 const AppContent: React.FC = () => {
@@ -23,10 +61,6 @@ const AppContent: React.FC = () => {
 
   const handleNavigateToStatistics = () => {
     dispatch({ type: 'SET_CURRENT_VIEW', payload: 'statistics' });
-  };
-
-  const handleNavigateToMenuManagement = () => {
-    dispatch({ type: 'SET_CURRENT_VIEW', payload: 'menuManagement' });
   };
 
   const handleNavigateToSettings = () => {
@@ -108,53 +142,26 @@ const AppContent: React.FC = () => {
           <AdminPanel
             onNavigateToUserManagement={handleNavigateToUserManagement}
             onNavigateToStatistics={handleNavigateToStatistics}
-            onNavigateToMenuManagement={handleNavigateToMenuManagement}
             onNavigateToSettings={handleNavigateToSettings}
-            onNavigateToPrintReports={handleNavigateToPrintReports}
             onClose={handleBackToMain}
           />
         );
       case 'statistics':
-        return <Statistics onBack={handleBackToAdmin} />;
+        return <StatisticsPanel onBack={handleBackToAdmin} />;
       case 'userManagement':
         return (
           <UserManagement
             users={state.users}
             onUpdateUsers={handleUpdateUsers}
+            onBack={handleBackToAdmin}
           />
         );
       case 'menuManagement':
-        return (
-          <MenuManagement
-            dailyMenus={[]} // Placeholder until context is updated
-            menuHistory={state.mealHistory || []}
-            onUpdateMenus={(menus) => {
-              // Placeholder until SET_DAILY_MENUS action is added
-              console.log('Update menus:', menus);
-            }}
-          />
-        );
+        return <ComingSoonPage title="メニュー管理機能" onBack={handleBackToAdmin} />;
       case 'settings':
-        return (
-          <Settings
-            appData={{
-              users: state.users,
-              mealHistory: state.mealHistory || []
-            }}
-            onUpdateSettings={handleUpdateSettings}
-            onExportData={handleExportData}
-            onImportData={handleImportData}
-            onClearData={handleClearData}
-          />
-        );
+        return <ComingSoonPage title="設定機能" onBack={handleBackToAdmin} />;
       case 'printReports':
-        return (
-          <PrintReports
-            users={state.users}
-            mealHistory={state.mealHistory || []}
-            facilityInfo={facilityInfo}
-          />
-        );
+        return <ComingSoonPage title="印刷機能" onBack={handleBackToAdmin} />;
       default:
         return <UserSelector />;
     }
@@ -170,11 +177,26 @@ const AppContent: React.FC = () => {
 
 // ルートAppコンポーネント
 const App: React.FC = () => {
+  const handleGlobalError = (error: Error, errorInfo: React.ErrorInfo) => {
+    console.group('🚨 Global Error Handler');
+    console.error('アプリケーションレベルのエラーが発生しました:', error);
+    console.error('エラー情報:', errorInfo);
+    console.groupEnd();
+
+    // 必要に応じて外部のエラー監視サービスに送信
+    // analytics.track('app_error', { message: error.message, stack: error.stack });
+  };
+
   return (
     <ThemeProvider theme={aobaTheme}>
-      <AppProvider>
-        <AppContent />
-      </AppProvider>
+      <ErrorBoundary
+        onError={handleGlobalError}
+        resetOnNavigate={true}
+      >
+        <AppProvider>
+          <AppContent />
+        </AppProvider>
+      </ErrorBoundary>
     </ThemeProvider>
   );
 };
