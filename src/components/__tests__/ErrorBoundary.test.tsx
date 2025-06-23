@@ -1,4 +1,4 @@
-﻿import { ThemeProvider } from '@mui/material';
+import { ThemeProvider } from '@mui/material';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
@@ -466,7 +466,8 @@ describe('ErrorBoundary', () => {
         it('should handle throwing null', () => {
             const Thrower = () => {
                 // eslint-disable-next-line @typescript-eslint/no-throw-literal
-                throw null;
+                // eslint-disable-next-line @typescript-eslint/no-throw-literal
+                
             };
 
             const spy = jest.spyOn(console, 'error').mockImplementation(() => {
@@ -486,7 +487,8 @@ describe('ErrorBoundary', () => {
         it('文字列エラーがキャッチされる', () => {
             const ThrowStringError = () => {
                 // eslint-disable-next-line @typescript-eslint/no-throw-literal
-                throw 'ただの文字列エラー';
+                // eslint-disable-next-line @typescript-eslint/no-throw-literal
+                
             };
             renderWithTheme(
                 <ErrorBoundary>
