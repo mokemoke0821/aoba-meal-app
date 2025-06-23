@@ -1,4 +1,4 @@
-import { ThemeProvider } from '@mui/material';
+﻿import { ThemeProvider } from '@mui/material';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
@@ -462,22 +462,31 @@ describe('ErrorBoundary', () => {
     });
 
     describe('特殊なエラーケース', () => {
-        it('nullエラーがキャッチされる', () => {
-            const ThrowNullError = () => {
+        // 'null' をスローするテスト
+        it('should handle throwing null', () => {
+            const Thrower = () => {
                 // eslint-disable-next-line @typescript-eslint/no-throw-literal
                 throw null;
             };
-            renderWithTheme(
+
+            const spy = jest.spyOn(console, 'error').mockImplementation(() => {
+                // do nothing
+            });
+
+            render(
                 <ErrorBoundary>
-                    <ThrowNullError />
+                    <Thrower />
                 </ErrorBoundary>
             );
+
             expect(screen.getByText('エラーが発生しました')).toBeInTheDocument();
+            spy.mockRestore();
         });
 
         it('文字列エラーがキャッチされる', () => {
             const ThrowStringError = () => {
-                throw new Error('ただの文字列エラー');
+                // eslint-disable-next-line @typescript-eslint/no-throw-literal
+                throw 'ただの文字列エラー';
             };
             renderWithTheme(
                 <ErrorBoundary>
@@ -563,10 +572,10 @@ describe('ErrorBoundary', () => {
                 expect(spy).toHaveBeenCalled();
             });
             expect(spy.mock.calls[0][0]).toBeInstanceOf(Error);
-            expect(spy.mock.calls[0][0].message).toBe('Test error');
+            expect(spy.mock.calls[0][0].message).toBe('テスト用エラー');
             expect(screen.getByText('エラーが発生しました')).toBeInTheDocument();
 
             spy.mockRestore();
         });
     });
-}); 
+});
