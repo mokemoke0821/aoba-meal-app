@@ -354,30 +354,19 @@ export const exportComprehensiveReport = (
     menus: MenuItem[]
 ): void => {
     try {
-        const currentDate = new Date();
-        const currentMonth = currentDate.getMonth() + 1;
-        const currentYear = currentDate.getFullYear();
+        const startDate = records.length > 0 ? new Date(Math.min(...records.map(r => new Date(r.date).getTime()))) : new Date();
+        const endDate = records.length > 0 ? new Date(Math.max(...records.map(r => new Date(r.date).getTime()))) : new Date();
+        const year = startDate.getFullYear();
+        const month = startDate.getMonth() + 1;
 
-        // 各種分析データを取得
-        const monthlyStats = calculateMonthlyStats(records, users, currentYear, currentMonth);
         const groupSummary = calculateGroupSummary(records, users);
-        const ratingAnalysis = analyzeRatings(records, menus);
+        const ratingAnalysis = analyzeRatings(records, menus, 'month');
 
-        // 全体統計
-        const totalUsers = users.filter(u => u.isActive).length;
-        const totalRecords = records.length;
-        const totalRevenue = records.reduce((sum, r) => sum + r.price, 0);
-        const averageRating = records.reduce((sum, r) => sum + r.rating, 0) / records.length;
+        const header = `総合レポート (${format(startDate, 'yyyy/MM/dd')} - ${format(endDate, 'yyyy/MM/dd')})`;
+        const filename = `総合レポート_${format(new Date(), 'yyyyMMdd')}.csv`;
 
         const csvContent = [
-            `あおば就労移行支援事業所 統合レポート`,
-            `作成日時: ${format(currentDate, 'yyyy年MM月dd日 HH:mm', { locale: ja })}`,
-            '',
-            '■ 全体統計',
-            `登録利用者数: ${totalUsers}名`,
-            `総利用記録: ${totalRecords}件`,
-            `総売上: ¥${totalRevenue.toLocaleString()}`,
-            `全体平均評価: ${Math.round(averageRating * 100) / 100}`,
+            header,
             '',
             '■ グループ別統計',
             'グループ,利用者数,総利用回数,総売上,平均評価',
@@ -400,7 +389,6 @@ export const exportComprehensiveReport = (
             )
         ].join('\n');
 
-        const filename = `統合レポート_${format(currentDate, 'yyyyMMdd')}.csv`;
         downloadCSV('\uFEFF' + csvContent, filename);
     } catch (error) {
         console.error('統合レポートCSV出力エラー:', error);

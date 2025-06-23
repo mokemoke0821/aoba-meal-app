@@ -321,7 +321,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children, initialState
         // デバウンス処理（500ms後に保存）
         const timeoutId = setTimeout(autoSave, 500);
         return () => clearTimeout(timeoutId);
-    }, [state.users, state.mealRecords, state.currentMenu]);
+    }, [state.users, state.mealRecords, state.currentMenu, saveAllData]);
 
     // ヘルパー関数: 安全なユーザー追加
     const addUser = async (userData: Omit<User, 'id' | 'createdAt'>): Promise<{ success: boolean; error?: string }> => {

@@ -58,12 +58,12 @@ self.addEventListener('activate', (event: ExtendableEvent) => {
 
                 // Delete old caches
                 await Promise.all(
-                    cacheNames.map(cacheName => {
-                        if (cacheName !== STATIC_CACHE_NAME && cacheName !== DYNAMIC_CACHE_NAME) {
+                    cacheNames
+                        .filter(cacheName => cacheName !== STATIC_CACHE_NAME && cacheName !== DYNAMIC_CACHE_NAME)
+                        .map(cacheName => {
                             console.log('[ServiceWorker] Deleting old cache:', cacheName);
                             return caches.delete(cacheName);
-                        }
-                    })
+                        })
                 );
 
                 // Claim all clients
@@ -78,7 +78,6 @@ self.addEventListener('activate', (event: ExtendableEvent) => {
 // Fetch event - serve from cache with network fallback
 self.addEventListener('fetch', (event: FetchEvent) => {
     const { request } = event;
-    const url = new URL(request.url);
 
     // Skip non-HTTP requests
     if (!request.url.startsWith('http')) {
@@ -274,39 +273,23 @@ async function getOfflinePage(): Promise<Response> {
     });
 }
 
-// Push notification handling
+// Push notification event
 self.addEventListener('push', (event: PushEvent) => {
-    console.log('[ServiceWorker] Push received');
+    console.log('[ServiceWorker] Push Received.');
 
-    if (!event.data) {
-        return;
-    }
+    const pushData = event.data?.json() ?? { title: '新しい通知', body: 'メッセージが届いています。' };
+    const { title, body, icon, badge } = pushData;
 
     const options = {
-        body: event.data.text(),
-        icon: '/logo192.png',
-        badge: '/logo192.png',
+        body: body,
+        icon: icon || '/logo192.png',
+        badge: badge || '/badge72.png',
         vibrate: [200, 100, 200],
-        data: {
-            dateOfArrival: Date.now(),
-            primaryKey: 1
-        },
-        actions: [
-            {
-                action: 'explore',
-                title: '確認',
-                icon: '/logo192.png'
-            },
-            {
-                action: 'close',
-                title: '閉じる',
-                icon: '/logo192.png'
-            }
-        ]
+        tag: 'aoba-notification'
     };
 
     event.waitUntil(
-        self.registration.showNotification('あおば給食管理', options)
+        self.registration.showNotification(title, options)
     );
 });
 
@@ -325,50 +308,19 @@ self.addEventListener('notificationclick', (event: NotificationEvent) => {
     );
 });
 
-// Background sync for offline actions (commented out due to type issues)
-// self.addEventListener('sync', (event: SyncEvent) => {
-//   console.log('[ServiceWorker] Background sync:', event.tag);
-//   
-//   if (event.tag === 'background-sync') {
-//     event.waitUntil(doBackgroundSync());
-//   }
-// });
-
-async function doBackgroundSync() {
-    console.log('[ServiceWorker] Performing background sync');
-
-    try {
-        // Get stored offline actions from IndexedDB
-        const offlineActions = await getOfflineActions();
-
-        for (const action of offlineActions) {
-            try {
-                await syncAction(action);
-                await removeOfflineAction(action.id);
-            } catch (error) {
-                console.error('[ServiceWorker] Failed to sync action:', error);
-            }
-        }
-    } catch (error) {
-        console.error('[ServiceWorker] Background sync failed:', error);
+// Background Sync event (not fully implemented in this example)
+self.addEventListener('sync', (event: SyncEvent) => {
+    if (event.tag === 'sync-new-data') {
+        console.log('[ServiceWorker] Background sync triggered');
+        event.waitUntil(
+            // Example: syncOfflineActions()
+            new Promise(resolve => {
+                console.log("Sync process would run here.");
+                resolve();
+            })
+        );
     }
-}
-
-// Placeholder functions for offline action management
-async function getOfflineActions(): Promise<any[]> {
-    // In a real implementation, this would read from IndexedDB
-    return [];
-}
-
-async function syncAction(action: any): Promise<void> {
-    // In a real implementation, this would replay the action
-    console.log('[ServiceWorker] Syncing action:', action);
-}
-
-async function removeOfflineAction(actionId: string): Promise<void> {
-    // In a real implementation, this would remove from IndexedDB
-    console.log('[ServiceWorker] Removing synced action:', actionId);
-}
+});
 
 // Message handling from main thread
 self.addEventListener('message', (event: ExtendableMessageEvent) => {

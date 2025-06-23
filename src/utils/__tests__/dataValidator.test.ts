@@ -71,6 +71,7 @@ describe('データ検証機能', () => {
         it('XSS攻撃パターンを検出する', () => {
             const xssPatterns = [
                 '<script>alert("xss")</script>',
+                // eslint-disable-next-line no-script-url
                 'javascript:alert("xss")',
                 'onload=alert("xss")',
             ];

@@ -53,7 +53,7 @@ export const validateString = (
     }
 
     // 制御文字のチェック
-    if (/[\x00-\x1f\x7f-\x9f]/.test(value)) {
+    if (/[\u0000-\u001f\u007f-\u009f]/.test(value)) {
         warnings.push(`${fieldName}に制御文字が含まれています`);
     }
 

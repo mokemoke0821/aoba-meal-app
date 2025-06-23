@@ -464,6 +464,7 @@ describe('ErrorBoundary', () => {
     describe('特殊なエラーケース', () => {
         it('nullエラーがキャッチされる', () => {
             const ThrowNullError = () => {
+                // eslint-disable-next-line @typescript-eslint/no-throw-literal
                 throw null;
             };
             renderWithTheme(
