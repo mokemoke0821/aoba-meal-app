@@ -6,6 +6,8 @@ import {
 } from '@mui/material';
 import { format } from 'date-fns';
 import React, { createContext, ReactNode, useCallback, useContext, useEffect, useReducer, useState } from 'react';
+import { appReducer, loadInitialData } from '../store/appReducer';
+import { aobaTheme } from '../theme';
 import { AppAction, AppState, MealRecord, MenuItem, migrateUserFromGroup, User, UserCategory } from '../types';
 import { validateMealRecord, validateUser } from '../utils/dataValidator';
 import {
@@ -14,7 +16,6 @@ import {
     loadUsers
 } from '../utils/storage';
 import { storageManager } from '../utils/storageManager';
-import { appReducer, loadInitialData } from './appReducer';
 
 // エラー状態の型定義
 interface ErrorState {
@@ -24,76 +25,12 @@ interface ErrorState {
     timestamp: string;
 }
 
-// 初期状態
-const initialState: AppState = {
-    users: [],
-    mealRecords: [],
-    currentMenu: null,
-    selectedUser: null,
-    selectedCategory: null,
-    currentView: 'categorySelect',
-    dailyMenus: [],
-    requireAdminAuth: false,
-};
-
 // 初期エラー状態
 const initialErrorState: ErrorState = {
     hasError: false,
     message: '',
     details: null,
     timestamp: '',
-};
-
-// Reducer
-const appReducer = (state: AppState, action: AppAction): AppState => {
-    switch (action.type) {
-        case 'SET_USERS':
-            return { ...state, users: action.payload };
-
-        case 'ADD_USER':
-            return { ...state, users: [...state.users, action.payload] };
-
-        case 'UPDATE_USER':
-            return {
-                ...state,
-                users: state.users.map(user =>
-                    user.id === action.payload.id ? action.payload : user
-                ),
-            };
-
-        case 'DELETE_USER':
-            return {
-                ...state,
-                users: state.users.filter(user => user.id !== action.payload),
-            };
-
-        case 'SET_MEAL_RECORDS':
-            return { ...state, mealRecords: action.payload };
-
-        case 'ADD_MEAL_RECORD':
-            return { ...state, mealRecords: [...state.mealRecords, action.payload] };
-
-        case 'SET_CURRENT_MENU':
-            return { ...state, currentMenu: action.payload };
-
-        case 'SET_SELECTED_USER':
-            return { ...state, selectedUser: action.payload };
-
-        case 'SET_SELECTED_CATEGORY':
-            return { ...state, selectedCategory: action.payload };
-
-        case 'SET_CURRENT_VIEW':
-            return { ...state, currentView: action.payload };
-
-        case 'SET_REQUIRE_ADMIN_AUTH':
-            return { ...state, requireAdminAuth: action.payload };
-
-        case 'RESET_STATE':
-            return action.payload;
-
-        default:
-            return state;
-    }
 };
 
 // Context型定義
@@ -170,7 +107,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children, initialState
         const newErrorState: ErrorState = {
             hasError: true,
             message,
-            details,
+            details: details || null,
             timestamp: new Date().toISOString(),
         };
         setErrorState(newErrorState);
@@ -185,7 +122,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children, initialState
     };
 
     // 安全なデータ保存
-    const saveAllData = async (): Promise<{ success: boolean; error?: string }> => {
+    const saveAllData = useCallback(async (): Promise<{ success: boolean; error?: string }> => {
         try {
             const result = storageManager.saveData(state);
             if (!result.success) {
@@ -198,7 +135,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children, initialState
             setError('データ保存中にエラーが発生しました', errorMessage);
             return { success: false, error: errorMessage };
         }
-    };
+    }, [state]);
 
     // 安全なデータ読み込み
     const loadAllData = useCallback(async (): Promise<{ success: boolean; error?: string; warning?: string }> => {
@@ -377,7 +314,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children, initialState
                 return { success: false, error: '無効なユーザーID' };
             }
 
-            const userExists = state.users.some(u => u.id === userId);
+            const userExists = state.users.some((u: User) => u.id === userId);
             if (!userExists) {
                 setError('指定されたユーザーが見つかりません', userId);
                 return { success: false, error: 'ユーザーが見つかりません' };
@@ -404,7 +341,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children, initialState
     // ヘルパー関数: 安全な給食記録追加
     const addMealRecord = async (userId: string, rating: number): Promise<{ success: boolean; error?: string }> => {
         try {
-            const user = state.users.find(u => u.id === userId);
+            const user = state.users.find((u: User) => u.id === userId);
             if (!user) {
                 setError('ユーザーが見つかりません', userId);
                 return { success: false, error: 'ユーザーが見つかりません' };
@@ -464,7 +401,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children, initialState
     const getTodayMealRecords = (): MealRecord[] => {
         try {
             const today = format(new Date(), 'yyyy-MM-dd');
-            return state.mealRecords.filter(record => record.date === today);
+            return state.mealRecords.filter((record: MealRecord) => record.date === today);
         } catch (error) {
             setError('今日の給食記録取得中にエラーが発生しました', error instanceof Error ? error.message : '不明なエラー');
             return [];
@@ -478,8 +415,8 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children, initialState
                 return [];
             }
             return state.mealRecords
-                .filter(record => record.userId === userId)
-                .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+                .filter((record: MealRecord) => record.userId === userId)
+                .sort((a: MealRecord, b: MealRecord) => new Date(b.date).getTime() - new Date(a.date).getTime());
         } catch (error) {
             setError('ユーザー給食記録取得中にエラーが発生しました', error instanceof Error ? error.message : '不明なエラー');
             return [];
@@ -503,8 +440,8 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children, initialState
     const getUsersByCategory = (category: UserCategory): User[] => {
         try {
             return state.users
-                .filter(user => user.category === category)
-                .sort((a, b) => (a.displayNumber || 0) - (b.displayNumber || 0));
+                .filter((user: User) => user.category === category)
+                .sort((a: User, b: User) => (a.displayNumber || 0) - (b.displayNumber || 0));
         } catch (error) {
             setError('カテゴリ別ユーザー取得中にエラーが発生しました', error instanceof Error ? error.message : '不明なエラー');
             return [];
@@ -521,7 +458,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children, initialState
                 '職員': []
             };
 
-            state.users.forEach(user => {
+            state.users.forEach((user: User) => {
                 if (user.category && result[user.category]) {
                     result[user.category].push(user);
                 }
@@ -529,7 +466,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children, initialState
 
             // 各カテゴリ内で番号順にソート
             Object.keys(result).forEach(category => {
-                result[category as UserCategory].sort((a, b) => (a.displayNumber || 0) - (b.displayNumber || 0));
+                (result as any)[category].sort((a: User, b: User) => (a.displayNumber || 0) - (b.displayNumber || 0));
             });
 
             return result;
@@ -548,7 +485,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children, initialState
     const migrateOldData = async (): Promise<{ success: boolean; migrated: boolean; error?: string }> => {
         try {
             let migrated = false;
-            const updatedUsers = state.users.map(user => {
+            const updatedUsers = state.users.map((user: User) => {
                 // 既にカテゴリが設定されている場合はスキップ
                 if (user.category) {
                     return user;

@@ -1,5 +1,5 @@
 import { format } from 'date-fns';
-import { GROUP_TO_CATEGORY_MAP, Group, MenuItem, User, getCategoryPrice } from '../types';
+import { GROUP_TO_CATEGORY, Group, MenuItem, User, getCategoryPrice } from '../types';
 
 // サンプル利用者データ
 export const generateInitialUsers = (): User[] => [
@@ -39,7 +39,7 @@ export const generateInitialUsers = (): User[] => [
     {
         id: '4',
         name: '高橋恵子',
-        group: 'グループD',
+        group: 'その他',
         trialUser: true,
         price: getCategoryPrice('体験者'),
         createdAt: '2024-01-01T00:00:00.000Z',
@@ -81,13 +81,7 @@ export const createUserTemplate = (
     price?: number,
     displayNumber?: number
 ): Omit<User, 'id' | 'createdAt'> => {
-    const category = GROUP_TO_CATEGORY_MAP[group];
-    const defaultPrices = {
-        'グループA': 400,
-        'グループB': 350,
-        'グループC': 500,
-        'グループD': 300,
-    };
+    const category = GROUP_TO_CATEGORY[group];
 
     return {
         name,
@@ -110,26 +104,4 @@ export const createMenuTemplate = (
     name,
     date: date || format(new Date(), 'yyyy-MM-dd'),
     description,
-});
-
-const generateRandomUser = (): Omit<User, 'id' | 'createdAt'> => {
-    const names = ['田中', '佐藤', '鈴木', '高橋', '渡辺', '山田', '中村', '小林', '加藤', '吉田'];
-    const firstNames = ['太郎', '次郎', '花子', '美咲', '健太', '由美', '翔太', '愛子', '大輔', '真理'];
-    const groups = ['グループA', 'グループB', 'グループC', 'グループD'];
-
-    const lastName = names[Math.floor(Math.random() * names.length)];
-    const firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
-    const group = groups[Math.floor(Math.random() * groups.length)] as Group;
-    const trialUser = Math.random() < 0.2; // 20%の確率で体験利用者
-    const category = GROUP_TO_CATEGORY_MAP[group];
-
-    return {
-        name: `${lastName}${firstName}`,
-        group,
-        trialUser,
-        price: trialUser ? 0 : getCategoryPrice(category),
-        category: category,
-        displayNumber: Math.floor(Math.random() * 100) + 1,
-        isActive: true
-    };
-}; 
+}); 

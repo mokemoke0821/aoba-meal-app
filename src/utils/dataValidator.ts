@@ -173,7 +173,7 @@ export const validateGroup = (
         return { isValid: false, errors, warnings };
     }
 
-    const validGroups: Group[] = ['グループA', 'グループB', 'グループC'];
+    const validGroups: Group[] = ['グループA', 'グループB', 'グループC', 'その他'];
     if (!validGroups.includes(value)) {
         errors.push(`${fieldName}は有効なグループ（${validGroups.join(', ')}）である必要があります`);
     }
