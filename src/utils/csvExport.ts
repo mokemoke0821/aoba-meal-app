@@ -356,8 +356,6 @@ export const exportComprehensiveReport = (
     try {
         const startDate = records.length > 0 ? new Date(Math.min(...records.map(r => new Date(r.date).getTime()))) : new Date();
         const endDate = records.length > 0 ? new Date(Math.max(...records.map(r => new Date(r.date).getTime()))) : new Date();
-        const year = startDate.getFullYear();
-        const month = startDate.getMonth() + 1;
 
         const groupSummary = calculateGroupSummary(records, users);
         const ratingAnalysis = analyzeRatings(records, menus, 'month');
