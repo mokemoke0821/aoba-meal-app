@@ -6,7 +6,6 @@ import {
 } from '@mui/material';
 import { format } from 'date-fns';
 import React, { createContext, ReactNode, useCallback, useContext, useEffect, useReducer, useState } from 'react';
-import { appReducer, loadInitialData } from '../store/appReducer';
 import { aobaTheme } from '../theme';
 import { AppAction, AppState, MealRecord, MenuItem, migrateUserFromGroup, User, UserCategory } from '../types';
 import { validateMealRecord, validateUser } from '../utils/dataValidator';
@@ -82,6 +81,81 @@ interface AppProviderProps {
     children: ReactNode;
     initialStateForTest?: AppState;
 }
+
+// ここで appReducer をインラインで定義、または別ファイルから正しくインポート
+const appReducer = (state: AppState, action: AppAction): AppState => {
+    switch (action.type) {
+        case 'SET_USERS':
+            return { ...state, users: action.payload };
+        case 'ADD_USER':
+            return { ...state, users: [...state.users, action.payload] };
+        case 'UPDATE_USER':
+            return {
+                ...state,
+                users: state.users.map(user =>
+                    user.id === action.payload.id ? action.payload : user
+                ),
+            };
+        case 'DELETE_USER':
+            return {
+                ...state,
+                users: state.users.filter(user => user.id !== action.payload),
+            };
+        case 'SET_MEAL_RECORDS':
+            return { ...state, mealRecords: action.payload };
+        case 'ADD_MEAL_RECORD':
+            return { ...state, mealRecords: [...state.mealRecords, action.payload] };
+        case 'SET_CURRENT_MENU':
+            return { ...state, currentMenu: action.payload };
+        case 'SET_SELECTED_USER':
+            return { ...state, selectedUser: action.payload };
+        case 'SET_SELECTED_CATEGORY':
+            return { ...state, selectedCategory: action.payload };
+        case 'SET_CURRENT_VIEW':
+            return { ...state, currentView: action.payload };
+        case 'SET_REQUIRE_ADMIN_AUTH':
+            return { ...state, requireAdminAuth: action.payload };
+        case 'RESET_STATE':
+            return action.payload;
+        // loadInitialData が返すので、ここでは何もしない
+        case 'SET_DAILY_MENUS':
+        case 'SET_MEAL_HISTORY':
+            return state;
+        default:
+            return state;
+    }
+};
+
+const loadInitialData = (): AppState => {
+    try {
+        const users = loadUsers();
+        const mealRecords = loadMealRecords();
+        const currentMenu = loadCurrentMenu();
+
+        return {
+            users,
+            mealRecords,
+            currentMenu,
+            selectedUser: null,
+            selectedCategory: null,
+            currentView: 'categorySelect',
+            dailyMenus: [],
+            requireAdminAuth: false,
+        };
+    } catch (error) {
+        console.error("Failed to load initial data:", error);
+        return {
+            users: [],
+            mealRecords: [],
+            currentMenu: null,
+            selectedUser: null,
+            selectedCategory: null,
+            currentView: 'categorySelect',
+            dailyMenus: [],
+            requireAdminAuth: false,
+        };
+    }
+};
 
 // Provider Component
 export const AppProvider: React.FC<AppProviderProps> = ({ children, initialStateForTest }) => {
