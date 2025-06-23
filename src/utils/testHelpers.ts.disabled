@@ -1,6 +1,6 @@
 import { format, subDays } from 'date-fns';
 import React from 'react';
-import { AppState, Group, GROUP_TO_CATEGORY_MAP, MealRecord, MenuItem, User, UserCategory } from '../types';
+import { AppState, Group, MealRecord, MenuItem, User, UserCategory } from '../types';
 
 /**
  * テストヘルパー

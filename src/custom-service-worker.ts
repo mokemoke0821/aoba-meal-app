@@ -309,12 +309,12 @@ self.addEventListener('notificationclick', (event: NotificationEvent) => {
 });
 
 // Background Sync event (not fully implemented in this example)
-self.addEventListener('sync', (event: SyncEvent) => {
+self.addEventListener('sync', (event: any) => {
     if (event.tag === 'sync-new-data') {
         console.log('[ServiceWorker] Background sync triggered');
         event.waitUntil(
             // Example: syncOfflineActions()
-            new Promise(resolve => {
+            new Promise<void>(resolve => {
                 console.log("Sync process would run here.");
                 resolve();
             })

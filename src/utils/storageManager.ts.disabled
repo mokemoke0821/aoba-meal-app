@@ -1,5 +1,5 @@
 import { AppState } from '../types';
-import { validateDataIntegrity, validateMealRecord, validateUser, ValidationResult } from './dataValidator';
+// import { validateDataIntegrity, validateMealRecord, validateUser, ValidationResult } from './dataValidator';
 
 export interface StorageResult<T> {
     success: boolean;
