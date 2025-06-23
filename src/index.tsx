@@ -1,38 +1,9 @@
 import React from 'react';
-import ReactDOM from 'react-dom/client';
+import { createRoot } from 'react-dom/client';
 import App from './App';
 import './index.css';
 import reportWebVitals from './reportWebVitals';
-
-// Service Worker registration for PWA support
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/serviceWorker.js')
-      .then((registration) => {
-        console.log('SW registered: ', registration);
-
-        // Check for updates
-        registration.addEventListener('updatefound', () => {
-          const installingWorker = registration.installing;
-          if (installingWorker) {
-            installingWorker.addEventListener('statechange', () => {
-              if (installingWorker.state === 'installed') {
-                if (navigator.serviceWorker.controller) {
-                  // New content is available
-                  if (window.confirm('新しいバージョンが利用可能です。更新しますか？')) {
-                    window.location.reload();
-                  }
-                }
-              }
-            });
-          }
-        });
-      })
-      .catch((registrationError) => {
-        console.log('SW registration failed: ', registrationError);
-      });
-  });
-}
+import * as serviceWorker from './serviceWorker';
 
 // PWA install prompt
 let deferredPrompt: any;
@@ -92,15 +63,35 @@ window.addEventListener('appinstalled', () => {
   console.log('PWA was installed');
 });
 
-const root = ReactDOM.createRoot(
-  document.getElementById('root') as HTMLElement
-);
+const container = document.getElementById('root');
+const root = createRoot(container!);
 
 root.render(
   <React.StrictMode>
     <App />
   </React.StrictMode>
 );
+
+// PWA Service Worker登録
+serviceWorker.register({
+  onSuccess: () => {
+    console.log('PWA: アプリがオフラインで利用可能になりました');
+  },
+  onUpdate: (registration) => {
+    const waitingServiceWorker = registration.waiting;
+
+    if (waitingServiceWorker) {
+      if (window.confirm('新しいバージョンが利用可能です。更新しますか？')) {
+        waitingServiceWorker.addEventListener('statechange', event => {
+          if ((event.target as any).state === 'activated') {
+            window.location.reload();
+          }
+        });
+        waitingServiceWorker.postMessage({ type: 'SKIP_WAITING' });
+      }
+    }
+  }
+});
 
 // If you want to start measuring performance in your app, pass a function
 // to log results (for example: reportWebVitals(console.log))

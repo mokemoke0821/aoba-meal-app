@@ -1,6 +1,6 @@
 import { format } from 'date-fns';
 import React, { createContext, ReactNode, useContext, useEffect, useReducer, useState } from 'react';
-import { AppAction, AppState, MealRecord, MenuItem, User } from '../types';
+import { AppAction, AppState, MealRecord, MenuItem, migrateUserFromGroup, User, UserCategory } from '../types';
 import { validateMealRecord, validateUser } from '../utils/dataValidator';
 import {
     loadCurrentMenu,
@@ -23,7 +23,10 @@ const initialState: AppState = {
     mealRecords: [],
     currentMenu: null,
     selectedUser: null,
-    currentView: 'userSelect',
+    selectedCategory: null,
+    currentView: 'categorySelect',
+    dailyMenus: [],
+    requireAdminAuth: false,
 };
 
 // 初期エラー状態
@@ -69,8 +72,14 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
         case 'SET_SELECTED_USER':
             return { ...state, selectedUser: action.payload };
 
+        case 'SET_SELECTED_CATEGORY':
+            return { ...state, selectedCategory: action.payload };
+
         case 'SET_CURRENT_VIEW':
             return { ...state, currentView: action.payload };
+
+        case 'SET_REQUIRE_ADMIN_AUTH':
+            return { ...state, requireAdminAuth: action.payload };
 
         default:
             return state;
@@ -96,6 +105,12 @@ interface AppContextType {
     setCurrentMenu: (menu: MenuItem) => void;
     navigateToView: (view: AppState['currentView']) => void;
 
+    // カテゴリ関連ヘルパー関数
+    selectCategory: (category: UserCategory) => void;
+    getUsersByCategory: (category: UserCategory) => User[];
+    getCategoryUsers: () => Record<UserCategory, User[]>;
+    migrateOldData: () => Promise<{ success: boolean; migrated: boolean; error?: string }>;
+
     // 安全なデータ取得関数
     getTodayMealRecords: () => MealRecord[];
     getUserMealHistory: (userId: string) => MealRecord[];
@@ -105,6 +120,7 @@ interface AppContextType {
     loadAllData: () => Promise<{ success: boolean; error?: string; warning?: string }>;
     resetAllData: () => Promise<{ success: boolean; error?: string }>;
     getStorageStats: () => any;
+    setRequireAdminAuth: (flag: boolean) => void;
 }
 
 // Context作成
@@ -286,7 +302,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     const addUser = async (userData: Omit<User, 'id' | 'createdAt'>): Promise<{ success: boolean; error?: string }> => {
         try {
             // データ検証
-            const validation = validateUser(userData);
+            const validation = validateUser(userData as User);
             if (!validation.isValid) {
                 const errorMessage = validation.errors.join(', ');
                 setError('ユーザーデータが無効です', errorMessage);
@@ -294,7 +310,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
             }
 
             const newUser: User = {
-                ...userData,
+                ...(userData as any),
                 id: `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
                 createdAt: new Date().toISOString(),
             };
@@ -445,6 +461,93 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         }
     };
 
+    const setRequireAdminAuth = (flag: boolean) => {
+        dispatch({ type: 'SET_REQUIRE_ADMIN_AUTH', payload: flag });
+    };
+
+    // ヘルパー関数: カテゴリ選択（新追加）
+    const selectCategory = (category: UserCategory) => {
+        try {
+            dispatch({ type: 'SET_SELECTED_CATEGORY', payload: category });
+        } catch (error) {
+            setError('カテゴリ選択中にエラーが発生しました', error instanceof Error ? error.message : '不明なエラー');
+        }
+    };
+
+    // ヘルパー関数: カテゴリ別ユーザー取得（新追加）
+    const getUsersByCategory = (category: UserCategory): User[] => {
+        try {
+            return state.users
+                .filter(user => user.category === category)
+                .sort((a, b) => (a.displayNumber || 0) - (b.displayNumber || 0));
+        } catch (error) {
+            setError('カテゴリ別ユーザー取得中にエラーが発生しました', error instanceof Error ? error.message : '不明なエラー');
+            return [];
+        }
+    };
+
+    // ヘルパー関数: 全カテゴリのユーザー取得（新追加）
+    const getCategoryUsers = (): Record<UserCategory, User[]> => {
+        try {
+            const result: Record<UserCategory, User[]> = {
+                'A型': [],
+                'B型': [],
+                '体験者': [],
+                '職員': []
+            };
+
+            state.users.forEach(user => {
+                if (user.category && result[user.category]) {
+                    result[user.category].push(user);
+                }
+            });
+
+            // 各カテゴリ内で番号順にソート
+            Object.keys(result).forEach(category => {
+                result[category as UserCategory].sort((a, b) => (a.displayNumber || 0) - (b.displayNumber || 0));
+            });
+
+            return result;
+        } catch (error) {
+            setError('カテゴリ別ユーザー取得中にエラーが発生しました', error instanceof Error ? error.message : '不明なエラー');
+            return {
+                'A型': [],
+                'B型': [],
+                '体験者': [],
+                '職員': []
+            };
+        }
+    };
+
+    // ヘルパー関数: 旧データ移行（新追加）
+    const migrateOldData = async (): Promise<{ success: boolean; migrated: boolean; error?: string }> => {
+        try {
+            let migrated = false;
+            const updatedUsers = state.users.map(user => {
+                // 既にカテゴリが設定されている場合はスキップ
+                if (user.category) {
+                    return user;
+                }
+
+                // 旧グループからカテゴリに変換
+                const migratedUser = migrateUserFromGroup(user);
+                migrated = true;
+                return migratedUser;
+            });
+
+            if (migrated) {
+                dispatch({ type: 'SET_USERS', payload: updatedUsers });
+                await saveAllData();
+            }
+
+            return { success: true, migrated };
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : '不明なエラー';
+            setError('データ移行中にエラーが発生しました', errorMessage);
+            return { success: false, migrated: false, error: errorMessage };
+        }
+    };
+
     const contextValue: AppContextType = {
         state,
         dispatch,
@@ -458,12 +561,17 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         addMealRecord,
         setCurrentMenu,
         navigateToView,
+        selectCategory,
+        getUsersByCategory,
+        getCategoryUsers,
+        migrateOldData,
         getTodayMealRecords,
         getUserMealHistory,
         saveAllData,
         loadAllData,
         resetAllData,
         getStorageStats,
+        setRequireAdminAuth,
     };
 
     return (

@@ -41,16 +41,57 @@ interface AdminPanelProps {
     onNavigateToUserManagement: () => void;
     onNavigateToStatistics: () => void;
     onNavigateToSettings: () => void;
+    onNavigateToDailyReport: () => void;
+    onNavigateToWeeklyReport: () => void;
+    onNavigateToMonthlyReport: () => void;
+    onNavigateToBillingReport: () => void;
     onClose: () => void;
 }
+
+interface AdminCardProps {
+    title: string;
+    description: string;
+    icon: React.ReactNode;
+    onClick: () => void;
+    color: string;
+}
+
+const AdminCard: React.FC<AdminCardProps> = ({ title, description, icon, onClick, color }) => (
+    <Card sx={{ borderRadius: '16px' }}>
+        <CardActionArea
+            onClick={onClick}
+            sx={{
+                p: 3,
+                textAlign: 'center',
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                    transform: 'scale(1.05)',
+                    boxShadow: 6,
+                }
+            }}
+        >
+            <Box sx={{ color }}>{icon}</Box>
+            <Typography variant="h5" sx={{ fontWeight: 600, mb: 1 }}>
+                {title}
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
+                {description}
+            </Typography>
+        </CardActionArea>
+    </Card>
+);
 
 const AdminPanel: React.FC<AdminPanelProps> = ({
     onNavigateToUserManagement,
     onNavigateToStatistics,
     onNavigateToSettings,
+    onNavigateToDailyReport,
+    onNavigateToWeeklyReport,
+    onNavigateToMonthlyReport,
+    onNavigateToBillingReport,
     onClose,
 }) => {
-    const { state } = useApp();
+    const { state, setRequireAdminAuth } = useApp();
     const [accessDialog, setAccessDialog] = useState(true);
     const [accessCode, setAccessCode] = useState('');
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -65,6 +106,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
         if (accessCode === ADMIN_CODE) {
             setIsAuthenticated(true);
             setAccessDialog(false);
+            setRequireAdminAuth(false);
         } else {
             alert('パスワードが正しくありません');
         }
@@ -111,7 +153,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
     };
 
     // 認証ダイアログ
-    if (!isAuthenticated) {
+    if (state.requireAdminAuth && !isAuthenticated) {
         return (
             <Dialog
                 open={accessDialog}
@@ -248,66 +290,63 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
             <Typography variant="h4" sx={{ mb: 3, fontWeight: 600 }}>
                 管理機能
             </Typography>
+            <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 3, mb: 4 }}>
+                <AdminCard
+                    title="利用者管理"
+                    description="利用者の登録、編集、削除"
+                    icon={<PeopleIcon sx={{ fontSize: '3rem' }} />}
+                    onClick={onNavigateToUserManagement}
+                    color="primary.main"
+                />
+                <AdminCard
+                    title="統計データ"
+                    description="利用状況のグラフやサマリー"
+                    icon={<AssessmentIcon sx={{ fontSize: '3rem' }} />}
+                    onClick={onNavigateToStatistics}
+                    color="success.main"
+                />
+                <AdminCard
+                    title="設定"
+                    description="アプリケーションの動作設定"
+                    icon={<SettingsIcon sx={{ fontSize: '3rem' }} />}
+                    onClick={onNavigateToSettings}
+                    color="info.main"
+                />
+            </Box>
 
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3, mb: 4 }}>
-                <Box sx={{ minWidth: '300px', flex: 1 }}>
-                    <Card sx={{ borderRadius: '16px' }}>
-                        <CardActionArea
-                            onClick={onNavigateToUserManagement}
-                            sx={{ minHeight: '150px', p: 3, textAlign: 'center' }}
-                        >
-                            <PeopleIcon sx={{ fontSize: '4rem', color: 'primary.main', mb: 2 }} />
-                            <Typography variant="h5" sx={{ fontWeight: 600, mb: 1 }}>
-                                利用者管理
-                            </Typography>
-                            <Typography variant="body1" color="text.secondary">
-                                利用者の追加・編集・削除
-                            </Typography>
-                        </CardActionArea>
-                    </Card>
-                </Box>
-
-                <Box sx={{ minWidth: '300px', flex: 1 }}>
-                    <Card sx={{ borderRadius: '16px' }}>
-                        <CardActionArea
-                            onClick={onNavigateToStatistics}
-                            sx={{ minHeight: '150px', p: 3, textAlign: 'center' }}
-                        >
-                            <AssessmentIcon sx={{ fontSize: '4rem', color: 'success.main', mb: 2 }} />
-                            <Typography variant="h5" sx={{ fontWeight: 600, mb: 1 }}>
-                                統計・レポート
-                            </Typography>
-                            <Typography variant="body1" color="text.secondary">
-                                詳細な分析とレポート表示
-                            </Typography>
-                        </CardActionArea>
-                    </Card>
-                </Box>
-
-                <Box sx={{ minWidth: '300px', flex: 1 }}>
-                    <Card
-                        sx={{
-                            minHeight: '200px',
-                            cursor: 'pointer',
-                            transition: 'all 0.3s ease',
-                            '&:hover': {
-                                transform: 'scale(1.05)',
-                                boxShadow: 6,
-                            },
-                        }}
-                        onClick={onNavigateToSettings}
-                    >
-                        <CardContent sx={{ textAlign: 'center', p: 4 }}>
-                            <SettingsIcon sx={{ fontSize: '4rem', color: 'warning.main', mb: 2 }} />
-                            <Typography variant="h5" sx={{ fontWeight: 600, mb: 1 }}>
-                                設定
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary">
-                                システム設定・データ管理
-                            </Typography>
-                        </CardContent>
-                    </Card>
-                </Box>
+            {/* レポート機能 */}
+            <Typography variant="h4" sx={{ mb: 3, fontWeight: 600 }}>
+                レポート機能
+            </Typography>
+            <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 3, mb: 4 }}>
+                <AdminCard
+                    title="当日注文レポート"
+                    description="本日の注文状況を出力"
+                    icon={<GetAppIcon sx={{ fontSize: '3rem' }} />}
+                    onClick={onNavigateToDailyReport}
+                    color="secondary.main"
+                />
+                <AdminCard
+                    title="週次レポート"
+                    description="週間ごとの利用状況"
+                    icon={<GetAppIcon sx={{ fontSize: '3rem' }} />}
+                    onClick={onNavigateToWeeklyReport}
+                    color="secondary.main"
+                />
+                <AdminCard
+                    title="月次レポート"
+                    description="月間ごとの利用状況"
+                    icon={<GetAppIcon sx={{ fontSize: '3rem' }} />}
+                    onClick={onNavigateToMonthlyReport}
+                    color="secondary.main"
+                />
+                <AdminCard
+                    title="料金計算レポート"
+                    description="利用者ごとの料金計算"
+                    icon={<AttachMoneyIcon sx={{ fontSize: '3rem' }} />}
+                    onClick={onNavigateToBillingReport}
+                    color="warning.main"
+                />
             </Box>
 
             {/* CSV出力メニュー */}

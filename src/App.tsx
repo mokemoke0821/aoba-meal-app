@@ -2,6 +2,7 @@ import { ArrowBack as ArrowBackIcon, Construction as ConstructionIcon } from '@m
 import { Button, Card, CardContent, Container, CssBaseline, ThemeProvider, Typography } from '@mui/material';
 import React from 'react';
 import AdminPanel from './components/AdminPanel';
+import CategorySelector from './components/CategorySelector';
 import ErrorBoundary from './components/ErrorBoundary';
 import MealOrder from './components/MealOrder';
 // import MenuManagement from './components/MenuManagement';
@@ -71,12 +72,30 @@ const AppContent: React.FC = () => {
     dispatch({ type: 'SET_CURRENT_VIEW', payload: 'printReports' });
   };
 
+  // 新しいレポート機能のハンドラー追加
+  const handleNavigateToDailyReport = () => {
+    dispatch({ type: 'SET_CURRENT_VIEW', payload: 'dailyReport' });
+  };
+
+  const handleNavigateToWeeklyReport = () => {
+    dispatch({ type: 'SET_CURRENT_VIEW', payload: 'weeklyReport' });
+  };
+
+  const handleNavigateToMonthlyReport = () => {
+    dispatch({ type: 'SET_CURRENT_VIEW', payload: 'monthlyReport' });
+  };
+
+  const handleNavigateToBillingReport = () => {
+    dispatch({ type: 'SET_CURRENT_VIEW', payload: 'billingReport' });
+  };
+
   const handleBackToAdmin = () => {
     dispatch({ type: 'SET_CURRENT_VIEW', payload: 'admin' });
   };
 
   const handleBackToMain = () => {
-    dispatch({ type: 'SET_CURRENT_VIEW', payload: 'userSelect' });
+    // メイン画面はカテゴリ選択から開始
+    dispatch({ type: 'SET_CURRENT_VIEW', payload: 'categorySelect' });
   };
 
   // Users update handler
@@ -131,6 +150,8 @@ const AppContent: React.FC = () => {
   // 現在のビューに応じて適切なコンポーネントを表示
   const renderCurrentView = () => {
     switch (state.currentView) {
+      case 'categorySelect':  // 新追加
+        return <CategorySelector />;
       case 'userSelect':
         return <UserSelector />;
       case 'mealOrder':
@@ -143,6 +164,10 @@ const AppContent: React.FC = () => {
             onNavigateToUserManagement={handleNavigateToUserManagement}
             onNavigateToStatistics={handleNavigateToStatistics}
             onNavigateToSettings={handleNavigateToSettings}
+            onNavigateToDailyReport={handleNavigateToDailyReport}      // 新追加
+            onNavigateToWeeklyReport={handleNavigateToWeeklyReport}    // 新追加
+            onNavigateToMonthlyReport={handleNavigateToMonthlyReport}  // 新追加
+            onNavigateToBillingReport={handleNavigateToBillingReport}  // 新追加
             onClose={handleBackToMain}
           />
         );
@@ -162,8 +187,17 @@ const AppContent: React.FC = () => {
         return <ComingSoonPage title="設定機能" onBack={handleBackToAdmin} />;
       case 'printReports':
         return <ComingSoonPage title="印刷機能" onBack={handleBackToAdmin} />;
+      // 新レポート機能（準備中画面として）
+      case 'dailyReport':
+        return <ComingSoonPage title="当日注文レポート" onBack={handleBackToAdmin} />;
+      case 'weeklyReport':
+        return <ComingSoonPage title="週次レポート" onBack={handleBackToAdmin} />;
+      case 'monthlyReport':
+        return <ComingSoonPage title="月次レポート" onBack={handleBackToAdmin} />;
+      case 'billingReport':
+        return <ComingSoonPage title="料金計算レポート" onBack={handleBackToAdmin} />;
       default:
-        return <UserSelector />;
+        return <CategorySelector />;  // デフォルトもカテゴリ選択
     }
   };
 

@@ -1,9 +1,11 @@
-import { addDays, format, subDays } from 'date-fns';
+import { format, subDays } from 'date-fns';
 import React from 'react';
-import { AppState, Group, MealRecord, MenuItem, User } from '../types';
+import { AppState, Group, GROUP_TO_CATEGORY_MAP, MealRecord, MenuItem, User, UserCategory } from '../types';
 
 /**
- * テスト用モックデータ生成
+ * テストヘルパー
+ * 概要: Jestテスト環境で共通して利用されるモックデータや関数を提供します。
+ * これにより、テストコードの冗長性を排除し、一貫性のあるテストデータを保証します。
  */
 
 // テスト用ユーザーデータ
@@ -17,172 +19,141 @@ export const mockUsers: User[] = [
         isActive: true,
         trialUser: false,
         notes: 'テスト用ユーザー1',
+        category: 'A型',
+        displayNumber: 1
     },
     {
         id: 'user_2',
         name: '佐藤花子',
         group: 'グループB',
         price: 450,
-        createdAt: '2024-01-02T00:00:00.000Z',
-        isActive: true,
+        createdAt: '2024-01-15T00:00:00.000Z',
+        isActive: false,
         trialUser: true,
         notes: 'テスト用ユーザー2',
+        category: 'B型',
+        displayNumber: 1
     },
     {
         id: 'user_3',
-        name: '山田次郎',
+        name: '鈴木三郎',
         group: 'グループC',
-        price: 600,
-        createdAt: '2024-01-03T00:00:00.000Z',
-        isActive: false,
+        price: 400,
+        createdAt: '2024-02-01T00:00:00.000Z',
+        isActive: true,
         trialUser: false,
-        notes: 'テスト用ユーザー3（非アクティブ）',
-    },
-];
-
-// テスト用メニューデータ
-export const mockMenuItems: MenuItem[] = [
-    {
-        id: 'menu_1',
-        name: 'カレーライス',
-        date: format(new Date(), 'yyyy-MM-dd'),
-        description: 'スパイシーなカレーライス',
-        price: 500,
-        category: 'main',
-    },
-    {
-        id: 'menu_2',
-        name: 'ハンバーグ定食',
-        date: format(addDays(new Date(), 1), 'yyyy-MM-dd'),
-        description: 'ジューシーなハンバーグ',
-        price: 600,
-        category: 'main',
+        notes: 'テスト用ユーザー3',
+        category: '職員',
+        displayNumber: 1
     },
 ];
 
 // テスト用給食記録データ
-export const mockMealRecords: MealRecord[] = [
-    {
-        id: 'meal_1',
-        userId: 'user_1',
-        userName: '田中太郎',
-        userGroup: 'グループA',
-        date: format(new Date(), 'yyyy-MM-dd'),
-        rating: 8,
-        price: 500,
-        menuName: 'カレーライス',
-        notes: '美味しかった',
-    },
-    {
-        id: 'meal_2',
-        userId: 'user_2',
-        userName: '佐藤花子',
-        userGroup: 'グループB',
-        date: format(new Date(), 'yyyy-MM-dd'),
-        rating: 7,
-        price: 450,
-        menuName: 'カレーライス',
-    },
-    {
-        id: 'meal_3',
-        userId: 'user_1',
-        userName: '田中太郎',
-        userGroup: 'グループA',
-        date: format(subDays(new Date(), 1), 'yyyy-MM-dd'),
-        rating: 9,
-        price: 500,
-        menuName: 'ハンバーグ定食',
-        notes: 'とても美味しかった',
-    },
-];
+export const mockMealRecord: MealRecord = {
+    id: 'record_1',
+    userId: 'user_1',
+    userName: '田中太郎',
+    userGroup: 'グループA',
+    userCategory: 'A型',
+    date: format(new Date(), 'yyyy-MM-dd'),
+    rating: 8,
+    price: 500,
+    menuName: 'テストメニュー',
+    notes: 'テスト備考',
+};
+
+// テスト用メニューアイテム
+export const mockMenuItem: MenuItem = {
+    id: 'menu_1',
+    name: 'テストランチ',
+    date: format(new Date(), 'yyyy-MM-dd'),
+    description: '栄養満点テストランチ',
+};
 
 // テスト用アプリケーション状態
 export const mockAppState: AppState = {
     users: mockUsers,
-    mealRecords: mockMealRecords,
-    currentMenu: mockMenuItems[0],
+    mealRecords: [mockMealRecord],
+    currentMenu: mockMenuItem,
     selectedUser: mockUsers[0],
+    selectedCategory: 'A型',
     currentView: 'userSelect',
+    requireAdminAuth: false,
 };
 
-/**
- * ファクトリー関数（動的データ生成）
- */
+// モックユーザー生成関数
+export const createMockUser = (overrides: Partial<User> = {}): User => {
+    const group = overrides.group || 'グループA';
+    const category = GROUP_TO_CATEGORY_MAP[group];
+    return {
+        id: 'user_default',
+        name: 'デフォルトユーザー',
+        group,
+        price: 400,
+        createdAt: new Date().toISOString(),
+        isActive: true,
+        trialUser: false,
+        category,
+        displayNumber: 1,
+        ...overrides,
+    };
+};
 
-export const createMockUser = (overrides?: Partial<User>): User => ({
-    id: `user_${Math.random().toString(36).substr(2, 9)}`,
-    name: `テストユーザー${Math.floor(Math.random() * 1000)}`,
-    group: 'グループA' as Group,
-    price: 500,
-    createdAt: new Date().toISOString(),
-    isActive: true,
-    trialUser: false,
-    ...overrides,
-});
-
-export const createMockMealRecord = (overrides?: Partial<MealRecord>): MealRecord => ({
-    id: `meal_${Math.random().toString(36).substr(2, 9)}`,
-    userId: 'user_1',
-    userName: 'テストユーザー',
-    userGroup: 'グループA',
-    date: format(new Date(), 'yyyy-MM-dd'),
-    rating: 7,
-    price: 500,
-    menuName: 'テストメニュー',
-    ...overrides,
-});
-
-export const createMockMenuItem = (overrides?: Partial<MenuItem>): MenuItem => ({
-    id: `menu_${Math.random().toString(36).substr(2, 9)}`,
-    name: 'テストメニュー',
-    date: format(new Date(), 'yyyy-MM-dd'),
-    description: 'テスト用のメニューです',
-    price: 500,
-    category: 'main',
-    ...overrides,
-});
-
-/**
- * 大量データ生成（パフォーマンステスト用）
- */
+// モック給食記録生成関数
+export const createMockMealRecord = (overrides: Partial<MealRecord> = {}): MealRecord => {
+    const user = mockUsers[0];
+    return {
+        id: `record_${Date.now()}`,
+        userId: user.id,
+        userName: user.name,
+        userGroup: user.group,
+        userCategory: user.category,
+        date: format(new Date(), 'yyyy-MM-dd'),
+        rating: 5,
+        price: user.price,
+        menuName: '日替わりランチ',
+        ...overrides,
+    };
+};
 
 export const generateMockUsers = (count: number): User[] => {
-    return Array.from({ length: count }, (_, index) =>
-        createMockUser({
-            id: `user_${index + 1}`,
-            name: `テストユーザー${index + 1}`,
-            group: (['グループA', 'グループB', 'グループC', 'グループD'] as Group[])[index % 4],
-            price: 400 + (index % 5) * 50, // 400-600円の範囲
-        })
-    );
+    return Array.from({ length: count }, (_, i) => {
+        const group: Group = (['グループA', 'グループB', 'グループC', 'グループD'] as const)[i % 4];
+        const category: UserCategory = GROUP_TO_CATEGORY_MAP[group];
+        return {
+            id: `user_${i + 1}`,
+            name: `テストユーザー${i + 1}`,
+            group,
+            price: 400 + (i % 5) * 10,
+            createdAt: `2024-01-${String(i % 30 + 1).padStart(2, '0')}T10:00:00.000Z`,
+            isActive: i % 5 !== 0,
+            trialUser: i % 3 === 0,
+            notes: `備考 ${i + 1}`,
+            category,
+            displayNumber: i + 1,
+        };
+    });
 };
 
-export const generateMockMealRecords = (
-    users: User[],
-    days: number = 30
-): MealRecord[] => {
+export const generateMockMealRecords = (users: User[], days: number): MealRecord[] => {
     const records: MealRecord[] = [];
-
-    for (let dayOffset = 0; dayOffset < days; dayOffset++) {
-        const date = format(subDays(new Date(), dayOffset), 'yyyy-MM-dd');
-
-        // 各日に各ユーザーの記録を作成（ランダムに80%の確率で）
-        users.forEach((user, userIndex) => {
-            if (Math.random() > 0.2) { // 80%の確率で記録あり
-                records.push(createMockMealRecord({
-                    id: `meal_${dayOffset}_${userIndex}`,
-                    userId: user.id,
-                    userName: user.name,
-                    userGroup: user.group,
-                    date,
-                    rating: Math.floor(Math.random() * 10) + 1, // 1-10の評価
-                    price: user.price,
-                    menuName: `メニュー${dayOffset % 7 + 1}`, // 週替わりメニュー
-                }));
+    users.forEach(user => {
+        for (let i = 0; i < days; i++) {
+            if (Math.random() > 0.3) { // 70%の確率で記録を作成
+                records.push(
+                    createMockMealRecord({
+                        userId: user.id,
+                        userName: user.name,
+                        userGroup: user.group,
+                        userCategory: user.category,
+                        date: format(subDays(new Date(), i), 'yyyy-MM-dd'),
+                        rating: Math.floor(Math.random() * 5) + 5, // 5-9の評価
+                        price: user.price,
+                    })
+                );
             }
-        });
-    }
-
+        }
+    });
     return records;
 };
 

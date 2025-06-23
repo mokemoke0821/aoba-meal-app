@@ -1,7 +1,7 @@
 {
   "short_name": "あおば給食",
-  "name": "あおば就労移行支援事業所給食管理システム",
-  "description": "就労移行支援事業所向け給食管理・評価システム",
+  "name": "あおば事業所給食管理アプリ",
+  "description": "就労移行支援事業所向け給食管理システム",
   "icons": [
     {
       "src": "favicon.ico",
@@ -11,86 +11,23 @@
     {
       "src": "logo192.png",
       "type": "image/png",
-      "sizes": "192x192",
-      "purpose": "any maskable"
+      "sizes": "192x192"
     },
     {
       "src": "logo512.png",
       "type": "image/png",
-      "sizes": "512x512",
-      "purpose": "any maskable"
+      "sizes": "512x512"
     }
   ],
-  "start_url": ".",
+  "start_url": "/aoba-meal-app/",
   "display": "standalone",
-  "orientation": "portrait",
   "theme_color": "#1976d2",
   "background_color": "#ffffff",
-  "scope": "/",
-  "lang": "ja",
-  "dir": "ltr",
   "categories": [
     "business",
     "productivity",
     "food"
   ],
-  "shortcuts": [
-    {
-      "name": "給食注文",
-      "short_name": "注文",
-      "description": "給食の注文を行います",
-      "url": "/?action=order",
-      "icons": [
-        {
-          "src": "logo192.png",
-          "sizes": "192x192"
-        }
-      ]
-    },
-    {
-      "name": "統計表示",
-      "short_name": "統計",
-      "description": "利用統計を表示します",
-      "url": "/?action=stats",
-      "icons": [
-        {
-          "src": "logo192.png",
-          "sizes": "192x192"
-        }
-      ]
-    },
-    {
-      "name": "管理画面",
-      "short_name": "管理",
-      "description": "管理機能にアクセスします",
-      "url": "/?action=admin",
-      "icons": [
-        {
-          "src": "logo192.png",
-          "sizes": "192x192"
-        }
-      ]
-    }
-  ],
-  "screenshots": [
-    {
-      "src": "screenshot1.png",
-      "type": "image/png",
-      "sizes": "540x720",
-      "form_factor": "narrow"
-    },
-    {
-      "src": "screenshot2.png",
-      "type": "image/png",
-      "sizes": "1024x768",
-      "form_factor": "wide"
-    }
-  ],
-  "prefer_related_applications": false,
-  "related_applications": [],
-  "features": [
-    "offline-support",
-    "push-notifications",
-    "data-export"
-  ]
+  "lang": "ja",
+  "scope": "/aoba-meal-app/"
 }

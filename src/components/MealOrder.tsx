@@ -25,7 +25,7 @@ import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import React, { useState } from 'react';
 import { useApp } from '../contexts/AppContext';
-import { GROUP_COLORS, getGroupDisplayName } from '../types';
+import { getGroupDisplayName, GROUP_COLORS, MealRecord } from '../types';
 
 const MealOrder: React.FC = () => {
     const { state, navigateToView, getTodayMealRecords, dispatch } = useApp();
@@ -58,15 +58,17 @@ const MealOrder: React.FC = () => {
     const handleOrderExecute = () => {
         if (selectedUser) {
             // 給食記録を作成（評価は後で入力）
-            const newRecord = {
+            const newRecord: MealRecord = {
                 id: `meal_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
                 userId: selectedUser.id,
                 userName: selectedUser.name,
                 userGroup: selectedUser.group,
+                userCategory: selectedUser.category,
                 date: format(new Date(), 'yyyy-MM-dd'),
                 rating: 0, // 未評価状態
                 price: selectedUser.price,
                 menuName: state.currentMenu?.name || '給食',
+                notes: '' // notesプロパティを追加
             };
             dispatch({ type: 'ADD_MEAL_RECORD', payload: newRecord });
         }

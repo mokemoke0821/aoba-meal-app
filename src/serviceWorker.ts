@@ -1,391 +1,146 @@
-// Service Worker implementation for Aoba Meal Management App
-// PWA features: offline support, caching, push notifications
+// This optional code is used to register a service worker.
+// register() is not called by default.
 
-/// <reference lib="webworker" />
+// This lets the app load faster on subsequent visits in production, and gives
+// it offline capabilities. However, it also means that developers (and users)
+// will only see deployed updates on subsequent visits to a page, after all the
+// existing tabs open on the page have been closed, since previously cached
+// resources are updated in the background.
 
-declare const self: ServiceWorkerGlobalScope;
+// To learn more about the benefits of this model and instructions on how to
+// opt-in, read https://cra.link/PWA
 
-const CACHE_NAME = 'aoba-meal-app-v1';
-const STATIC_CACHE_NAME = 'aoba-static-v1';
-const DYNAMIC_CACHE_NAME = 'aoba-dynamic-v1';
+type Config = {
+    onSuccess?: (registration: ServiceWorkerRegistration) => void;
+    onUpdate?: (registration: ServiceWorkerRegistration) => void;
+};
 
-// Assets to cache immediately
-const STATIC_ASSETS = [
-    '/',
-    '/static/js/bundle.js',
-    '/static/css/main.css',
-    '/manifest.json',
-    '/logo192.png',
-    '/logo512.png',
-    '/favicon.ico'
-];
+const isLocalhost = Boolean(
+    window.location.hostname === 'localhost' ||
+    // [::1] is the IPv6 localhost address.
+    window.location.hostname === '[::1]' ||
+    // 127.0.0.0/8 are considered localhost for IPv4.
+    window.location.hostname.match(
+        /^127(?:\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){3}$/
+    )
+);
 
-// API endpoints to cache for offline use
-const API_CACHE_PATTERNS = [
-    '/api/users',
-    '/api/meals',
-    '/api/statistics'
-];
+export function register(config?: Config) {
+    if (process.env.NODE_ENV === 'production' && 'serviceWorker' in navigator) {
+        // The URL constructor is available in all browsers that support SW.
+        const publicUrl = new URL(process.env.PUBLIC_URL, window.location.href);
+        if (publicUrl.origin !== window.location.origin) {
+            // Our service worker won't work if PUBLIC_URL is on a different origin
+            // from what our page is served on. This might happen if a CDN is used to
+            // serve assets; see https://github.com/facebook/create-react-app/issues/2374
+            return;
+        }
 
-// Install event - cache static assets
-self.addEventListener('install', (event: ExtendableEvent) => {
-    console.log('[ServiceWorker] Install event');
+        window.addEventListener('load', () => {
+            const swUrl = `${process.env.PUBLIC_URL}/service-worker.js`;
 
-    event.waitUntil(
-        (async () => {
-            try {
-                const staticCache = await caches.open(STATIC_CACHE_NAME);
-                console.log('[ServiceWorker] Caching static assets');
-                await staticCache.addAll(STATIC_ASSETS);
+            if (isLocalhost) {
+                // This is running on localhost. Let's check if a service worker still exists or not.
+                checkValidServiceWorker(swUrl, config);
 
-                // Skip waiting to activate immediately
-                self.skipWaiting();
-            } catch (error) {
-                console.error('[ServiceWorker] Install failed:', error);
+                // Add some additional logging to localhost, pointing developers to the
+                // service worker/PWA documentation.
+                navigator.serviceWorker.ready.then(() => {
+                    console.log(
+                        'This web app is being served cache-first by a service ' +
+                        'worker. To learn more, visit https://cra.link/PWA'
+                    );
+                });
+            } else {
+                // Is not localhost. Just register service worker
+                registerValidSW(swUrl, config);
             }
-        })()
-    );
-});
+        });
+    }
+}
 
-// Activate event - clean up old caches
-self.addEventListener('activate', (event: ExtendableEvent) => {
-    console.log('[ServiceWorker] Activate event');
+function registerValidSW(swUrl: string, config?: Config) {
+    navigator.serviceWorker
+        .register(swUrl)
+        .then((registration) => {
+            registration.onupdatefound = () => {
+                const installingWorker = registration.installing;
+                if (installingWorker == null) {
+                    return;
+                }
+                installingWorker.onstatechange = () => {
+                    if (installingWorker.state === 'installed') {
+                        if (navigator.serviceWorker.controller) {
+                            // At this point, the updated precached content has been fetched,
+                            // but the previous service worker will still serve the older
+                            // content until all client tabs are closed.
+                            console.log(
+                                'New content is available and will be used when all ' +
+                                'tabs for this page are closed. See https://cra.link/PWA.'
+                            );
 
-    event.waitUntil(
-        (async () => {
-            try {
-                const cacheNames = await caches.keys();
+                            // Execute callback
+                            if (config && config.onUpdate) {
+                                config.onUpdate(registration);
+                            }
+                        } else {
+                            // At this point, everything has been precached.
+                            // It's the perfect time to display a
+                            // "Content is cached for offline use." message.
+                            console.log('Content is cached for offline use.');
 
-                // Delete old caches
-                await Promise.all(
-                    cacheNames.map(cacheName => {
-                        if (cacheName !== STATIC_CACHE_NAME && cacheName !== DYNAMIC_CACHE_NAME) {
-                            console.log('[ServiceWorker] Deleting old cache:', cacheName);
-                            return caches.delete(cacheName);
+                            // Execute callback
+                            if (config && config.onSuccess) {
+                                config.onSuccess(registration);
+                            }
                         }
-                    })
-                );
-
-                // Claim all clients
-                self.clients.claim();
-            } catch (error) {
-                console.error('[ServiceWorker] Activate failed:', error);
-            }
-        })()
-    );
-});
-
-// Fetch event - serve from cache with network fallback
-self.addEventListener('fetch', (event: FetchEvent) => {
-    const { request } = event;
-    const url = new URL(request.url);
-
-    // Skip non-HTTP requests
-    if (!request.url.startsWith('http')) {
-        return;
-    }
-
-    event.respondWith(
-        (async () => {
-            try {
-                // Strategy 1: Cache First for static assets
-                if (isStaticAsset(request)) {
-                    return await cacheFirst(request);
-                }
-
-                // Strategy 2: Network First for API requests
-                if (isAPIRequest(request)) {
-                    return await networkFirst(request);
-                }
-
-                // Strategy 3: Stale While Revalidate for everything else
-                return await staleWhileRevalidate(request);
-
-            } catch (error) {
-                console.error('[ServiceWorker] Fetch failed:', error);
-
-                // Return offline page for navigation requests
-                if (request.mode === 'navigate') {
-                    return await getOfflinePage();
-                }
-
-                throw error;
-            }
-        })()
-    );
-});
-
-// Cache strategies
-async function cacheFirst(request: Request): Promise<Response> {
-    const cache = await caches.open(STATIC_CACHE_NAME);
-    const cachedResponse = await cache.match(request);
-
-    if (cachedResponse) {
-        return cachedResponse;
-    }
-
-    const networkResponse = await fetch(request);
-
-    if (networkResponse.ok) {
-        cache.put(request, networkResponse.clone());
-    }
-
-    return networkResponse;
-}
-
-async function networkFirst(request: Request): Promise<Response> {
-    const cache = await caches.open(DYNAMIC_CACHE_NAME);
-
-    try {
-        const networkResponse = await fetch(request);
-
-        if (networkResponse.ok) {
-            cache.put(request, networkResponse.clone());
-        }
-
-        return networkResponse;
-    } catch (error) {
-        console.log('[ServiceWorker] Network failed, trying cache:', request.url);
-
-        const cachedResponse = await cache.match(request);
-        if (cachedResponse) {
-            return cachedResponse;
-        }
-
-        throw error;
-    }
-}
-
-async function staleWhileRevalidate(request: Request): Promise<Response> {
-    const cache = await caches.open(DYNAMIC_CACHE_NAME);
-    const cachedResponse = await cache.match(request);
-
-    // Always try to update cache in background
-    const networkResponsePromise = fetch(request).then(response => {
-        if (response.ok) {
-            cache.put(request, response.clone());
-        }
-        return response;
-    }).catch(error => {
-        console.log('[ServiceWorker] Background update failed:', error);
-        return new Response('Network failed', { status: 500 });
-    });
-
-    // Return cached version immediately if available
-    if (cachedResponse) {
-        return cachedResponse;
-    }
-
-    // Otherwise wait for network
-    return await networkResponsePromise;
-}
-
-// Helper functions
-function isStaticAsset(request: Request): boolean {
-    const url = new URL(request.url);
-    return (
-        url.pathname.includes('/static/') ||
-        url.pathname.endsWith('.js') ||
-        url.pathname.endsWith('.css') ||
-        url.pathname.endsWith('.png') ||
-        url.pathname.endsWith('.jpg') ||
-        url.pathname.endsWith('.svg') ||
-        url.pathname.endsWith('.ico')
-    );
-}
-
-function isAPIRequest(request: Request): boolean {
-    const url = new URL(request.url);
-    return url.pathname.startsWith('/api/') ||
-        API_CACHE_PATTERNS.some(pattern => url.pathname.includes(pattern));
-}
-
-async function getOfflinePage(): Promise<Response> {
-    const cache = await caches.open(STATIC_CACHE_NAME);
-    const offlinePage = await cache.match('/');
-
-    if (offlinePage) {
-        return offlinePage;
-    }
-
-    // Fallback offline page
-    return new Response(`
-    <!DOCTYPE html>
-    <html lang="ja">
-    <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>オフライン - あおば給食管理</title>
-      <style>
-        body {
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-          margin: 0;
-          padding: 2rem;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          color: white;
-          text-align: center;
-          min-height: 100vh;
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-          align-items: center;
-        }
-        h1 { font-size: 2.5rem; margin-bottom: 1rem; }
-        p { font-size: 1.2rem; margin-bottom: 2rem; opacity: 0.9; }
-        .retry-btn {
-          background: rgba(255,255,255,0.2);
-          border: 2px solid rgba(255,255,255,0.5);
-          color: white;
-          padding: 1rem 2rem;
-          font-size: 1.1rem;
-          border-radius: 50px;
-          cursor: pointer;
-          transition: all 0.3s ease;
-        }
-        .retry-btn:hover {
-          background: rgba(255,255,255,0.3);
-          transform: translateY(-2px);
-        }
-        .offline-icon {
-          font-size: 4rem;
-          margin-bottom: 2rem;
-          opacity: 0.7;
-        }
-      </style>
-    </head>
-    <body>
-      <div class="offline-icon">📶</div>
-      <h1>オフラインです</h1>
-      <p>インターネット接続を確認してください</p>
-      <button class="retry-btn" onclick="window.location.reload()">
-        再試行
-      </button>
-      
-      <script>
-        // Check for connection and auto-reload
-        window.addEventListener('online', () => {
-          window.location.reload();
+                    }
+                };
+            };
+        })
+        .catch((error) => {
+            console.error('Error during service worker registration:', error);
         });
-      </script>
-    </body>
-    </html>
-  `, {
-        headers: { 'Content-Type': 'text/html' }
-    });
 }
 
-// Push notification handling
-self.addEventListener('push', (event: PushEvent) => {
-    console.log('[ServiceWorker] Push received');
-
-    if (!event.data) {
-        return;
-    }
-
-    const options = {
-        body: event.data.text(),
-        icon: '/logo192.png',
-        badge: '/logo192.png',
-        vibrate: [200, 100, 200],
-        data: {
-            dateOfArrival: Date.now(),
-            primaryKey: 1
-        },
-        actions: [
-            {
-                action: 'explore',
-                title: '確認',
-                icon: '/logo192.png'
-            },
-            {
-                action: 'close',
-                title: '閉じる',
-                icon: '/logo192.png'
+function checkValidServiceWorker(swUrl: string, config?: Config) {
+    // Check if the service worker can be found. If it can't reload the page.
+    fetch(swUrl, {
+        headers: { 'Service-Worker': 'script' },
+    })
+        .then((response) => {
+            // Ensure service worker exists, and that we really are getting a JS file.
+            const contentType = response.headers.get('content-type');
+            if (
+                response.status === 404 ||
+                (contentType != null && contentType.indexOf('javascript') === -1)
+            ) {
+                // No service worker found. Probably a different app. Reload the page.
+                navigator.serviceWorker.ready.then((registration) => {
+                    registration.unregister().then(() => {
+                        window.location.reload();
+                    });
+                });
+            } else {
+                // Service worker found. Proceed as normal.
+                registerValidSW(swUrl, config);
             }
-        ]
-    };
-
-    event.waitUntil(
-        self.registration.showNotification('あおば給食管理', options)
-    );
-});
-
-// Notification click handling
-self.addEventListener('notificationclick', (event: NotificationEvent) => {
-    console.log('[ServiceWorker] Notification clicked');
-
-    event.notification.close();
-
-    if (event.action === 'close') {
-        return;
-    }
-
-    event.waitUntil(
-        self.clients.openWindow('/')
-    );
-});
-
-// Background sync for offline actions (commented out due to type issues)
-// self.addEventListener('sync', (event: SyncEvent) => {
-//   console.log('[ServiceWorker] Background sync:', event.tag);
-//   
-//   if (event.tag === 'background-sync') {
-//     event.waitUntil(doBackgroundSync());
-//   }
-// });
-
-async function doBackgroundSync() {
-    console.log('[ServiceWorker] Performing background sync');
-
-    try {
-        // Get stored offline actions from IndexedDB
-        const offlineActions = await getOfflineActions();
-
-        for (const action of offlineActions) {
-            try {
-                await syncAction(action);
-                await removeOfflineAction(action.id);
-            } catch (error) {
-                console.error('[ServiceWorker] Failed to sync action:', error);
-            }
-        }
-    } catch (error) {
-        console.error('[ServiceWorker] Background sync failed:', error);
-    }
-}
-
-// Placeholder functions for offline action management
-async function getOfflineActions(): Promise<any[]> {
-    // In a real implementation, this would read from IndexedDB
-    return [];
-}
-
-async function syncAction(action: any): Promise<void> {
-    // In a real implementation, this would replay the action
-    console.log('[ServiceWorker] Syncing action:', action);
-}
-
-async function removeOfflineAction(actionId: string): Promise<void> {
-    // In a real implementation, this would remove from IndexedDB
-    console.log('[ServiceWorker] Removing synced action:', actionId);
-}
-
-// Message handling from main thread
-self.addEventListener('message', (event: ExtendableMessageEvent) => {
-    console.log('[ServiceWorker] Message received:', event.data);
-
-    if (event.data && event.data.type === 'SKIP_WAITING') {
-        self.skipWaiting();
-    }
-
-    if (event.data && event.data.type === 'GET_VERSION') {
-        event.ports[0].postMessage({
-            type: 'VERSION',
-            version: CACHE_NAME
+        })
+        .catch(() => {
+            console.log(
+                'No internet connection found. App is running in offline mode.'
+            );
         });
+}
+
+export function unregister() {
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.ready
+            .then((registration) => {
+                registration.unregister();
+            })
+            .catch((error) => {
+                console.error(error.message);
+            });
     }
-});
-
-// Export for TypeScript
-export { };
-
+} 

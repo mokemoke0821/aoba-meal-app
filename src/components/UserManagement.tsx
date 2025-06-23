@@ -35,6 +35,7 @@ import {
     Toolbar,
     Typography
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import {
     DataGrid,
     GridActionsCellItem,
@@ -45,7 +46,15 @@ import {
 import { saveAs } from 'file-saver';
 import React, { useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { Group, User, getGroupDisplayName } from '../types';
+import {
+    GROUP_COLORS,
+    GROUP_DISPLAY_NAMES,
+    GROUP_TO_CATEGORY_MAP,
+    Group,
+    User,
+    UserCategory,
+    getCategoryPrice
+} from '../types';
 
 interface UserFormData {
     name: string;
@@ -53,6 +62,8 @@ interface UserFormData {
     trialUser: boolean;
     price: number;
     notes?: string;
+    category: UserCategory;
+    displayNumber: number;
 }
 
 interface UserManagementProps {
@@ -88,13 +99,15 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers, o
     const [mergeDialog, setMergeDialog] = useState({ open: false, sourceId: '', targetId: '' });
 
     // Form management
-    const { control, handleSubmit, reset, setValue, formState: { errors } } = useForm<UserFormData>({
+    const { register, handleSubmit, control, setValue, reset, formState: { errors } } = useForm<UserFormData>({
         defaultValues: {
             name: '',
-            group: 'グループA',
+            group: 'グループB',
             trialUser: false,
-            price: 400,
-            notes: ''
+            price: 0,
+            notes: '',
+            category: 'B型',
+            displayNumber: 1
         }
     });
 
@@ -161,15 +174,20 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers, o
 
     // CRUD Operations
     const handleCreateUser = (data: UserFormData) => {
+        const category = GROUP_TO_CATEGORY_MAP[data.group];
+        const maxDisplayNumber = Math.max(0, ...users.filter(u => u.category === category).map(u => u.displayNumber));
+
         const newUser: User = {
             id: `user_${Date.now()}`,
             name: data.name.trim(),
             group: data.group,
             trialUser: data.trialUser,
-            price: data.price,
+            price: getCategoryPrice(category),
             createdAt: new Date().toISOString(),
             isActive: true,
-            notes: data.notes
+            notes: data.notes,
+            category: category,
+            displayNumber: maxDisplayNumber + 1
         };
 
         const validation = validateUserData(newUser);
@@ -197,13 +215,16 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers, o
     const handleUpdateUser = (data: UserFormData) => {
         if (!editingUser) return;
 
+        const category = GROUP_TO_CATEGORY_MAP[data.group];
+
         const updatedUser: User = {
             ...editingUser,
             name: data.name.trim(),
             group: data.group,
             trialUser: data.trialUser,
-            price: data.price,
-            notes: data.notes
+            price: getCategoryPrice(category),
+            notes: data.notes,
+            category: category
         };
 
         const validation = validateUserData(updatedUser);
@@ -270,6 +291,8 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers, o
             setValue('trialUser', user.trialUser);
             setValue('price', user.price);
             setValue('notes', user.notes || '');
+            setValue('category', user.category);
+            setValue('displayNumber', user.displayNumber);
         } else {
             setEditingUser(null);
             reset();
@@ -404,7 +427,9 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers, o
                             price: parseInt(values[4]) || 400,
                             createdAt: new Date().toISOString(),
                             isActive: values[6] === '有効',
-                            notes: values[7]?.replace(/"/g, '') || ''
+                            notes: values[7]?.replace(/"/g, '') || '',
+                            category: values[2] as UserCategory,
+                            displayNumber: parseInt(values[5]) || 1
                         };
 
                         const validation = validateUserData(user);
@@ -478,10 +503,15 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers, o
             editable: true,
             renderCell: (params) => (
                 <Chip
-                    label={getGroupDisplayName(params.value)}
+                    label={GROUP_DISPLAY_NAMES[params.value as Group]}
                     size="small"
                     variant="outlined"
-                    color={params.row.isActive === false ? 'default' : 'primary'}
+                    sx={{
+                        borderColor: GROUP_COLORS[params.value as Group],
+                        color: GROUP_COLORS[params.value as Group],
+                        fontWeight: 'bold',
+                        backgroundColor: alpha(GROUP_COLORS[params.value as Group], 0.1)
+                    }}
                 />
             )
         },

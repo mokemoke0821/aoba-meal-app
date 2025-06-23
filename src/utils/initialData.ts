@@ -1,5 +1,5 @@
 import { format } from 'date-fns';
-import { Group, MenuItem, User } from '../types';
+import { GROUP_TO_CATEGORY_MAP, Group, MenuItem, User, getCategoryPrice } from '../types';
 
 // サンプル利用者データ
 export const generateInitialUsers = (): User[] => [
@@ -8,48 +8,44 @@ export const generateInitialUsers = (): User[] => [
         name: '佐藤太郎',
         group: 'グループA',
         trialUser: false,
-        price: 400,
+        price: getCategoryPrice('A型'),
         createdAt: '2024-01-01T00:00:00.000Z',
+        category: 'A型',
+        displayNumber: 1,
+        isActive: true,
     },
     {
         id: '2',
         name: '田中花子',
         group: 'グループB',
         trialUser: false,
-        price: 400,
-        createdAt: '2024-01-15T00:00:00.000Z',
+        price: getCategoryPrice('B型'),
+        createdAt: '2024-01-01T00:00:00.000Z',
+        category: 'B型',
+        displayNumber: 1,
+        isActive: true,
     },
     {
         id: '3',
-        name: '山田一郎',
-        group: 'グループA',
-        trialUser: true,
-        price: 0,
-        createdAt: '2024-02-01T00:00:00.000Z',
+        name: '鈴木一郎',
+        group: 'グループC',
+        trialUser: false,
+        price: getCategoryPrice('職員'),
+        createdAt: '2024-01-01T00:00:00.000Z',
+        category: '職員',
+        displayNumber: 1,
+        isActive: true,
     },
     {
         id: '4',
-        name: '鈴木美咲',
-        group: 'グループB',
-        trialUser: false,
-        price: 400,
-        createdAt: '2024-02-15T00:00:00.000Z',
-    },
-    {
-        id: '5',
-        name: '職員・田中',
-        group: 'グループC',
-        trialUser: false,
-        price: 500,
-        createdAt: '2024-03-01T00:00:00.000Z',
-    },
-    {
-        id: '6',
-        name: '体験・山本',
+        name: '高橋恵子',
         group: 'グループD',
         trialUser: true,
-        price: 0,
-        createdAt: '2024-03-10T00:00:00.000Z',
+        price: getCategoryPrice('体験者'),
+        createdAt: '2024-01-01T00:00:00.000Z',
+        category: '体験者',
+        displayNumber: 1,
+        isActive: true,
     },
 ];
 
@@ -82,8 +78,10 @@ export const setupInitialData = (): void => {
 export const createUserTemplate = (
     name: string,
     group: Group,
-    price?: number
+    price?: number,
+    displayNumber?: number
 ): Omit<User, 'id' | 'createdAt'> => {
+    const category = GROUP_TO_CATEGORY_MAP[group];
     const defaultPrices = {
         'グループA': 400,
         'グループB': 350,
@@ -95,8 +93,10 @@ export const createUserTemplate = (
         name,
         group,
         trialUser: false,
-        price: price || defaultPrices[group],
+        price: price || getCategoryPrice(category),
         isActive: true,
+        category: category,
+        displayNumber: displayNumber || 1
     };
 };
 
@@ -121,11 +121,15 @@ const generateRandomUser = (): Omit<User, 'id' | 'createdAt'> => {
     const firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
     const group = groups[Math.floor(Math.random() * groups.length)] as Group;
     const trialUser = Math.random() < 0.2; // 20%の確率で体験利用者
+    const category = GROUP_TO_CATEGORY_MAP[group];
 
     return {
         name: `${lastName}${firstName}`,
         group,
         trialUser,
-        price: trialUser ? 0 : 400,
+        price: trialUser ? 0 : getCategoryPrice(category),
+        category: category,
+        displayNumber: Math.floor(Math.random() * 100) + 1,
+        isActive: true
     };
 }; 

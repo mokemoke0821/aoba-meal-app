@@ -499,7 +499,9 @@ class StorageManager {
             mealRecords: [],
             currentMenu: null,
             selectedUser: null,
-            currentView: 'userSelect',
+            selectedCategory: null,
+            currentView: 'categorySelect',
+            requireAdminAuth: false,
         };
     }
 
