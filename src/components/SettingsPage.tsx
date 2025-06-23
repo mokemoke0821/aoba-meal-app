@@ -182,8 +182,6 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
         setSnackbar({ open: true, message: 'すべてのデータが正常に初期化されました。', severity: 'info' });
     };
 
-    const predefinedColors = ['#1976d2', '#2e7d32', '#f57c00', '#9c27b0', '#d32f2f'];
-
     return (
         <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
             <Paper sx={{ p: { xs: 2, sm: 3 }, borderRadius: 4, overflow: 'hidden' }}>

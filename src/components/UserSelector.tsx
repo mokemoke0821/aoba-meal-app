@@ -24,7 +24,7 @@ import {
     useTheme
 } from '@mui/material';
 import { format } from 'date-fns';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useApp } from '../contexts/AppContext';
 import {
     User,
@@ -61,9 +61,9 @@ const UserSelector: React.FC = () => {
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
     // 選択されたカテゴリの利用者を取得
-    const categoryUsers = state.selectedCategory
+    const categoryUsers = useMemo(() => state.selectedCategory
         ? getUsersByCategory(state.selectedCategory)
-        : [];
+        : [], [state.selectedCategory, getUsersByCategory]);
 
     // カテゴリ情報取得
     const categoryInfo = state.selectedCategory
@@ -105,12 +105,6 @@ const UserSelector: React.FC = () => {
     const handleUserSelectForOrder = (user: User) => {
         selectUser(user);
         navigateToView('mealOrder');
-    };
-
-    // 利用者選択ハンドラー（評価用）
-    const handleUserSelectForRating = (user: User) => {
-        selectUser(user);
-        navigateToView('rating');
     };
 
     // 新規利用者追加ハンドラー

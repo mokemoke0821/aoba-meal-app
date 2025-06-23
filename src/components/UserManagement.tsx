@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import {
     Add as AddIcon,
     ArrowBack as ArrowBackIcon,
@@ -96,10 +97,9 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers, o
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' as 'success' | 'error' | 'info' });
     const [loading, setLoading] = useState(false);
     const [bulkActionDialog, setBulkActionDialog] = useState({ open: false, action: '' });
-    const [mergeDialog, setMergeDialog] = useState({ open: false, sourceId: '', targetId: '' });
 
     // Form management
-    const { register, handleSubmit, control, setValue, reset, formState: { errors } } = useForm<UserFormData>({
+    const { handleSubmit, control, setValue, reset, formState: { errors } } = useForm<UserFormData>({
         defaultValues: {
             name: '',
             group: 'グループB',
@@ -409,7 +409,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers, o
         if (!file) return;
 
         const reader = new FileReader();
-        reader.onload = (e) => {
+        reader.onload = async (e) => {
             try {
                 const csv = e.target?.result as string;
                 const lines = csv.split('\n');

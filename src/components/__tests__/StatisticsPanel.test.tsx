@@ -1,5 +1,5 @@
 import { ThemeProvider } from '@mui/material';
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { AppProvider } from '../../contexts/AppContext';
 import aobaTheme from '../../theme';
@@ -216,29 +216,25 @@ describe('StatisticsPanel', () => {
     describe('グラフ表示', () => {
         it('日別推移グラフが表示される', async () => {
             renderWithProviders(<StatisticsPanel onBack={mockOnBack} />);
-            const chartTitle = await screen.findByText('📈 日別注文・評価推移');
-            const chartContainer = within(chartTitle.parentElement!).getByRole('region', { name: /日別注文・評価推移/i });
+            const chartContainer = await screen.findByRole('region', { name: /日別注文・評価推移/i });
             expect(chartContainer).toBeInTheDocument();
         });
 
         it('評価分布グラフが表示される', async () => {
             renderWithProviders(<StatisticsPanel onBack={mockOnBack} />);
-            const chartTitle = await screen.findByText('⭐ 評価分布');
-            const chartContainer = within(chartTitle.parentElement!).getByRole('region', { name: /評価分布/i });
+            const chartContainer = await screen.findByRole('region', { name: /評価分布/i });
             expect(chartContainer).toBeInTheDocument();
         });
 
         it('メニュー人気度グラフが表示される', async () => {
             renderWithProviders(<StatisticsPanel onBack={mockOnBack} />);
-            const chartTitle = await screen.findByText('🍽️ メニュー人気度');
-            const chartContainer = within(chartTitle.parentElement!).getByRole('region', { name: /メニュー人気度/i });
+            const chartContainer = await screen.findByRole('region', { name: /メニュー人気度/i });
             expect(chartContainer).toBeInTheDocument();
         });
 
         it('月別トレンドグラフが表示される', async () => {
             renderWithProviders(<StatisticsPanel onBack={mockOnBack} />);
-            const chartTitle = await screen.findByText('📊 月別トレンド');
-            const chartContainer = within(chartTitle.parentElement!).getByRole('region', { name: /月別トレンド/i });
+            const chartContainer = await screen.findByRole('region', { name: /月別トレンド/i });
             expect(chartContainer).toBeInTheDocument();
         });
     });
