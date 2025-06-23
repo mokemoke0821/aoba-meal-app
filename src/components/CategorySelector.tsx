@@ -1,34 +1,19 @@
-import {
-    Engineering as EngineeringIcon,
-    Factory as FactoryIcon,
-    Group as GroupIcon,
-    LocalFlorist as LocalFloristIcon,
-    Settings as SettingsIcon
-} from '@mui/icons-material';
+import SettingsIcon from '@mui/icons-material/Settings';
 import {
     alpha,
     Box,
     Card,
-    CardContent,
     Container,
     Fab,
     Grid,
     Typography,
     useMediaQuery,
-    useTheme,
-    Zoom
+    useTheme
 } from '@mui/material';
+import { motion } from 'framer-motion';
 import React from 'react';
 import { useApp } from '../contexts/AppContext';
 import { CATEGORY_CONFIG, getCategoryInfo, UserCategory } from '../types';
-
-// カテゴリアイコンマッピング
-const CATEGORY_ICONS: Record<UserCategory, React.ReactElement> = {
-    'A型': <FactoryIcon sx={{ fontSize: '4rem' }} />,
-    'B型': <EngineeringIcon sx={{ fontSize: '4rem' }} />,
-    '体験者': <LocalFloristIcon sx={{ fontSize: '4rem' }} />,
-    '職員': <GroupIcon sx={{ fontSize: '4rem' }} />
-};
 
 interface CategoryCardProps {
     category: UserCategory;
@@ -37,92 +22,43 @@ interface CategoryCardProps {
 }
 
 const CategoryCard: React.FC<CategoryCardProps> = ({ category, userCount, onClick }) => {
-    const theme = useTheme();
     const categoryInfo = getCategoryInfo(category);
+    const isMobile = useMediaQuery(useTheme().breakpoints.down('sm'));
 
     return (
-        <Zoom in timeout={500}>
+        <motion.div whileHover={{ scale: 1.05 }} transition={{ type: "spring", stiffness: 300 }}>
             <Card
                 onClick={onClick}
                 sx={{
-                    height: '200px',
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    alignItems: 'center',
                     cursor: 'pointer',
-                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                    borderRadius: '20px',
-                    border: `3px solid ${alpha(categoryInfo.color, 0.3)}`,
-                    background: `linear-gradient(135deg, ${alpha(categoryInfo.color, 0.05)} 0%, ${alpha(categoryInfo.color, 0.15)} 100%)`,
+                    borderRadius: 4,
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                    border: `2px solid ${categoryInfo.color}`,
+                    backgroundColor: alpha(categoryInfo.color, 0.05),
                     '&:hover': {
-                        transform: 'translateY(-8px)',
-                        boxShadow: `0 12px 40px ${alpha(categoryInfo.color, 0.4)}`,
-                        border: `3px solid ${categoryInfo.color}`,
-                        background: `linear-gradient(135deg, ${alpha(categoryInfo.color, 0.1)} 0%, ${alpha(categoryInfo.color, 0.25)} 100%)`,
-                    },
-                    '&:active': {
+                        boxShadow: `0 8px 24px ${alpha(categoryInfo.color, 0.2)}`,
                         transform: 'translateY(-4px)',
-                    }
+                    },
+                    transition: 'all 0.3s ease-in-out',
+                    p: isMobile ? 2 : 3,
                 }}
             >
-                <CardContent
-                    sx={{
-                        height: '100%',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        textAlign: 'center',
-                        p: 3
-                    }}
-                >
-                    <Box
-                        sx={{
-                            color: categoryInfo.color,
-                            mb: 2,
-                            transition: 'transform 0.3s ease',
-                            '&:hover': {
-                                transform: 'scale(1.1)'
-                            }
-                        }}
-                    >
-                        {CATEGORY_ICONS[category]}
-                    </Box>
-
-                    <Typography
-                        variant="h5"
-                        sx={{
-                            fontWeight: 700,
-                            color: categoryInfo.color,
-                            mb: 1,
-                            fontSize: { xs: '1.2rem', sm: '1.5rem' }
-                        }}
-                    >
-                        {categoryInfo.displayName}
-                    </Typography>
-
-                    <Typography
-                        variant="body2"
-                        color="text.secondary"
-                        sx={{
-                            fontSize: '0.9rem',
-                            fontWeight: 500
-                        }}
-                    >
-                        {userCount}名 登録済み
-                    </Typography>
-
-                    <Typography
-                        variant="caption"
-                        sx={{
-                            mt: 1,
-                            color: categoryInfo.color,
-                            fontWeight: 600,
-                            opacity: 0.8
-                        }}
-                    >
-                        {categoryInfo.price === 0 ? '無料' : `${categoryInfo.price}円/食`}
-                    </Typography>
-                </CardContent>
+                <Typography variant={isMobile ? "h3" : "h2"} sx={{ mb: 1 }}>
+                    {categoryInfo.icon}
+                </Typography>
+                <Typography variant={isMobile ? "h6" : "h5"} sx={{ fontWeight: 'bold', color: 'text.primary' }}>
+                    {categoryInfo.displayName}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                    {userCount}名
+                </Typography>
             </Card>
-        </Zoom>
+        </motion.div>
     );
 };
 
@@ -131,8 +67,7 @@ const CategorySelector: React.FC = () => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-    // カテゴリ別利用者数を計算
-    const getUserCountByCategory = (category: UserCategory): number => {
+    const getUserCountByCategory = (category: UserCategory) => {
         return state.users.filter(user => user.category === category).length;
     };
 
@@ -142,12 +77,11 @@ const CategorySelector: React.FC = () => {
     };
 
     const handleAdminAccess = () => {
-        dispatch({ type: 'SET_CURRENT_VIEW', payload: 'admin' });
+        dispatch({ type: 'SET_CURRENT_VIEW', payload: 'adminAuth' });
     };
 
     return (
         <Container maxWidth="md" sx={{ py: 4, minHeight: '100vh' }}>
-            {/* ヘッダー */}
             <Box sx={{ textAlign: 'center', mb: 6 }}>
                 <Typography
                     variant={isMobile ? 'h4' : 'h3'}
@@ -162,7 +96,6 @@ const CategorySelector: React.FC = () => {
                 >
                     🍽️ あおば給食管理
                 </Typography>
-
                 <Typography
                     variant="h6"
                     color="text.secondary"
@@ -175,11 +108,9 @@ const CategorySelector: React.FC = () => {
                 </Typography>
             </Box>
 
-            {/* カテゴリグリッド（2x2） */}
             <Grid container spacing={3} sx={{ mb: 4 }}>
                 {Object.values(CATEGORY_CONFIG).map((categoryInfo) => (
-                    // @ts-ignore
-                    <Grid item xs={6} key={categoryInfo.id}>
+                    <Grid xs={6} key={categoryInfo.id}>
                         <CategoryCard
                             category={categoryInfo.id}
                             userCount={getUserCountByCategory(categoryInfo.id)}
@@ -189,7 +120,6 @@ const CategorySelector: React.FC = () => {
                 ))}
             </Grid>
 
-            {/* 統計情報 */}
             <Box
                 sx={{
                     textAlign: 'center',
@@ -203,7 +133,6 @@ const CategorySelector: React.FC = () => {
                 <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
                     📊 本日の状況
                 </Typography>
-
                 <Typography variant="body1" color="text.secondary">
                     総利用者数: <strong>{state.users.length}名</strong> /
                     本日の注文: <strong>
@@ -214,7 +143,6 @@ const CategorySelector: React.FC = () => {
                 </Typography>
             </Box>
 
-            {/* 管理画面アクセスボタン */}
             <Fab
                 color="secondary"
                 onClick={handleAdminAccess}
@@ -236,7 +164,6 @@ const CategorySelector: React.FC = () => {
                 <SettingsIcon sx={{ fontSize: '2rem' }} />
             </Fab>
 
-            {/* フッター情報 */}
             <Box
                 sx={{
                     textAlign: 'center',
@@ -256,7 +183,6 @@ const CategorySelector: React.FC = () => {
                 >
                     あおば就労移行支援事業所 給食管理システム v2.0
                 </Typography>
-
                 <Typography
                     variant="caption"
                     color="text.secondary"

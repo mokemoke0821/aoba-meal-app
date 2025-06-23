@@ -21,21 +21,25 @@ import React, { useState } from 'react';
 import { useApp } from '../contexts/AppContext';
 import { GROUP_COLORS, RATING_EMOJIS, getGroupDisplayName } from '../types';
 
-const RatingInput: React.FC = () => {
-    const { state, addMealRecord, navigateToView, dispatch } = useApp();
-    const [selectedRating, setSelectedRating] = useState<number | null>(null);
+interface RatingInputProps {
+    userId: string;
+}
+
+const RatingInput: React.FC<RatingInputProps> = ({ userId }) => {
+    const { state, navigateToView } = useApp();
+    const [rating, setRating] = useState<number>(5);
     const [showThankYou, setShowThankYou] = useState(false);
 
-    const selectedUser = state.selectedUser;
+    const { selectedUser } = state;
 
     // 評価選択ハンドラー
     const handleRatingSelect = (rating: number) => {
-        setSelectedRating(rating);
+        setRating(rating);
     };
 
     // 評価送信ハンドラー
     const handleSubmit = async () => {
-        if (selectedRating && selectedUser) {
+        if (selectedUser) {
             // 既存の給食記録を更新（評価を追加）
             const todayRecords = state.mealRecords;
             const recordIndex = todayRecords.findIndex(
@@ -47,9 +51,8 @@ const RatingInput: React.FC = () => {
                 const updatedRecords = [...todayRecords];
                 updatedRecords[recordIndex] = {
                     ...updatedRecords[recordIndex],
-                    rating: selectedRating
+                    rating: rating
                 };
-                dispatch({ type: 'SET_MEAL_RECORDS', payload: updatedRecords });
             }
 
             // ありがとうメッセージを表示
@@ -100,7 +103,7 @@ const RatingInput: React.FC = () => {
         const buttons = [];
         for (let i = 1; i <= 10; i++) {
             const emoji = RATING_EMOJIS[i as keyof typeof RATING_EMOJIS];
-            const isSelected = selectedRating === i;
+            const isSelected = rating === i;
 
             buttons.push(
                 <ButtonBase
@@ -255,20 +258,20 @@ const RatingInput: React.FC = () => {
                     variant="contained"
                     size="large"
                     onClick={handleSubmit}
-                    disabled={selectedRating === null}
+                    disabled={rating === 0}
                     sx={{
                         minHeight: '100px',
                         fontSize: '1.75rem',
                         fontWeight: 700,
                         borderRadius: '16px',
-                        backgroundColor: selectedRating ? 'success.main' : 'grey.400',
+                        backgroundColor: rating > 0 ? 'success.main' : 'grey.400',
                         '&:hover': {
-                            backgroundColor: selectedRating ? 'success.dark' : 'grey.500',
+                            backgroundColor: rating > 0 ? 'success.dark' : 'grey.500',
                         },
                     }}
                     startIcon={<ThumbUpIcon sx={{ fontSize: '2rem' }} />}
                 >
-                    {selectedRating ? `評価 ${selectedRating}点 で送信` : '評価を選んでください'}
+                    {rating > 0 ? `評価 ${rating}点 で送信` : '評価を選んでください'}
                 </Button>
 
                 <Button
@@ -315,7 +318,7 @@ const RatingInput: React.FC = () => {
                         {selectedUser.name} さん
                     </Typography>
                     <Typography variant="h5" sx={{ color: 'text.secondary', mb: 3 }}>
-                        評価: {selectedRating}点 {selectedRating && RATING_EMOJIS[selectedRating as keyof typeof RATING_EMOJIS]}
+                        評価: {rating}点 {rating && RATING_EMOJIS[rating as keyof typeof RATING_EMOJIS]}
                     </Typography>
                     <Typography variant="h6" sx={{ color: 'text.secondary' }}>
                         自動的に最初の画面に戻ります...

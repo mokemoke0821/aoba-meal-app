@@ -1,5 +1,6 @@
 import { ThemeProvider } from '@mui/material';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 import aobaTheme from '../../theme';
 import ErrorBoundary from '../ErrorBoundary';
@@ -313,15 +314,15 @@ describe('ErrorBoundary', () => {
             const copyButton = screen.getByText('エラーレポートをコピー');
             fireEvent.click(copyButton);
 
-            await waitFor(() => {
-                const copiedText = mockClipboard.writeText.mock.calls[0][0];
-
-                expect(copiedText).toContain('あおば事業所給食管理アプリ - エラーレポート');
-                expect(copiedText).toContain('エラーメッセージ: 完全なレポートテスト');
-                expect(copiedText).toContain('ユーザーエージェント:');
-                expect(copiedText).toContain('画面解像度:');
-                expect(copiedText).toContain('ローカルストレージ容量:');
+            const copiedText = await waitFor(() => {
+                return mockClipboard.writeText.mock.calls[0][0];
             });
+
+            expect(copiedText).toContain('あおば事業所給食管理アプリ - エラーレポート');
+            expect(copiedText).toContain('エラーメッセージ: 完全なレポートテスト');
+            expect(copiedText).toContain('ユーザーエージェント:');
+            expect(copiedText).toContain('画面解像度:');
+            expect(copiedText).toContain('ローカルストレージ容量:');
         });
     });
 
@@ -390,22 +391,22 @@ describe('ErrorBoundary', () => {
             });
         });
 
-        it('キーボードナビゲーションが機能する', () => {
+        it('キーボードナビゲーションが機能する', async () => {
             renderWithTheme(
                 <ErrorBoundary>
                     <ThrowError shouldThrow={true} />
                 </ErrorBoundary>
             );
 
-            const retryButton = screen.getByText('再試行');
+            const retryButton = screen.getByRole('button', { name: '再試行' });
             retryButton.focus();
-            expect(document.activeElement).toBe(retryButton);
+            expect(retryButton).toHaveFocus();
 
             // Tabキーで次のボタンに移動
-            fireEvent.keyDown(retryButton, { key: 'Tab' });
+            userEvent.tab();
 
-            const reloadButton = screen.getByText('ページを再読み込み');
-            expect(document.activeElement).not.toBe(retryButton);
+            const reloadButton = screen.getByRole('button', { name: 'ページを再読み込み' });
+            expect(reloadButton).toHaveFocus();
         });
 
         it('スクリーンリーダー用の適切なラベルが設定されている', () => {
@@ -553,6 +554,28 @@ describe('ErrorBoundary', () => {
             // 大量ログがあってもエラー処理が1秒以内で完了することを期待
             expect(processingTime).toBeLessThan(1000);
             expect(screen.getByText('エラーが発生しました')).toBeInTheDocument();
+        });
+    });
+
+    describe('componentDidCatchが呼ばれることを確認', () => {
+        it('componentDidCatchが呼ばれることを確認', async () => {
+            const spy = jest.spyOn(ErrorBoundary.prototype, 'componentDidCatch');
+
+            renderWithTheme(
+                <ErrorBoundary>
+                    <ThrowError shouldThrow={true} />
+                </ErrorBoundary>
+            );
+
+            // componentDidCatchが呼ばれることを確認
+            await waitFor(() => {
+                expect(spy).toHaveBeenCalled();
+            });
+            expect(spy.mock.calls[0][0]).toBeInstanceOf(Error);
+            expect(spy.mock.calls[0][0].message).toBe('Test error');
+            expect(screen.getByText('エラーが発生しました')).toBeInTheDocument();
+
+            spy.mockRestore();
         });
     });
 }); 

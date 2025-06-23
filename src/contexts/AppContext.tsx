@@ -1,5 +1,11 @@
+import {
+    Alert,
+    AlertColor,
+    Snackbar,
+    ThemeProvider,
+} from '@mui/material';
 import { format } from 'date-fns';
-import React, { createContext, ReactNode, useContext, useEffect, useReducer, useState } from 'react';
+import React, { createContext, ReactNode, useCallback, useContext, useEffect, useReducer, useState } from 'react';
 import { AppAction, AppState, MealRecord, MenuItem, migrateUserFromGroup, User, UserCategory } from '../types';
 import { validateMealRecord, validateUser } from '../utils/dataValidator';
 import {
@@ -8,12 +14,13 @@ import {
     loadUsers
 } from '../utils/storage';
 import { storageManager } from '../utils/storageManager';
+import { appReducer, loadInitialData } from './appReducer';
 
 // エラー状態の型定義
 interface ErrorState {
     hasError: boolean;
     message: string;
-    details?: string;
+    details: string | null;
     timestamp: string;
 }
 
@@ -33,7 +40,7 @@ const initialState: AppState = {
 const initialErrorState: ErrorState = {
     hasError: false,
     message: '',
-    details: '',
+    details: null,
     timestamp: '',
 };
 
@@ -81,6 +88,9 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
         case 'SET_REQUIRE_ADMIN_AUTH':
             return { ...state, requireAdminAuth: action.payload };
 
+        case 'RESET_STATE':
+            return action.payload;
+
         default:
             return state;
     }
@@ -121,6 +131,10 @@ interface AppContextType {
     resetAllData: () => Promise<{ success: boolean; error?: string }>;
     getStorageStats: () => any;
     setRequireAdminAuth: (flag: boolean) => void;
+
+    // 新しい関数
+    showSnackbar: (message: string, severity?: AlertColor) => void;
+    clearAllData: () => Promise<void>;
 }
 
 // Context作成
@@ -129,12 +143,23 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 // Provider Props
 interface AppProviderProps {
     children: ReactNode;
+    initialStateForTest?: AppState;
 }
 
 // Provider Component
-export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
-    const [state, dispatch] = useReducer(appReducer, initialState);
-    const [errorState, setErrorState] = useState<ErrorState>(initialErrorState);
+export const AppProvider: React.FC<AppProviderProps> = ({ children, initialStateForTest }) => {
+    const [state, dispatch] = useReducer(appReducer, initialStateForTest || loadInitialData());
+    const [errorState, setErrorState] = useState<ErrorState>({
+        hasError: false,
+        message: '',
+        details: null,
+        timestamp: '',
+    });
+    const [snackbar, setSnackbar] = useState<{ open: boolean, message: string, severity: AlertColor }>({
+        open: false,
+        message: '',
+        severity: 'info',
+    });
 
     // エラー管理関数
     const clearError = () => {
@@ -176,7 +201,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     };
 
     // 安全なデータ読み込み
-    const loadAllData = async (): Promise<{ success: boolean; error?: string; warning?: string }> => {
+    const loadAllData = useCallback(async (): Promise<{ success: boolean; error?: string; warning?: string }> => {
         try {
             const result = storageManager.loadData();
             if (!result.success) {
@@ -204,7 +229,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
             setError('データ読み込み中にエラーが発生しました', errorMessage);
             return { success: false, error: errorMessage };
         }
-    };
+    }, [dispatch]);
 
     // 全データリセット
     const resetAllData = async (): Promise<{ success: boolean; error?: string }> => {
@@ -280,7 +305,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         };
 
         initializeData();
-    }, []);
+    }, [loadAllData]);
 
     // 自動保存（データ変更時）
     useEffect(() => {
@@ -548,7 +573,25 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         }
     };
 
-    const contextValue: AppContextType = {
+    const showSnackbar = (message: string, severity: AlertColor = 'success') => {
+        setSnackbar({ open: true, message, severity });
+    };
+
+    const clearAllData = async () => {
+        try {
+            await resetAllData();
+            dispatch({ type: 'RESET_STATE', payload: loadInitialData() });
+        } catch (error: any) {
+            setErrorState({
+                hasError: true,
+                message: 'データのリセットに失敗しました。',
+                details: error.message,
+                timestamp: new Date().toISOString(),
+            });
+        }
+    };
+
+    const value: AppContextType = {
         state,
         dispatch,
         errorState,
@@ -572,11 +615,29 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         resetAllData,
         getStorageStats,
         setRequireAdminAuth,
+        showSnackbar,
+        clearAllData,
     };
 
     return (
-        <AppContext.Provider value={contextValue}>
-            {children}
+        <AppContext.Provider value={value}>
+            <ThemeProvider theme={aobaTheme}>
+                {children}
+                <Snackbar
+                    open={snackbar.open}
+                    autoHideDuration={6000}
+                    onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
+                    anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+                >
+                    <Alert
+                        onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
+                        severity={snackbar.severity}
+                        sx={{ width: '100%' }}
+                    >
+                        {snackbar.message}
+                    </Alert>
+                </Snackbar>
+            </ThemeProvider>
         </AppContext.Provider>
     );
 };

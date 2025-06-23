@@ -13,7 +13,7 @@ export interface User {
 }
 
 // グループ型定義
-export type Group = 'グループA' | 'グループB' | 'グループC' | 'グループD';
+export type Group = 'グループA' | 'グループB' | 'グループC' | 'その他';
 
 // 利用者カテゴリ型定義（新追加）
 export type UserCategory = 'A型' | 'B型' | '体験者' | '職員';
@@ -128,6 +128,7 @@ export type ViewType =
   | 'mealOrder'
   | 'rating'
   | 'admin'
+  | 'adminAuth'
   | 'statistics'
   | 'userManagement'
   | 'menuManagement'
@@ -152,7 +153,8 @@ export type AppAction =
   | { type: 'SET_CURRENT_VIEW'; payload: ViewType }
   | { type: 'SET_DAILY_MENUS'; payload: DailyMenu[] }
   | { type: 'SET_MEAL_HISTORY'; payload: MealRecord[] }
-  | { type: 'SET_REQUIRE_ADMIN_AUTH'; payload: boolean };
+  | { type: 'SET_REQUIRE_ADMIN_AUTH'; payload: boolean }
+  | { type: 'RESET_STATE'; payload: AppState };
 
 // 評価用の絵文字マッピング
 export const RATING_EMOJIS = {
@@ -185,16 +187,16 @@ export const getUserDisplayName = (user: User): string => {
 };
 
 // 旧グループからカテゴリへの変換マッピング（データ移行用）
-export const GROUP_TO_CATEGORY_MAP: Record<Group, UserCategory> = {
+export const GROUP_TO_CATEGORY: Record<Group, UserCategory> = {
   'グループA': 'A型',
   'グループB': 'B型',
   'グループC': '職員',
-  'グループD': '体験者'
-} as const;
+  'その他': '体験者',
+};
 
 // データ移行用ユーティリティ（新追加）
 export const migrateUserFromGroup = (oldUser: any): User => {
-  const category = oldUser.group ? GROUP_TO_CATEGORY_MAP[oldUser.group as Group] || 'B型' : 'B型';
+  const category = oldUser.group ? GROUP_TO_CATEGORY[oldUser.group as Group] || 'B型' : 'B型';
 
   return {
     id: oldUser.id,
@@ -209,3 +211,5 @@ export const migrateUserFromGroup = (oldUser: any): User => {
     notes: oldUser.notes
   };
 };
+
+export const ALL_GROUPS: Group[] = ['グループA', 'グループB', 'グループC', 'その他'];

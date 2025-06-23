@@ -33,7 +33,6 @@ import {
     exportRatingAnalysis
 } from '../utils/csvExport';
 import {
-    calculateGroupSummary,
     calculateRevenue
 } from '../utils/statistics';
 
@@ -95,7 +94,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
     const [accessDialog, setAccessDialog] = useState(true);
     const [accessCode, setAccessCode] = useState('');
     const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [groupSummary, setGroupSummary] = useState<any[]>([]);
     const [currentMonthRevenue, setCurrentMonthRevenue] = useState(0);
 
     // 簡易認証（実際の運用では設定画面で変更可能）
@@ -115,13 +113,11 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
     // 統計データの計算
     useEffect(() => {
         if (isAuthenticated) {
-            const groupStats = calculateGroupSummary(state.mealRecords, state.users);
             const revenueData = calculateRevenue(state.mealRecords, 'monthly');
             const thisMonthRevenue = revenueData.find(r =>
                 r.period === format(new Date(), 'yyyy-MM')
             )?.revenue || 0;
 
-            setGroupSummary(groupStats);
             setCurrentMonthRevenue(thisMonthRevenue);
         }
     }, [isAuthenticated, state.mealRecords, state.users]);
