@@ -58,7 +58,7 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ onBack }) => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
-    const [dateRange, setDateRange] = useState<DateRange>({
+    const [dateRange] = useState<DateRange>({
         startDate: null,
         endDate: null,
     });
@@ -82,26 +82,41 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ onBack }) => {
             setStatisticsData(stats);
         } catch (error) {
             console.error('Statistics calculation error:', error);
+            // デフォルト統計データを設定
+            setStatisticsData({
+                dailyOrders: [],
+                userRatings: [
+                    { rating: 1, count: 0, percentage: 0 },
+                    { rating: 2, count: 0, percentage: 0 },
+                    { rating: 3, count: 0, percentage: 0 },
+                    { rating: 4, count: 0, percentage: 0 },
+                    { rating: 5, count: 0, percentage: 0 },
+                ],
+                menuPopularity: [],
+                monthlyTrends: [],
+                totalUsers: state.users.length,
+                totalOrders: 0,
+                totalRevenue: 0,
+                averageRating: 0,
+            });
         }
     }, [state.mealRecords, state.users, dateRange]);
 
-    const handleDateRangeChange = (newRange: DateRange) => {
-        setDateRange(newRange);
-    };
-
-    const handleApplyFilter = () => {
-        // フィルターは useEffect で自動適用される
-    };
 
     const handleRefresh = () => {
-        // 強制的に再計算
-        const stats = calculateOverallStatistics(
-            state.mealRecords,
-            state.users,
-            dateRange.startDate || undefined,
-            dateRange.endDate || undefined
-        );
-        setStatisticsData(stats);
+        try {
+            // 強制的に再計算
+            const stats = calculateOverallStatistics(
+                state.mealRecords,
+                state.users,
+                dateRange.startDate || undefined,
+                dateRange.endDate || undefined
+            );
+            setStatisticsData(stats);
+        } catch (error) {
+            console.error('Statistics refresh error:', error);
+            alert('統計データの更新中にエラーが発生しました');
+        }
     };
 
     const handleExportReport = () => {

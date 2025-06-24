@@ -5,11 +5,11 @@ import {
     calculateMonthlyTrends,
     calculateOverallStatistics,
     calculateRatingDistribution,
-    calculateTodayStats,
+    calculateTodayStats
 } from '../statisticsCalculator';
 import {
-    createDateRangeTestData,
     createMockMealRecord,
+    createTestDateStrings,
     generateMockMealRecords,
     generateMockUsers,
     mockUsers
@@ -65,13 +65,13 @@ describe('統計計算機能', () => {
             // 今日の統計
             const todayStats = result.find(s => s.date === format(today, 'yyyy-MM-dd'));
             expect(todayStats).toBeDefined();
-            expect(todayStats!.totalOrders).toBe(1);
+            expect(todayStats!.orderCount).toBe(1);
             expect(todayStats!.averageRating).toBe(8);
 
             // 昨日の統計
             const yesterdayStats = result.find(s => s.date === format(yesterday, 'yyyy-MM-dd'));
             expect(yesterdayStats).toBeDefined();
-            expect(yesterdayStats!.totalOrders).toBe(2);
+            expect(yesterdayStats!.orderCount).toBe(2);
             expect(yesterdayStats!.averageRating).toBe(7.5);
         });
 
@@ -89,8 +89,8 @@ describe('統計計算機能', () => {
 
             const result = calculateDailyStats(records);
 
-            expect(result[0].totalOrders).toBe(2);
-            expect(result[0].totalEvaluations).toBe(1); // rating > 0 のもののみ
+            expect(result[0].orderCount).toBe(2);
+            expect(result[0].evaluationCount).toBe(1); // rating > 0 のもののみ
             expect(result[0].averageRating).toBe(8); // 評価ありのもののみで計算
         });
     });
@@ -109,11 +109,11 @@ describe('統計計算機能', () => {
             const result = calculateRatingDistribution(records);
 
             expect(result).toEqual([
-                { rating: 1, count: 1 },
-                { rating: 2, count: 0 },
-                { rating: 3, count: 2 },
-                { rating: 4, count: 0 },
-                { rating: 5, count: 3 },
+                { rating: 1, count: 1, percentage: 16.7 },
+                { rating: 2, count: 0, percentage: 0 },
+                { rating: 3, count: 2, percentage: 33.3 },
+                { rating: 4, count: 0, percentage: 0 },
+                { rating: 5, count: 3, percentage: 50 },
             ]);
         });
 
@@ -157,16 +157,16 @@ describe('統計計算機能', () => {
 
             expect(result).toHaveLength(3);
 
-            const curry = result.find(m => m.menuName === 'カレーライス');
+            const curry = result.find(m => m.menuType === 'カレーライス');
             expect(curry).toEqual({
-                menuName: 'カレーライス',
-                orderCount: 2,
+                menuType: 'カレーライス',
+                count: 2,
                 averageRating: 7.5,
-                totalRevenue: expect.any(Number),
+                percentage: expect.any(Number),
             });
 
-            const hamburg = result.find(m => m.menuName === 'ハンバーグ');
-            expect(hamburg?.orderCount).toBe(2);
+            const hamburg = result.find(m => m.menuType === 'ハンバーグ');
+            expect(hamburg?.count).toBe(2);
             expect(hamburg?.averageRating).toBe(7.5);
         });
 
@@ -179,8 +179,8 @@ describe('統計計算機能', () => {
             const result = calculateMenuPopularity(records);
 
             expect(result).toHaveLength(2);
-            expect(result.some(m => m.menuName === '不明')).toBe(true);
-            expect(result.some(m => m.menuName === 'カレーライス')).toBe(true);
+            expect(result.some(m => m.menuType === '通常食')).toBe(true);
+            expect(result.some(m => m.menuType === 'カレーライス')).toBe(true);
         });
 
         it('注文数で降順ソートされる', () => {
@@ -195,12 +195,12 @@ describe('統計計算機能', () => {
 
             const result = calculateMenuPopularity(records);
 
-            expect(result[0].menuName).toBe('C');
-            expect(result[0].orderCount).toBe(3);
-            expect(result[1].menuName).toBe('B');
-            expect(result[1].orderCount).toBe(2);
-            expect(result[2].menuName).toBe('A');
-            expect(result[2].orderCount).toBe(1);
+            expect(result[0].menuType).toBe('C');
+            expect(result[0].count).toBe(3);
+            expect(result[1].menuType).toBe('B');
+            expect(result[1].count).toBe(2);
+            expect(result[2].menuType).toBe('A');
+            expect(result[2].count).toBe(1);
         });
     });
 
@@ -233,8 +233,8 @@ describe('統計計算機能', () => {
 
             const thisMonth = result.find(m => m.month === format(today, 'yyyy-MM'));
             expect(thisMonth).toBeDefined();
-            expect(thisMonth!.totalOrders).toBe(2);
-            expect(thisMonth!.totalRevenue).toBe(950);
+            expect(thisMonth!.orderCount).toBe(2);
+            expect(thisMonth!.revenue).toBe(950);
             expect(thisMonth!.averageRating).toBe(7.5);
         });
 
@@ -243,9 +243,9 @@ describe('統計計算機能', () => {
 
             expect(result).toHaveLength(6);
 
-            // 月が降順でソートされているかチェック
+            // 月が昇順でソートされているかチェック（過去→現在）
             for (let i = 0; i < result.length - 1; i++) {
-                expect(result[i].month >= result[i + 1].month).toBe(true);
+                expect(result[i].month <= result[i + 1].month).toBe(true);
             }
         });
 
@@ -253,8 +253,8 @@ describe('統計計算機能', () => {
             const result = calculateMonthlyTrends([]);
 
             result.forEach(month => {
-                expect(month.totalOrders).toBe(0);
-                expect(month.totalRevenue).toBe(0);
+                expect(month.orderCount).toBe(0);
+                expect(month.revenue).toBe(0);
                 expect(month.averageRating).toBe(0);
             });
         });
@@ -309,27 +309,23 @@ describe('統計計算機能', () => {
             const result = calculateOverallStatistics(records, users);
 
             expect(result).toEqual({
-                dailyStats: expect.any(Array),
-                ratingDistribution: expect.any(Array),
+                dailyOrders: expect.any(Array),
+                userRatings: expect.any(Array),
                 menuPopularity: expect.any(Array),
                 monthlyTrends: expect.any(Array),
-                todayStats: expect.any(Object),
-                summary: {
-                    totalUsers: 5,
-                    totalOrders: expect.any(Number),
-                    totalRevenue: expect.any(Number),
-                    averageRating: expect.any(Number),
-                    period: expect.any(String),
-                },
+                totalUsers: 5,
+                totalOrders: expect.any(Number),
+                totalRevenue: expect.any(Number),
+                averageRating: expect.any(Number),
             });
 
-            expect(result.summary.totalUsers).toBe(5);
-            expect(result.summary.totalOrders).toBeGreaterThanOrEqual(0);
-            expect(result.summary.totalRevenue).toBeGreaterThanOrEqual(0);
+            expect(result.totalUsers).toBe(5);
+            expect(result.totalOrders).toBeGreaterThanOrEqual(0);
+            expect(result.totalRevenue).toBeGreaterThanOrEqual(0);
         });
 
         it('日付範囲フィルターが正しく動作する', () => {
-            const { todayString, sevenDaysAgoString } = createDateRangeTestData();
+            const { todayString, sevenDaysAgoString } = createTestDateStrings();
             const users = generateMockUsers(3);
             const records = [
                 createMockMealRecord({
@@ -360,23 +356,26 @@ describe('統計計算機能', () => {
             );
 
             // 期間内の記録のみが集計される
-            expect(result.summary.totalOrders).toBe(2);
-            expect(result.summary.totalRevenue).toBe(900);
+            expect(result.totalOrders).toBe(2);
+            expect(result.totalRevenue).toBe(900);
         });
 
         it('空のデータでも正常に動作する', () => {
             const result = calculateOverallStatistics([], []);
 
-            expect(result.summary).toEqual({
+            expect(result).toEqual({
+                dailyOrders: [],
+                userRatings: expect.any(Array),
+                menuPopularity: [],
+                monthlyTrends: expect.any(Array),
                 totalUsers: 0,
                 totalOrders: 0,
                 totalRevenue: 0,
                 averageRating: 0,
-                period: expect.any(String),
             });
 
-            expect(result.dailyStats).toEqual([]);
-            expect(result.ratingDistribution).toHaveLength(5); // 1-5の評価
+            expect(result.dailyOrders).toEqual([]);
+            expect(result.userRatings).toHaveLength(5); // 1-5の評価
             expect(result.menuPopularity).toEqual([]);
             expect(result.monthlyTrends).toHaveLength(6); // 6ヶ月分
         });
@@ -395,7 +394,7 @@ describe('統計計算機能', () => {
 
             // 1秒以内で処理完了することを期待
             expect(processingTime).toBeLessThan(1000);
-            expect(result.summary.totalOrders).toBeGreaterThan(0);
+            expect(result.totalOrders).toBeGreaterThan(0);
         });
     });
 
@@ -411,7 +410,7 @@ describe('統計計算機能', () => {
             const result = calculateOverallStatistics(records, mockUsers);
 
             // 正常な評価値のみが計算に使用される
-            expect(result.summary.averageRating).toBe(5);
+            expect(result.averageRating).toBe(5);
         });
 
         it('未来の日付の記録を適切に処理する', () => {
@@ -424,7 +423,7 @@ describe('統計計算機能', () => {
             const result = calculateOverallStatistics(records, mockUsers);
 
             // 未来の記録も含めて処理される
-            expect(result.summary.totalOrders).toBe(2);
+            expect(result.totalOrders).toBe(2);
         });
 
         it('不正な日付形式を適切に処理する', () => {

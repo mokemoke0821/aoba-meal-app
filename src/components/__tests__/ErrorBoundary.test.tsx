@@ -459,7 +459,7 @@ describe('ErrorBoundary', () => {
         // 'null' をスローするテスト
         it('should handle throwing null', () => {
             const Thrower = () => {
-                // eslint-disable-next-line @typescript-eslint/no-throw-literal
+                // eslint-disable-next-line @typescript-eslint/no-throw-literal, no-throw-literal
                 throw null;
             };
 
@@ -479,7 +479,7 @@ describe('ErrorBoundary', () => {
 
         it('文字列エラーがキャッチされる', () => {
             const ThrowStringError = () => {
-                // eslint-disable-next-line @typescript-eslint/no-throw-literal
+                // eslint-disable-next-line @typescript-eslint/no-throw-literal, no-throw-literal
                 throw '文字列エラー';
             };
             renderWithTheme(

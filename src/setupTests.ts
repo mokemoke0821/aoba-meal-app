@@ -4,6 +4,22 @@
 // learn more: https://github.com/testing-library/jest-dom
 import '@testing-library/jest-dom';
 
+// Global timeout
+jest.setTimeout(60000);
+
+// Console error suppression for known warnings
+const originalError = console.error;
+console.error = (...args: any[]) => {
+  if (
+    typeof args[0] === 'string' &&
+    (args[0].includes('Warning: ReactDOM.render is deprecated') ||
+     args[0].includes('Warning: React.createFactory is deprecated'))
+  ) {
+    return;
+  }
+  originalError.call(console, ...args);
+};
+
 // LocalStorage のモック
 const localStorageMock = {
     getItem: jest.fn(),
@@ -66,16 +82,13 @@ Object.defineProperty(window, 'matchMedia', {
 });
 
 // console のモック（テスト中のログを制御）
-const originalError = console.error;
 const originalWarn = console.warn;
 
 beforeAll(() => {
-    console.error = jest.fn();
     console.warn = jest.fn();
 });
 
 afterAll(() => {
-    console.error = originalError;
     console.warn = originalWarn;
 });
 

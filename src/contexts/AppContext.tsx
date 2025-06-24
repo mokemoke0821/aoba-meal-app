@@ -2,7 +2,7 @@ import React, { createContext, ReactNode, useContext, useReducer } from 'react';
 import { DailyMenu, Group, MealRecord, MenuItem, User, UserCategory, ViewType } from '../types';
 
 // アプリの状態の型定義
-interface AppState {
+export interface AppState {
   currentView: ViewType;
   users: User[];
   mealRecords: MealRecord[];
@@ -156,10 +156,15 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 // プロバイダーコンポーネント
 interface AppProviderProps {
   children: ReactNode;
+  initialStateForTest?: Partial<AppState>;
 }
 
-export function AppProvider({ children }: AppProviderProps) {
-  const [state, dispatch] = useReducer(appReducer, initialState);
+export function AppProvider({ children, initialStateForTest }: AppProviderProps) {
+  const testInitialState = initialStateForTest
+    ? { ...initialState, ...initialStateForTest }
+    : initialState;
+
+  const [state, dispatch] = useReducer(appReducer, testInitialState);
 
   return (
     <AppContext.Provider value={{ state, dispatch }}>

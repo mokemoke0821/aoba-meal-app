@@ -197,6 +197,27 @@ export const generateRandomPrice = (category: UserCategory): number => {
     }
 };
 
+// 単一のモックユーザー作成関数
+export const createMockUser = (overrides: Partial<User> = {}): User => {
+    const baseUser: User = {
+        id: `user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        name: 'テストユーザー',
+        group: 'グループA',
+        category: 'A型' as UserCategory,
+        displayNumber: 1,
+        price: 100,
+        createdAt: new Date().toISOString(),
+        isActive: true,
+        trialUser: false,
+        notes: 'テスト用ユーザー'
+    };
+
+    return { ...baseUser, ...overrides };
+};
+
+// モック給食記録（generateMockMealRecordsのデフォルト呼び出し）
+export const mockMealRecords = generateMockMealRecords(mockUsers, 10);
+
 // テスト用のCSVデータ生成
 export const generateMockCSVData = (records: MealRecord[]): string => {
     const headers = ['日付', '利用者名', 'グループ', 'カテゴリ', '料金', '評価', 'メニュー名', '備考'];
@@ -287,4 +308,12 @@ export const createDateRangeTestData = (
     recordsPerDay: number = 1
 ): MealRecord[] => {
     return generateMockMealRecordsForDateRange(mockUsers, startDate, endDate, recordsPerDay);
+};
+
+// 日付文字列のテストデータ作成（引数なしでtoday/sevenDaysAgoを返す）
+export const createTestDateStrings = () => {
+    const { format, subDays } = require('date-fns');
+    const todayString = format(new Date(), 'yyyy-MM-dd');
+    const sevenDaysAgoString = format(subDays(new Date(), 7), 'yyyy-MM-dd');
+    return { todayString, sevenDaysAgoString };
 }; 

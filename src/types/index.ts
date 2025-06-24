@@ -214,3 +214,53 @@ export const migrateUserFromGroup = (oldUser: any): User => {
 };
 
 export const ALL_GROUPS: Group[] = ['グループA', 'グループB', 'グループC', 'その他'];
+
+// 統計関連の型定義（新追加）
+export interface RatingDistribution {
+  rating: number;
+  count: number;
+  percentage: number;
+}
+
+export interface DailyStats {
+  date: string;
+  orderCount: number;
+  evaluationCount: number;
+  averageRating: number;
+  totalRevenue: number;
+}
+
+export interface MenuPopularityStats {
+  menuType: string;
+  count: number;
+  averageRating: number;
+  percentage: number;
+}
+
+export interface MonthlyTrendStats {
+  month: string;
+  orderCount: number;
+  averageRating: number;
+  revenue: number;
+}
+
+export interface StatisticsResult {
+  dailyOrders: DailyStats[];
+  userRatings: RatingDistribution[];
+  menuPopularity: MenuPopularityStats[];
+  monthlyTrends: MonthlyTrendStats[];
+  totalUsers: number;
+  totalOrders: number;
+  totalRevenue: number;
+  averageRating: number;
+}
+
+// エラー処理用型定義（新追加）
+export interface AppError {
+  code: string;
+  message: string;
+  details?: any;
+  timestamp: string;
+}
+
+export type ErrorHandler = (error: AppError | Error) => void;

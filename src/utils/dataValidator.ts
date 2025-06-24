@@ -270,6 +270,18 @@ export const validateDateRange = (
         warnings: []
     };
 
+    // 両方nullの場合は有効とする
+    if (startDate === null && endDate === null) {
+        return result;
+    }
+
+    // 片方だけnullの場合はエラー
+    if ((startDate === null && endDate !== null) || (startDate !== null && endDate === null)) {
+        result.isValid = false;
+        result.errors.push(`${fieldName}の開始日と終了日は両方指定するか、両方未指定にしてください`);
+        return result;
+    }
+
     const startResult = validateDate(startDate, `${fieldName}の開始日`);
     const endResult = validateDate(endDate, `${fieldName}の終了日`);
 
@@ -414,6 +426,11 @@ export const validateMealRecord = (record: any): ValidationResult => {
         warnings: []
     };
 
+    // ユーザーIDバリデーション
+    const userIdResult = validateString(record.userId, '利用者ID');
+    result.errors.push(...userIdResult.errors);
+    result.warnings.push(...userIdResult.warnings);
+
     // 日付バリデーション
     const dateResult = validateDate(record.date, '日付');
     result.errors.push(...dateResult.errors);
@@ -535,4 +552,62 @@ export const mockMealRecords: MealRecord[] = [
     createMockMealRecord({ id: '3', userId: '3' }),
     createMockMealRecord({ id: '4', userId: '4' })
 ];
+
+// セキュリティ強化: XSS対策とデータサニタイゼーション
+export const sanitizeInput = (input: string): string => {
+    if (typeof input !== 'string') {
+        throw new Error('入力は文字列である必要があります');
+    }
+
+    // HTMLタグとスクリプトの除去
+    const sanitized = input
+        .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+        .replace(/<[^>]+>/g, '')
+        .replace(/javascript:/gi, '')
+        .replace(/on\w+\s*=/gi, '')
+        .trim();
+
+    return sanitized;
+};
+
+export const validateEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+};
+
+export const validatePhoneNumber = (phone: string): boolean => {
+    const phoneRegex = /^\d{10,11}$/;
+    return phoneRegex.test(phone.replace(/[-\s]/g, ''));
+};
+
+// CSRFトークン生成（基本実装）
+export const generateCSRFToken = (): string => {
+    return Array.from(crypto.getRandomValues(new Uint8Array(32)))
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('');
+};
+
+// パスワード強度チェック
+export const validatePasswordStrength = (password: string): ValidationResult => {
+    const result: ValidationResult = {
+        isValid: true,
+        errors: [],
+        warnings: []
+    };
+
+    if (password.length < 8) {
+        result.isValid = false;
+        result.errors.push('パスワードは8文字以上である必要があります');
+    }
+
+    if (!/[A-Za-z]/.test(password)) {
+        result.warnings.push('英字を含めることを推奨します');
+    }
+
+    if (!/[0-9]/.test(password)) {
+        result.warnings.push('数字を含めることを推奨します');
+    }
+
+    return result;
+};
 

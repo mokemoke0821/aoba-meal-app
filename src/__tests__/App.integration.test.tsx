@@ -102,7 +102,6 @@ describe('<App /> Integration Tests', () => {
     });
 
     test('注文後に評価画面に遷移し、評価後にカテゴリ選択画面に戻ること', async () => {
-        const user = userEvent.setup();
         renderWithProviders(<App />, {
             initialState: {
                 currentView: 'mealOrder',
@@ -114,15 +113,15 @@ describe('<App /> Integration Tests', () => {
             expect(screen.getByText('注文する')).toBeInTheDocument();
         });
 
-        await user.click(screen.getByText('注文する'));
-        await user.click(await screen.findByText('はい'));
+        await userEvent.click(screen.getByText('注文する'));
+        await userEvent.click(await screen.findByText('はい'));
 
         await waitFor(() => {
             expect(screen.getByText('評価を入力してください')).toBeInTheDocument();
         });
         expect(screen.getByText('5')).toBeInTheDocument();
 
-        await user.click(screen.getByText('評価を送信'));
+        await userEvent.click(screen.getByText('評価を送信'));
 
         await waitFor(() => {
             expect(screen.getByText('カテゴリ選択画面')).toBeInTheDocument();
@@ -130,17 +129,16 @@ describe('<App /> Integration Tests', () => {
     });
 
     test('管理者としてログインし、管理画面にアクセスできること', async () => {
-        const user = userEvent.setup();
         renderWithProviders(<App />);
 
-        await user.click(screen.getByLabelText('管理画面'));
+        await userEvent.click(screen.getByLabelText('管理画面'));
 
         await waitFor(() => {
             expect(screen.getByLabelText('管理者パスワード')).toBeInTheDocument();
         });
 
-        await user.type(screen.getByLabelText('管理者パスワード'), 'test-admin-password');
-        await user.click(screen.getByText('認証'));
+        await userEvent.type(screen.getByLabelText('管理者パスワード'), 'test-admin-password');
+        await userEvent.click(screen.getByText('認証'));
 
         await waitFor(() => {
             expect(screen.getByText('管理パネル')).toBeInTheDocument();

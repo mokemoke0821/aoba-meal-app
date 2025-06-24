@@ -49,6 +49,8 @@ export const filterRecordsByDateRange = (
     endDate: Date
 ): MealRecord[] => {
     return records.filter(record => {
+        if (!isValidDate(record.date)) return false;
+
         const recordDate = new Date(record.date);
         return recordDate >= startOfDay(startDate) && recordDate <= endOfDay(endDate);
     });
@@ -61,6 +63,8 @@ export const calculateDailyStats = (records: MealRecord[]): DailyOrderData[] => 
     const dailyMap = new Map<string, DailyOrderData>();
 
     records.forEach(record => {
+        if (!isValidDate(record.date)) return;
+
         const dateKey = format(new Date(record.date), 'yyyy-MM-dd');
 
         if (!dailyMap.has(dateKey)) {
@@ -77,16 +81,22 @@ export const calculateDailyStats = (records: MealRecord[]): DailyOrderData[] => 
         dayData.orderCount++;
         dayData.totalRevenue += record.price || 500; // デフォルト価格
 
-        if (record.rating > 0) {
+        if (isValidRating(record.rating)) {
             dayData.evaluationCount++;
         }
     });
 
     // 平均評価を計算
     dailyMap.forEach(dayData => {
-        const dayRecords = records.filter(r =>
-            format(new Date(r.date), 'yyyy-MM-dd') === dayData.date && r.rating > 0
-        );
+        const dayRecords = records.filter(r => {
+            if (!isValidDate(r.date)) return false;
+
+            try {
+                return format(new Date(r.date), 'yyyy-MM-dd') === dayData.date && isValidRating(r.rating);
+            } catch (error) {
+                return false;
+            }
+        });
 
         if (dayRecords.length > 0) {
             dayData.averageRating = dayRecords.reduce((sum, r) => sum + r.rating, 0) / dayRecords.length;
@@ -97,11 +107,31 @@ export const calculateDailyStats = (records: MealRecord[]): DailyOrderData[] => 
 };
 
 /**
+ * 評価値が有効かどうかをチェック
+ */
+const isValidRating = (rating: number): boolean => {
+    return typeof rating === 'number' &&
+        !isNaN(rating) &&
+        rating > 0 &&
+        rating <= 10 &&
+        isFinite(rating);
+};
+
+/**
+ * 日付が有効かどうかをチェック
+ */
+const isValidDate = (date: string): boolean => {
+    if (!date || typeof date !== 'string') return false;
+    const parsedDate = new Date(date);
+    return !isNaN(parsedDate.getTime()) && date !== '';
+};
+
+/**
  * 評価分布データを計算
  */
 export const calculateRatingDistribution = (records: MealRecord[]): UserRatingData[] => {
     const ratingCounts = new Map<number, number>();
-    const evaluatedRecords = records.filter(r => r.rating > 0);
+    const evaluatedRecords = records.filter(r => isValidRating(r.rating));
 
     // 評価カウント
     evaluatedRecords.forEach(record => {
@@ -143,7 +173,7 @@ export const calculateMenuPopularity = (records: MealRecord[]): MenuPopularityDa
         const menuData = menuMap.get(menuType)!;
         menuData.count++;
 
-        if (record.rating > 0) {
+        if (isValidRating(record.rating)) {
             menuData.totalRating += record.rating;
             menuData.ratingCount++;
         }
@@ -180,7 +210,7 @@ export const calculateMonthlyTrends = (records: MealRecord[], months: number = 6
         const monthEnd = endOfMonth(targetDate);
 
         const monthRecords = filterRecordsByDateRange(records, monthStart, monthEnd);
-        const evaluatedRecords = monthRecords.filter(r => r.rating > 0);
+        const evaluatedRecords = monthRecords.filter(r => isValidRating(r.rating));
 
         const averageRating = evaluatedRecords.length > 0
             ? evaluatedRecords.reduce((sum, r) => sum + r.rating, 0) / evaluatedRecords.length
@@ -214,7 +244,7 @@ export const calculateOverallStatistics = (
         filteredRecords = filterRecordsByDateRange(records, startDate, endDate);
     }
 
-    const evaluatedRecords = filteredRecords.filter(r => r.rating > 0);
+    const evaluatedRecords = filteredRecords.filter(r => isValidRating(r.rating));
     const averageRating = evaluatedRecords.length > 0
         ? evaluatedRecords.reduce((sum, r) => sum + r.rating, 0) / evaluatedRecords.length
         : 0;
@@ -244,7 +274,7 @@ export const calculateTodayStats = (records: MealRecord[]): {
 } => {
     const today = new Date();
     const todayRecords = filterRecordsByDateRange(records, today, today);
-    const evaluatedRecords = todayRecords.filter(r => r.rating > 0);
+    const evaluatedRecords = todayRecords.filter(r => isValidRating(r.rating));
 
     const averageRating = evaluatedRecords.length > 0
         ? evaluatedRecords.reduce((sum, r) => sum + r.rating, 0) / evaluatedRecords.length
