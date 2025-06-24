@@ -13,7 +13,7 @@ module.exports = {
 
     // ES Modules 変換の除外設定
     transformIgnorePatterns: [
-        'node_modules/(?!(date-fns|recharts|@mui|@emotion)/)',
+        'node_modules/(?!(date-fns|recharts|@mui|@emotion|@testing-library)/)',
     ],
 
     // モジュール名マッピング
@@ -21,6 +21,9 @@ module.exports = {
         '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
         '\\.(jpg|jpeg|png|gif|svg)$': '<rootDir>/__mocks__/fileMock.js',
         '^@/(.*)$': '<rootDir>/src/$1',
+        // date-fns v4対応
+        '^date-fns/locale$': '<rootDir>/node_modules/date-fns/locale/index.js',
+        '^date-fns/(.*)$': '<rootDir>/node_modules/date-fns/$1',
     },
 
     // テストファイルパターン

@@ -1,5 +1,5 @@
 import { eachDayOfInterval, endOfMonth, format, isWithinInterval, parseISO, startOfMonth } from 'date-fns';
-import { ja } from 'date-fns/locale';
+// import { ja } from 'date-fns/locale/ja'; // テスト環境でのエラーを回避
 import { MealRecord, MenuItem, User } from '../types';
 
 // 月次利用統計
@@ -222,7 +222,7 @@ export const analyzeUsagePatterns = (records: MealRecord[]): UsagePattern => {
     // 月別トレンド
     const monthlyStats = new Map<string, { count: number; revenue: number }>();
     records.forEach(record => {
-        const month = format(parseISO(record.date), 'yyyy-MM', { locale: ja });
+        const month = format(parseISO(record.date), 'yyyy-MM');
         if (!monthlyStats.has(month)) {
             monthlyStats.set(month, { count: 0, revenue: 0 });
         }

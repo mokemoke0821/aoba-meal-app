@@ -1,5 +1,5 @@
 import { format, parseISO } from 'date-fns';
-import { ja } from 'date-fns/locale';
+// import { ja } from 'date-fns/locale/ja'; // テスト環境でのエラーを回避
 import { saveAs } from 'file-saver';
 import { MealRecord, MenuItem, User } from '../types';
 import {

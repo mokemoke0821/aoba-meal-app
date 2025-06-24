@@ -53,14 +53,8 @@ Object.defineProperty(window, 'localStorage', {
     value: mockLocalStorage,
 });
 
-// navigator.clipboard のモック
-const mockClipboard = {
-    writeText: jest.fn(),
-};
-
-Object.defineProperty(navigator, 'clipboard', {
-    value: mockClipboard,
-});
+// navigator.clipboardのモックはsetupTests.tsで設定済み
+const mockClipboard = navigator.clipboard as jest.Mocked<Clipboard>;
 
 // window.location.reload のモック
 const mockReload = jest.fn();
@@ -75,7 +69,7 @@ describe('ErrorBoundary', () => {
         jest.clearAllMocks();
         mockLocalStorage.setItem.mockClear();
         mockLocalStorage.getItem.mockReturnValue(null);
-        mockClipboard.writeText.mockResolvedValue(undefined);
+        (mockClipboard.writeText as jest.Mock).mockResolvedValue(undefined);
     });
 
     describe('正常状態', () => {
@@ -87,7 +81,7 @@ describe('ErrorBoundary', () => {
             );
 
             expect(screen.getByText('正常なコンポーネント')).toBeInTheDocument();
-            expect(screen.queryByText('エラーが発生しました')).not.toBeInTheDocument();
+            expect(screen.queryByText('問題が発生しました')).not.toBeInTheDocument();
         });
 
         it('複数の子コンポーネントを正常に表示する', () => {
@@ -113,8 +107,8 @@ describe('ErrorBoundary', () => {
                 </ErrorBoundary>
             );
 
-            expect(screen.getByText('エラーが発生しました')).toBeInTheDocument();
-            expect(screen.getByText('申し訳ございません。予期しないエラーが発生しました。')).toBeInTheDocument();
+            expect(screen.getByText('問題が発生しました')).toBeInTheDocument();
+            expect(screen.getByText('アプリケーションでエラーが発生しました')).toBeInTheDocument();
             expect(screen.queryByText('正常なコンポーネント')).not.toBeInTheDocument();
         });
 
@@ -125,7 +119,7 @@ describe('ErrorBoundary', () => {
                 </ErrorBoundary>
             );
 
-            expect(screen.getByText('エラーが発生しました')).toBeInTheDocument();
+            expect(screen.getByText('問題が発生しました')).toBeInTheDocument();
 
             // エラー詳細の展開
             const detailButton = screen.getByText('詳細を表示');
@@ -195,7 +189,7 @@ describe('ErrorBoundary', () => {
                 </ErrorBoundary>
             );
 
-            expect(screen.getByText('エラーが発生しました')).toBeInTheDocument();
+            expect(screen.getByText('問題が発生しました')).toBeInTheDocument();
 
             const retryButton = screen.getByText('再試行');
             fireEvent.click(retryButton);
@@ -208,7 +202,7 @@ describe('ErrorBoundary', () => {
             );
 
             expect(screen.getByText('正常なコンポーネント')).toBeInTheDocument();
-            expect(screen.queryByText('エラーが発生しました')).not.toBeInTheDocument();
+            expect(screen.queryByText('問題が発生しました')).not.toBeInTheDocument();
         });
 
         it('リロードボタンが機能する', () => {
@@ -280,14 +274,14 @@ describe('ErrorBoundary', () => {
                 expect(mockClipboard.writeText).toHaveBeenCalled();
             });
 
-            const copiedText = mockClipboard.writeText.mock.calls[0][0];
+            const copiedText = (mockClipboard.writeText as jest.Mock).mock.calls[0][0];
             expect(copiedText).toContain('レポートテスト用エラー');
             expect(copiedText).toContain('エラーID:');
             expect(copiedText).toContain('発生時刻:');
         });
 
         it('クリップボードアクセスエラーが適切に処理される', async () => {
-            mockClipboard.writeText.mockRejectedValue(new Error('Clipboard access denied'));
+            (mockClipboard.writeText as jest.Mock).mockRejectedValue(new Error('Clipboard access denied'));
 
             renderWithTheme(
                 <ErrorBoundary>
@@ -315,7 +309,7 @@ describe('ErrorBoundary', () => {
             fireEvent.click(copyButton);
 
             const copiedText = await waitFor(() => {
-                return mockClipboard.writeText.mock.calls[0][0];
+                return (mockClipboard.writeText as jest.Mock).mock.calls[0][0];
             });
 
             expect(copiedText).toContain('あおば事業所給食管理アプリ - エラーレポート');
@@ -339,7 +333,7 @@ describe('ErrorBoundary', () => {
                 </ErrorBoundary>
             );
 
-            expect(screen.getByText('エラーが発生しました')).toBeInTheDocument();
+            expect(screen.getByText('問題が発生しました')).toBeInTheDocument();
         });
 
         it('不正なJSONデータが適切に処理される', () => {
@@ -351,7 +345,7 @@ describe('ErrorBoundary', () => {
                 </ErrorBoundary>
             );
 
-            expect(screen.getByText('エラーが発生しました')).toBeInTheDocument();
+            expect(screen.getByText('問題が発生しました')).toBeInTheDocument();
             // 新しいエラーログが保存されることを確認
             expect(mockLocalStorage.setItem).toHaveBeenCalled();
         });
@@ -368,7 +362,7 @@ describe('ErrorBoundary', () => {
             );
 
             // エラーログ保存に失敗してもエラー画面は表示される
-            expect(screen.getByText('エラーが発生しました')).toBeInTheDocument();
+            expect(screen.getByText('問題が発生しました')).toBeInTheDocument();
         });
     });
 
@@ -436,7 +430,7 @@ describe('ErrorBoundary', () => {
                 </ErrorBoundary>
             );
 
-            expect(screen.getByText('エラーが発生しました')).toBeInTheDocument();
+            expect(screen.getByText('問題が発生しました')).toBeInTheDocument();
 
             // モバイルでもすべてのボタンが表示されることを確認
             expect(screen.getByText('再試行')).toBeInTheDocument();
@@ -457,7 +451,7 @@ describe('ErrorBoundary', () => {
                 </ErrorBoundary>
             );
 
-            expect(screen.getByText('エラーが発生しました')).toBeInTheDocument();
+            expect(screen.getByText('問題が発生しました')).toBeInTheDocument();
         });
     });
 
@@ -466,8 +460,7 @@ describe('ErrorBoundary', () => {
         it('should handle throwing null', () => {
             const Thrower = () => {
                 // eslint-disable-next-line @typescript-eslint/no-throw-literal
-                // eslint-disable-next-line @typescript-eslint/no-throw-literal
-                
+                throw null;
             };
 
             const spy = jest.spyOn(console, 'error').mockImplementation(() => {
@@ -480,22 +473,21 @@ describe('ErrorBoundary', () => {
                 </ErrorBoundary>
             );
 
-            expect(screen.getByText('エラーが発生しました')).toBeInTheDocument();
+            expect(screen.getByText('問題が発生しました')).toBeInTheDocument();
             spy.mockRestore();
         });
 
         it('文字列エラーがキャッチされる', () => {
             const ThrowStringError = () => {
                 // eslint-disable-next-line @typescript-eslint/no-throw-literal
-                // eslint-disable-next-line @typescript-eslint/no-throw-literal
-                
+                throw '文字列エラー';
             };
             renderWithTheme(
                 <ErrorBoundary>
                     <ThrowStringError />
                 </ErrorBoundary>
             );
-            expect(screen.getByText('エラーが発生しました')).toBeInTheDocument();
+            expect(screen.getByText('問題が発生しました')).toBeInTheDocument();
         });
 
         it('循環参照エラーがキャッチされる', () => {
@@ -510,7 +502,7 @@ describe('ErrorBoundary', () => {
                     <ThrowCircularError />
                 </ErrorBoundary>
             );
-            expect(screen.getByText('エラーが発生しました')).toBeInTheDocument();
+            expect(screen.getByText('問題が発生しました')).toBeInTheDocument();
         });
     });
 
@@ -529,7 +521,7 @@ describe('ErrorBoundary', () => {
 
             // エラー処理が500ms以内で完了することを期待
             expect(processingTime).toBeLessThan(500);
-            expect(screen.getByText('エラーが発生しました')).toBeInTheDocument();
+            expect(screen.getByText('問題が発生しました')).toBeInTheDocument();
         });
 
         it('大量のエラーログでもパフォーマンスが維持される', () => {
@@ -555,7 +547,7 @@ describe('ErrorBoundary', () => {
 
             // 大量ログがあってもエラー処理が1秒以内で完了することを期待
             expect(processingTime).toBeLessThan(1000);
-            expect(screen.getByText('エラーが発生しました')).toBeInTheDocument();
+            expect(screen.getByText('問題が発生しました')).toBeInTheDocument();
         });
     });
 
@@ -575,7 +567,7 @@ describe('ErrorBoundary', () => {
             });
             expect(spy.mock.calls[0][0]).toBeInstanceOf(Error);
             expect(spy.mock.calls[0][0].message).toBe('テスト用エラー');
-            expect(screen.getByText('エラーが発生しました')).toBeInTheDocument();
+            expect(screen.getByText('問題が発生しました')).toBeInTheDocument();
 
             spy.mockRestore();
         });

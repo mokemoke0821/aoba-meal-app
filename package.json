@@ -40,7 +40,9 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "cross-env DISABLE_ESLINT_PLUGIN=true react-scripts build",
-    "test": "react-scripts test",
+    "test": "react-scripts test --transformIgnorePatterns=\"node_modules/(?!(date-fns|@testing-library)/)\"",
+    "test:ci": "react-scripts test --watchAll=false --coverage",
+    "test:debug": "react-scripts test --watchAll=false --verbose",
     "eject": "react-scripts eject",
     "predeploy": "npm run build",
     "deploy": "gh-pages -d build",

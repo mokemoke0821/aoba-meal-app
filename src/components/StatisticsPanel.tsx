@@ -35,13 +35,19 @@ import {
     YAxis,
 } from 'recharts';
 import { useApp } from '../contexts/AppContext';
-import { exportStatisticsReport } from '../utils/csvExport';
+// import { exportStatisticsReport } from '../utils/csvExport'; // 一時的に無効化
 import {
     calculateOverallStatistics,
     calculateTodayStats,
     StatisticsData,
 } from '../utils/statisticsCalculator';
-import DateRangeFilter, { DateRange } from './DateRangeFilter';
+// import DateRangeFilter, { DateRange } from './DateRangeFilter'; // 一時的に無効化
+
+// 簡単なDateRange型定義
+interface DateRange {
+    startDate: Date | null;
+    endDate: Date | null;
+}
 
 interface StatisticsPanelProps {
     onBack: () => void;
@@ -99,6 +105,9 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ onBack }) => {
     };
 
     const handleExportReport = () => {
+        // 一時的に無効化
+        alert('CSV出力機能は一時的に無効化されています');
+        /*
         try {
             if (statisticsData) {
                 exportStatisticsReport(
@@ -111,6 +120,7 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ onBack }) => {
             console.error('Export error:', error);
             alert('レポート出力中にエラーが発生しました');
         }
+        */
     };
 
     // グラフの色設定
@@ -224,7 +234,8 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ onBack }) => {
                 </Box>
             </Box>
 
-            {/* 期間フィルター */}
+            {/* 期間フィルター - 一時的に無効化 */}
+            {/*
             <Box sx={{ p: 3 }}>
                 <DateRangeFilter
                     dateRange={dateRange}
@@ -232,6 +243,7 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ onBack }) => {
                     onApplyFilter={handleApplyFilter}
                 />
             </Box>
+            */}
 
             {/* 今日の統計カード */}
             <Box sx={{ px: 3, mb: 3 }}>

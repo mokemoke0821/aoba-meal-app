@@ -29,8 +29,8 @@ describe('統計計算機能', () => {
             expect(result).toHaveLength(1);
             expect(result[0]).toEqual({
                 date: today,
-                totalOrders: 2,
-                totalEvaluations: 2,
+                orderCount: 2,
+                evaluationCount: 2,
                 averageRating: 7.5,
                 totalRevenue: 950,
             });

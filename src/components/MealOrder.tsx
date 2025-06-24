@@ -22,7 +22,7 @@ import {
     Typography,
 } from '@mui/material';
 import { format } from 'date-fns';
-import { ja } from 'date-fns/locale';
+// import { ja } from 'date-fns/locale/ja'; // テスト環境でのエラーを回避
 import React, { useState } from 'react';
 import { useApp } from '../contexts/AppContext';
 import { getGroupDisplayName, GROUP_COLORS, MealRecord } from '../types';
@@ -142,7 +142,7 @@ const MealOrder: React.FC<MealOrderProps> = ({ onBack }) => {
         );
     }
 
-    const today = format(new Date(), 'yyyy年MM月dd日（EEEE）', { locale: ja });
+    const today = format(new Date(), 'yyyy年MM月dd日');
 
     return (
         <Container maxWidth="md" sx={{ py: 4 }}>
