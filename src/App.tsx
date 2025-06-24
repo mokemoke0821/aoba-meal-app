@@ -3,15 +3,16 @@ import React from 'react';
 import AdminPanel from './components/AdminPanel';
 import ErrorBoundary from './components/ErrorBoundary';
 import SettingsPage from './components/SettingsPage';
-// import StatisticsPanel from './components/StatisticsPanel';
-// import UserManagement from './components/UserManagement';
 import UserSelector from './components/UserSelector';
 import { AppProvider, useApp } from './contexts/AppContext';
+// import StatisticsPanel from './components/StatisticsPanel';
+// import UserManagement from './components/UserManagement';
+import CategorySelector from './components/CategorySelector';
 import aobaTheme from './theme';
 
 // ビュー別コンポーネントマッピング
 const VIEW_COMPONENTS = {
-  categorySelect: () => <div>カテゴリ選択</div>,
+  categorySelect: CategorySelector,
   userSelect: UserSelector,
   mealOrder: () => <div>給食注文</div>,
   rating: () => <div>評価入力</div>,
@@ -36,7 +37,7 @@ const AppContent: React.FC = () => {
   return (
     <>
       <CssBaseline />
-      <div className="app-container">
+      <div className="app-container" style={{ minHeight: '100vh', padding: '20px' }}>
         <CurrentComponent />
       </div>
     </>
