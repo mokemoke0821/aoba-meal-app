@@ -1,4 +1,4 @@
-import { CssBaseline, ThemeProvider } from '@mui/material';
+import { Box, Button, CssBaseline, ThemeProvider, Typography } from '@mui/material';
 import React from 'react';
 import AdminPanel from './components/AdminPanel';
 import CategorySelector from './components/CategorySelector';
@@ -9,6 +9,35 @@ import UserManagement from './components/UserManagement';
 import UserSelector from './components/UserSelector';
 import { AppProvider, useApp } from './contexts/AppContext';
 import aobaTheme from './theme';
+
+// 共通の戻るボタン付きプレースホルダーコンポーネント
+const PlaceholderPage: React.FC<{ title: string; backTo?: string }> = ({ title, backTo = 'admin' }) => {
+  const { dispatch } = useApp();
+
+  const handleBack = () => {
+    dispatch({ type: 'SET_VIEW', payload: backTo as any });
+  };
+
+  return (
+    <Box sx={{ p: 3 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+        <Button
+          variant="outlined"
+          onClick={handleBack}
+          sx={{ mr: 2 }}
+        >
+          ← 戻る
+        </Button>
+        <Typography variant="h4">
+          {title}
+        </Typography>
+      </Box>
+      <Typography variant="body1" color="text.secondary">
+        この機能は準備中です。
+      </Typography>
+    </Box>
+  );
+};
 
 // UserManagementコンポーネントをラップして必要なpropsを提供
 const UserManagementWrapper: React.FC = () => {
@@ -44,49 +73,110 @@ const StatisticsPanelWrapper: React.FC = () => {
   );
 };
 
-// MenuManagementコンポーネントをラップして必要なpropsを提供
-// const MenuManagementWrapper: React.FC = () => {
-//   const { dispatch } = useApp();
-//   
-//   const handleBack = () => {
-//     dispatch({ type: 'SET_VIEW', payload: 'admin' });
-//   };
-//   
-//   return (
-//     <MenuManagement onBack={handleBack} />
-//   );
-// };
+// 給食注文ページ
+const MealOrderPage: React.FC = () => {
+  const { dispatch } = useApp();
 
-// Settingsコンポーネントをラップして必要なpropsを提供
-// const SettingsWrapper: React.FC = () => {
-//   const { dispatch } = useApp();
-//   
-//   const handleBack = () => {
-//     dispatch({ type: 'SET_VIEW', payload: 'admin' });
-//   };
-//   
-//   return (
-//     <Settings onBack={handleBack} />
-//   );
-// };
+  const handleBack = () => {
+    dispatch({ type: 'SET_VIEW', payload: 'userSelect' });
+  };
+
+  return (
+    <Box sx={{ p: 3 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+        <Button
+          variant="outlined"
+          onClick={handleBack}
+          sx={{ mr: 2 }}
+        >
+          ← 戻る
+        </Button>
+        <Typography variant="h4">
+          給食注文
+        </Typography>
+      </Box>
+      <Typography variant="body1" color="text.secondary">
+        給食注文機能は準備中です。
+      </Typography>
+    </Box>
+  );
+};
+
+// 評価入力ページ
+const RatingPage: React.FC = () => {
+  const { dispatch } = useApp();
+
+  const handleBack = () => {
+    dispatch({ type: 'SET_VIEW', payload: 'userSelect' });
+  };
+
+  return (
+    <Box sx={{ p: 3 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+        <Button
+          variant="outlined"
+          onClick={handleBack}
+          sx={{ mr: 2 }}
+        >
+          ← 戻る
+        </Button>
+        <Typography variant="h4">
+          評価入力
+        </Typography>
+      </Box>
+      <Typography variant="body1" color="text.secondary">
+        評価入力機能は準備中です。
+      </Typography>
+    </Box>
+  );
+};
+
+// 管理者認証ページ
+const AdminAuthPage: React.FC = () => {
+  const { dispatch } = useApp();
+
+  const handleBack = () => {
+    dispatch({ type: 'SET_VIEW', payload: 'categorySelect' });
+  };
+
+  return (
+    <Box sx={{ p: 3 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+        <Button
+          variant="outlined"
+          onClick={handleBack}
+          sx={{ mr: 2 }}
+        >
+          ← 戻る
+        </Button>
+        <Typography variant="h4">
+          管理者認証
+        </Typography>
+      </Box>
+      <Typography variant="body1" color="text.secondary">
+        管理者認証機能は準備中です。
+      </Typography>
+    </Box>
+  );
+};
 
 // ビュー別コンポーネントマッピング
 const VIEW_COMPONENTS = {
   categorySelect: CategorySelector,
   userSelect: UserSelector,
-  mealOrder: () => <div>給食注文</div>,
-  rating: () => <div>評価入力</div>,
+  mealOrder: MealOrderPage,
+  rating: RatingPage,
   admin: AdminPanel,
-  adminAuth: () => <div>管理者認証</div>,
+  adminAuth: AdminAuthPage,
   statistics: StatisticsPanelWrapper,
   userManagement: UserManagementWrapper,
-  menuManagement: () => <div>メニュー管理（準備中）</div>,
-  settings: () => <div>設定（準備中）</div>,
-  printReports: () => <div>レポート印刷</div>,
-  dailyReport: () => <div>日次レポート</div>,
-  weeklyReport: () => <div>週次レポート</div>,
-  monthlyReport: () => <div>月次レポート</div>,
-  billingReport: () => <div>料金レポート</div>,
+  menuManagement: () => <PlaceholderPage title="メニュー管理" backTo="admin" />,
+  settings: () => <PlaceholderPage title="設定" backTo="admin" />,
+  printReports: () => <PlaceholderPage title="レポート印刷" backTo="admin" />,
+  dailyReport: () => <PlaceholderPage title="日次レポート" backTo="admin" />,
+  weeklyReport: () => <PlaceholderPage title="週次レポート" backTo="admin" />,
+  monthlyReport: () => <PlaceholderPage title="月次レポート" backTo="admin" />,
+  billingReport: () => <PlaceholderPage title="料金レポート" backTo="admin" />,
 } as const;
 
 // メインアプリケーションコンポーネント
