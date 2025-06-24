@@ -128,6 +128,7 @@ export type ViewType =
   | 'mealOrder'
   | 'rating'
   | 'admin'
+  | 'adminPanel'        // 新追加：管理者パネル
   | 'adminAuth'
   | 'statistics'
   | 'userManagement'
