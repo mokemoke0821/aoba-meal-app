@@ -37,7 +37,56 @@ type AppAction =
 // 初期状態
 const initialState: AppState = {
   currentView: 'categorySelect',
-  users: [],
+  users: [
+    {
+      id: 'user_1',
+      name: '田中太郎',
+      group: 'グループA',
+      category: 'A型',
+      displayNumber: 1,
+      price: 100,
+      createdAt: new Date().toISOString(),
+      isActive: true,
+      trialUser: false,
+      notes: ''
+    },
+    {
+      id: 'user_2',
+      name: '佐藤花子',
+      group: 'グループB',
+      category: 'B型',
+      displayNumber: 1,
+      price: 0,
+      createdAt: new Date().toISOString(),
+      isActive: true,
+      trialUser: false,
+      notes: ''
+    },
+    {
+      id: 'user_3',
+      name: '山田次郎',
+      group: 'グループC',
+      category: '職員',
+      displayNumber: 1,
+      price: 400,
+      createdAt: new Date().toISOString(),
+      isActive: true,
+      trialUser: false,
+      notes: ''
+    },
+    {
+      id: 'user_4',
+      name: '鈴木美咲',
+      group: 'その他',
+      category: '体験者',
+      displayNumber: 1,
+      price: 400,
+      createdAt: new Date().toISOString(),
+      isActive: true,
+      trialUser: true,
+      notes: ''
+    }
+  ],
   mealRecords: [],
   groups: ['グループA', 'グループB', 'グループC', 'その他'],
   selectedDate: new Date(),

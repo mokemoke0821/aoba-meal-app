@@ -77,7 +77,7 @@ const UserSelector: React.FC = () => {
                         <Button
                             variant="outlined"
                             sx={{ mt: 2 }}
-                            onClick={() => dispatch({ type: 'SET_VIEW', payload: 'admin' })}
+                            onClick={() => dispatch({ type: 'SET_VIEW', payload: 'adminPanel' })}
                         >
                             管理者メニューへ
                         </Button>
@@ -121,7 +121,7 @@ const UserSelector: React.FC = () => {
                 <Box sx={{ mt: 4, textAlign: 'center' }}>
                     <Button
                         variant="outlined"
-                        onClick={() => dispatch({ type: 'SET_VIEW', payload: 'admin' })}
+                        onClick={() => dispatch({ type: 'SET_VIEW', payload: 'adminPanel' })}
                     >
                         管理者メニュー
                     </Button>

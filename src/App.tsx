@@ -96,6 +96,7 @@ const AppContent: React.FC = () => {
         return <CategorySelector />;
       case 'userSelect':
         return <UserSelector />;
+      case 'admin':
       case 'adminPanel':
         return <AdminPanel />;
       case 'userManagement':

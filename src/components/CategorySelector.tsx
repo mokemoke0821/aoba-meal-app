@@ -80,7 +80,7 @@ const CategorySelector: React.FC = () => {
                     <Button
                         variant="outlined"
                         size="large"
-                        onClick={() => dispatch({ type: 'SET_VIEW', payload: 'admin' })}
+                        onClick={() => dispatch({ type: 'SET_VIEW', payload: 'adminPanel' })}
                     >
                         管理者メニュー
                     </Button>
