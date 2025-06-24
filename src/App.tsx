@@ -1,14 +1,74 @@
 import { CssBaseline, ThemeProvider } from '@mui/material';
 import React from 'react';
 import AdminPanel from './components/AdminPanel';
+import CategorySelector from './components/CategorySelector';
 import ErrorBoundary from './components/ErrorBoundary';
-import SettingsPage from './components/SettingsPage';
+// import MenuManagement from './components/MenuManagement';
+import StatisticsPanel from './components/StatisticsPanel';
+import UserManagement from './components/UserManagement';
 import UserSelector from './components/UserSelector';
 import { AppProvider, useApp } from './contexts/AppContext';
-// import StatisticsPanel from './components/StatisticsPanel';
-// import UserManagement from './components/UserManagement';
-import CategorySelector from './components/CategorySelector';
 import aobaTheme from './theme';
+
+// UserManagementコンポーネントをラップして必要なpropsを提供
+const UserManagementWrapper: React.FC = () => {
+  const { state, dispatch } = useApp();
+
+  const handleUpdateUsers = (users: any[]) => {
+    dispatch({ type: 'SET_USERS', payload: users });
+  };
+
+  const handleBack = () => {
+    dispatch({ type: 'SET_VIEW', payload: 'admin' });
+  };
+
+  return (
+    <UserManagement
+      users={state.users}
+      onUpdateUsers={handleUpdateUsers}
+      onBack={handleBack}
+    />
+  );
+};
+
+// StatisticsPanelコンポーネントをラップして必要なpropsを提供
+const StatisticsPanelWrapper: React.FC = () => {
+  const { dispatch } = useApp();
+
+  const handleBack = () => {
+    dispatch({ type: 'SET_VIEW', payload: 'admin' });
+  };
+
+  return (
+    <StatisticsPanel onBack={handleBack} />
+  );
+};
+
+// MenuManagementコンポーネントをラップして必要なpropsを提供
+// const MenuManagementWrapper: React.FC = () => {
+//   const { dispatch } = useApp();
+//   
+//   const handleBack = () => {
+//     dispatch({ type: 'SET_VIEW', payload: 'admin' });
+//   };
+//   
+//   return (
+//     <MenuManagement onBack={handleBack} />
+//   );
+// };
+
+// Settingsコンポーネントをラップして必要なpropsを提供
+// const SettingsWrapper: React.FC = () => {
+//   const { dispatch } = useApp();
+//   
+//   const handleBack = () => {
+//     dispatch({ type: 'SET_VIEW', payload: 'admin' });
+//   };
+//   
+//   return (
+//     <Settings onBack={handleBack} />
+//   );
+// };
 
 // ビュー別コンポーネントマッピング
 const VIEW_COMPONENTS = {
@@ -18,10 +78,10 @@ const VIEW_COMPONENTS = {
   rating: () => <div>評価入力</div>,
   admin: AdminPanel,
   adminAuth: () => <div>管理者認証</div>,
-  statistics: () => <div>統計</div>,
-  userManagement: () => <div>ユーザー管理</div>,
-  menuManagement: () => <div>メニュー管理</div>,
-  settings: SettingsPage,
+  statistics: StatisticsPanelWrapper,
+  userManagement: UserManagementWrapper,
+  menuManagement: () => <div>メニュー管理（準備中）</div>,
+  settings: () => <div>設定（準備中）</div>,
   printReports: () => <div>レポート印刷</div>,
   dailyReport: () => <div>日次レポート</div>,
   weeklyReport: () => <div>週次レポート</div>,
