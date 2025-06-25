@@ -76,10 +76,18 @@ const EatingRatioInput: React.FC<EatingRatioInputProps> = ({ onBack }) => {
             // ありがとうメッセージを表示
             setShowThankYou(true);
 
-            // 3秒後に利用者選択画面に戻る
+            // 3秒後にカテゴリ選択画面に戻る
             setTimeout(() => {
                 setShowThankYou(false);
-                handleBack();
+                // 改良された成功メッセージ
+                alert(`✅ ${selectedUser.name}さんの摂食量評価（${eatingRatio}割）を記録しました！\n\nお疲れ様でした。\n次の利用者の方は、カテゴリを選択してください。`);
+
+                // 利用者選択状態をクリア
+                dispatch({ type: 'SET_SELECTED_USER', payload: null });
+                dispatch({ type: 'SET_SELECTED_CATEGORY', payload: null });
+
+                // 修正: カテゴリ選択画面に戻る（次の利用者が使いやすくするため）
+                dispatch({ type: 'SET_VIEW', payload: 'categorySelect' });
             }, 3000);
         }
     };

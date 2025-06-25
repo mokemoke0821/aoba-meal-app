@@ -44,7 +44,6 @@ import {
     GridRowId,
     GridToolbar
 } from '@mui/x-data-grid';
-import { saveAs } from 'file-saver';
 import React, { useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import {
@@ -56,6 +55,7 @@ import {
     UserCategory,
     getCategoryPrice
 } from '../types';
+import { exportUsersCSV } from '../utils/csvExport';
 
 interface UserFormData {
     name: string;
@@ -380,28 +380,21 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers, o
 
     // Export/Import functions
     const handleExportUsers = () => {
-        const csvContent = [
-            ['ID', '名前', 'グループ', 'お試しユーザー', '料金', '登録日', '状態', '備考'].join(','),
-            ...filteredUsers.map(user => [
-                user.id,
-                `"${user.name}"`,
-                user.group,
-                user.trialUser ? 'はい' : 'いいえ',
-                user.price,
-                user.createdAt.split('T')[0],
-                user.isActive !== false ? '有効' : '無効',
-                `"${user.notes || ''}"`
-            ].join(','))
-        ].join('\n');
-
-        const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8' });
-        saveAs(blob, `利用者一覧_${new Date().toISOString().split('T')[0]}.csv`);
-
-        setSnackbar({
-            open: true,
-            message: '利用者データをCSVファイルでエクスポートしました',
-            severity: 'success'
-        });
+        try {
+            exportUsersCSV(filteredUsers.length > 0 ? filteredUsers : users);
+            setSnackbar({
+                open: true,
+                message: '利用者データをCSVファイルとしてダウンロードしました',
+                severity: 'success'
+            });
+        } catch (error) {
+            console.error('CSV出力エラー:', error);
+            setSnackbar({
+                open: true,
+                message: 'CSV出力中にエラーが発生しました',
+                severity: 'error'
+            });
+        }
     };
 
     const handleImportUsers = (event: React.ChangeEvent<HTMLInputElement>) => {

@@ -30,6 +30,16 @@ const CategorySelector: React.FC = () => {
                     利用者カテゴリを選択してください
                 </Typography>
 
+                {/* 連続利用を考慮した案内メッセージ追加 */}
+                <Box sx={{ textAlign: 'center', mb: 3, mt: 2 }}>
+                    <Typography variant="h6" sx={{ color: 'text.secondary' }}>
+                        👥 ご利用される方のカテゴリを選択してください
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: 'text.secondary', mt: 1 }}>
+                        複数の利用者が連続してご利用いただけます
+                    </Typography>
+                </Box>
+
                 <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr 1fr' }, gap: 3, mt: 4 }}>
                     {categories.map((category) => (
                         <Card

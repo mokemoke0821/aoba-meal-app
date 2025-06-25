@@ -46,21 +46,19 @@ import {
     YAxis
 } from 'recharts';
 import { useApp } from '../contexts/AppContext';
-// import { exportStatisticsReport } from '../utils/csvExport'; // 一時的に無効化
+import {
+    exportMonthlyReportCSV,
+    exportPeriodReportCSV,
+    exportStatisticsCSV,
+    exportUsersCSV
+} from '../utils/csvExport';
 import {
     calculateOverallStatistics,
     calculateTodayStats,
     StatisticsData,
 } from '../utils/statisticsCalculator';
-// import DateRangeFilter, { DateRange } from './DateRangeFilter'; // 一時的に無効化
+import DateRangeFilter, { DateRange } from './DateRangeFilter';
 
-// 簡単なDateRange型定義
-interface DateRange {
-    startDate: Date | null;
-    endDate: Date | null;
-}
-
-// 月次有料ユーザー統計の型定義
 interface MonthlyPaidUserStats {
     month: string;                    // 'yyyy-MM'形式
     users: Array<{
@@ -84,7 +82,7 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ onBack }) => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
-    const [dateRange] = useState<DateRange>({
+    const [dateRange, setDateRange] = useState<DateRange>({
         startDate: null,
         endDate: null,
     });
@@ -231,22 +229,68 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ onBack }) => {
     };
 
     const handleExportReport = () => {
-        // 一時的に無効化
-        alert('CSV出力機能は一時的に無効化されています');
-        /*
         try {
             if (statisticsData) {
-                exportStatisticsReport(
-                    statisticsData,
-                    dateRange.startDate || new Date(),
-                    dateRange.endDate || new Date()
+                // 統計データCSV出力
+                exportStatisticsCSV(
+                    state.mealRecords,
+                    state.users,
+                    dateRange.startDate || undefined,
+                    dateRange.endDate || undefined
                 );
+
+                // 成功メッセージ
+                alert('統計データをCSVファイルとしてダウンロードしました');
+            } else {
+                alert('出力するデータがありません');
             }
         } catch (error) {
-            console.error('Export error:', error);
-            alert('レポート出力中にエラーが発生しました');
+            console.error('CSV出力エラー:', error);
+            alert('CSV出力中にエラーが発生しました');
         }
-        */
+    };
+
+    // 利用者CSVエクスポート
+    const handleExportUsers = () => {
+        try {
+            exportUsersCSV(state.users);
+            alert('利用者データをCSVファイルとしてダウンロードしました');
+        } catch (error) {
+            console.error('CSV出力エラー:', error);
+            alert('CSV出力中にエラーが発生しました');
+        }
+    };
+
+    // 月次CSVエクスポート
+    const handleExportMonthly = () => {
+        try {
+            const now = new Date();
+            exportMonthlyReportCSV(state.mealRecords, now.getFullYear(), now.getMonth() + 1);
+            alert('月次レポートをCSVファイルとしてダウンロードしました');
+        } catch (error) {
+            console.error('CSV出力エラー:', error);
+            alert('CSV出力中にエラーが発生しました');
+        }
+    };
+
+    // 期間指定CSVエクスポート
+    const handleExportPeriodReport = () => {
+        try {
+            if (dateRange.startDate && dateRange.endDate) {
+                exportPeriodReportCSV(
+                    state.mealRecords,
+                    state.users,
+                    dateRange.startDate,
+                    dateRange.endDate
+                );
+                alert('期間指定レポートをCSVファイルとしてダウンロードしました');
+            } else {
+                alert('開始日と終了日を両方とも選択してください');
+            }
+        } catch (error) {
+            console.error('CSV出力エラー:', error);
+            alert('CSV出力中にエラーが発生しました');
+        }
     };
 
     // グラフの色設定
@@ -348,7 +392,7 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ onBack }) => {
                     📊 統計・分析
                 </Typography>
 
-                <Box sx={{ display: 'flex', gap: 1 }}>
+                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                     <Button
                         variant="outlined"
                         startIcon={<RefreshIcon />}
@@ -363,9 +407,36 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ onBack }) => {
                         onClick={handleExportReport}
                         sx={{ borderRadius: '8px' }}
                     >
-                        CSV出力
+                        統計CSV
+                    </Button>
+                    <Button
+                        variant="outlined"
+                        startIcon={<DownloadIcon />}
+                        onClick={handleExportUsers}
+                        sx={{ borderRadius: '8px' }}
+                        size={isMobile ? 'small' : 'medium'}
+                    >
+                        利用者CSV
+                    </Button>
+                    <Button
+                        variant="outlined"
+                        startIcon={<DownloadIcon />}
+                        onClick={handleExportMonthly}
+                        sx={{ borderRadius: '8px' }}
+                        size={isMobile ? 'small' : 'medium'}
+                    >
+                        月次CSV
                     </Button>
                 </Box>
+            </Box>
+
+            {/* 期間指定フィルター */}
+            <Box sx={{ px: 3, pt: 3 }}>
+                <DateRangeFilter
+                    dateRange={dateRange}
+                    onDateRangeChange={setDateRange}
+                    onExport={handleExportPeriodReport}
+                />
             </Box>
 
             {/* 今日の統計カード（改善版） */}

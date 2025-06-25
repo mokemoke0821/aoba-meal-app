@@ -81,10 +81,20 @@ const MealOrder: React.FC<MealOrderProps> = ({ onBack }) => {
                 supportNotes: ''
             };
             dispatch({ type: 'ADD_MEAL_RECORD', payload: newRecord });
+
+            // 改良された成功メッセージ
+            setTimeout(() => {
+                alert(`✅ ${selectedUser.name}さんの給食注文が完了しました！\n\n次の利用者の方は、カテゴリを選択してください。`);
+
+                // 利用者選択状態をクリア
+                dispatch({ type: 'SET_SELECTED_USER', payload: null });
+                dispatch({ type: 'SET_SELECTED_CATEGORY', payload: null });
+
+                // 修正: カテゴリ選択画面に戻る（次の利用者が使いやすくするため）
+                dispatch({ type: 'SET_VIEW', payload: 'categorySelect' });
+            }, 100); // 画面更新後にメッセージ表示
         }
         setConfirmOpen(false);
-        // 注文完了後は利用者選択画面に戻る
-        handleBack();
     };
 
     // 確認ダイアログのキャンセル
@@ -105,9 +115,20 @@ const MealOrder: React.FC<MealOrderProps> = ({ onBack }) => {
                 record => !(record.userId === selectedUser.id && record.date === format(new Date(), 'yyyy-MM-dd'))
             );
             dispatch({ type: 'SET_MEAL_RECORDS', payload: updatedRecords });
+
+            // キャンセル完了メッセージ
+            setTimeout(() => {
+                alert(`❌ ${selectedUser.name}さんの給食注文をキャンセルしました。\n\n次の利用者の方は、カテゴリを選択してください。`);
+
+                // 利用者選択状態をクリア
+                dispatch({ type: 'SET_SELECTED_USER', payload: null });
+                dispatch({ type: 'SET_SELECTED_CATEGORY', payload: null });
+
+                // カテゴリ選択画面に戻る
+                dispatch({ type: 'SET_VIEW', payload: 'categorySelect' });
+            }, 100);
         }
         setCancelOpen(false);
-        handleBack();
     };
 
     // キャンセルダイアログの取消
