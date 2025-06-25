@@ -37,7 +37,7 @@
     "start": "cross-env NODE_OPTIONS=\"--max-old-space-size=4096\" react-scripts start",
     "build": "cross-env NODE_OPTIONS=\"--max-old-space-size=8192\" DISABLE_ESLINT_PLUGIN=true GENERATE_SOURCEMAP=false react-scripts build",
     "build:dev": "cross-env NODE_OPTIONS=\"--max-old-space-size=6144\" react-scripts build",
-    "test": "cross-env NODE_OPTIONS=\"--max-old-space-size=4096\" react-scripts test --testTimeout=60000",
+    "test": "cross-env NODE_OPTIONS=\"--max-old-space-size=4096\" react-scripts test --testTimeout=60000 --transformIgnorePatterns=\"node_modules/(?!(date-fns|@mui|@emotion)/)\"",
     "test:ci": "cross-env NODE_OPTIONS=\"--max-old-space-size=4096\" react-scripts test --watchAll=false --testTimeout=60000 --coverage",
     "eject": "react-scripts eject",
     "predeploy": "npm run build",

@@ -301,6 +301,18 @@ export const validateDateRange = (
     if (start > end) {
         result.isValid = false;
         result.errors.push(`${fieldName}の開始日は終了日より前である必要があります`);
+        return result;
+    }
+
+    // 同一日付警告
+    if (start.getTime() === end.getTime()) {
+        result.warnings.push(`開始日と終了日が同じです`);
+    }
+
+    // 長期間警告（365日以上）
+    const daysDiff = Math.abs(end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24);
+    if (daysDiff >= 365) {
+        result.warnings.push(`長期間（${Math.floor(daysDiff)}日）の期間が選択されています`);
     }
 
     return result;
@@ -369,12 +381,23 @@ export const checkDuplicates = <T>(
         warnings: []
     };
 
-    const keys = array.map(getKey);
-    const duplicates = keys.filter((key, index) => keys.indexOf(key) !== index);
+    const seen = new Set<string>();
+    const duplicateKeys = new Set<string>();
 
-    if (duplicates.length > 0) {
+    array.forEach(item => {
+        const key = getKey(item);
+        if (seen.has(key)) {
+            duplicateKeys.add(key);
+        } else {
+            seen.add(key);
+        }
+    });
+
+    if (duplicateKeys.size > 0) {
         result.isValid = false;
-        result.errors.push(`${fieldName}に重複があります: ${duplicates.join(', ')}`);
+        duplicateKeys.forEach(key => {
+            result.errors.push(`${fieldName}に重複した値「${key}」があります`);
+        });
     }
 
     return result;
@@ -485,13 +508,39 @@ export const validateDataIntegrity = (
     );
     result.errors.push(...displayNumberDuplicates.errors);
 
-    // 給食記録の孤児チェック
-    const userIds = new Set(users.map(user => user.id));
-    const orphanRecords = mealRecords.filter(record => !userIds.has(record.userId));
+    // ユーザーIDマップを作成
+    const userMap = new Map<string, User>();
+    users.forEach(user => {
+        userMap.set(user.id, user);
+    });
 
-    if (orphanRecords.length > 0) {
-        result.warnings.push(`存在しないユーザーの給食記録が${orphanRecords.length}件あります`);
-    }
+    // 各給食記録をチェック
+    mealRecords.forEach(record => {
+        // 存在しないユーザーIDの参照をチェック
+        const user = userMap.get(record.userId);
+        if (!user) {
+            result.isValid = false;
+            result.errors.push(`存在しない利用者ID「${record.userId}」が参照されています`);
+            return;
+        }
+
+        // 利用者名の不一致をチェック
+        if (user.name !== record.userName) {
+            result.warnings.push(`利用者ID「${record.userId}」の利用者名が一致しません（期待: ${user.name}, 実際: ${record.userName}）`);
+        }
+
+        // 非アクティブユーザーの最近の記録をチェック
+        if (!user.isActive) {
+            const recordDate = new Date(record.date);
+            const today = new Date();
+            const daysDiff = Math.abs(today.getTime() - recordDate.getTime()) / (1000 * 60 * 60 * 24);
+
+            // 7日以内の記録を「最近」とする
+            if (daysDiff <= 7) {
+                result.warnings.push(`非アクティブな利用者「${user.name}」の最近の記録があります（${record.date}）`);
+            }
+        }
+    });
 
     // 日付の整合性チェック
     const invalidDateRecords = mealRecords.filter(record => {
