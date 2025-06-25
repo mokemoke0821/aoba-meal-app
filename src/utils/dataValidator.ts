@@ -436,14 +436,14 @@ export const validateMealRecord = (record: any): ValidationResult => {
     result.errors.push(...dateResult.errors);
     result.warnings.push(...dateResult.warnings);
 
-    // 評価バリデーション
-    const ratingResult = validateNumber(record.rating, '評価', {
+    // 摂食量バリデーション
+    const eatingRatioResult = validateNumber(record.eatingRatio, '摂食量', {
         min: 1,
         max: 10,
         isInteger: true
     });
-    result.errors.push(...ratingResult.errors);
-    result.warnings.push(...ratingResult.warnings);
+    result.errors.push(...eatingRatioResult.errors);
+    result.warnings.push(...eatingRatioResult.warnings);
 
     // 料金バリデーション
     const priceResult = validateNumber(record.price, '料金', {
@@ -531,10 +531,10 @@ export const createMockMealRecord = (overrides: Partial<MealRecord> = {}): MealR
         userGroup: 'グループA',
         userCategory: 'A型',
         date: new Date().toISOString().split('T')[0],
-        rating: 7,
+        eatingRatio: 7,
         price: 100,
         menuName: 'テストメニュー',
-        notes: 'テスト記録',
+        supportNotes: 'テスト記録',
         ...overrides
     };
 };

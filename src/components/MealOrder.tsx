@@ -67,7 +67,7 @@ const MealOrder: React.FC<MealOrderProps> = ({ onBack }) => {
     // 給食注文実行
     const handleOrderExecute = () => {
         if (selectedUser) {
-            // 給食記録を作成（評価は後で入力）
+            // 給食記録を作成（摂食量は後で入力）
             const newRecord: MealRecord = {
                 id: `meal_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
                 userId: selectedUser.id,
@@ -75,10 +75,10 @@ const MealOrder: React.FC<MealOrderProps> = ({ onBack }) => {
                 userGroup: selectedUser.group,
                 userCategory: selectedUser.category,
                 date: format(new Date(), 'yyyy-MM-dd'),
-                rating: 0, // 未評価状態
+                eatingRatio: 0, // 未記録状態
                 price: selectedUser.price,
                 menuName: state.currentMenu?.name || '今日の給食',
-                notes: ''
+                supportNotes: ''
             };
             dispatch({ type: 'ADD_MEAL_RECORD', payload: newRecord });
         }
@@ -272,7 +272,7 @@ const MealOrder: React.FC<MealOrderProps> = ({ onBack }) => {
                     </Button>
                 )}
 
-                {/* 評価入力ボタン（注文済みの場合のみ表示） */}
+                {/* 摂食量入力ボタン（注文済みの場合のみ表示） */}
                 {hasOrderedToday && (
                     <Button
                         variant="outlined"
@@ -285,7 +285,7 @@ const MealOrder: React.FC<MealOrderProps> = ({ onBack }) => {
                             borderRadius: '12px',
                         }}
                     >
-                        評価を入力する
+                        摂食量を記録する
                     </Button>
                 )}
             </Box>

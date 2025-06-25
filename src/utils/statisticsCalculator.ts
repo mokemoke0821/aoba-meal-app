@@ -1,43 +1,29 @@
-import { endOfDay, endOfMonth, endOfWeek, format, startOfDay, startOfMonth, startOfWeek } from 'date-fns';
-import { MealRecord, User } from '../types';
+import { endOfDay, endOfWeek, format, startOfDay, startOfWeek } from 'date-fns';
+import { EATING_RATIO_LABELS, EatingRatioDistribution, MealRecord, User } from '../types';
 
 export interface DailyOrderData {
     date: string;
     orderCount: number;
     evaluationCount: number;
-    averageRating: number;
+    averageEatingRatio: number;  // 平均摂食量
     totalRevenue: number;
-}
-
-export interface UserRatingData {
-    rating: number;
-    count: number;
-    percentage: number;
-}
-
-export interface MenuPopularityData {
-    menuType: string;
-    count: number;
-    averageRating: number;
-    percentage: number;
 }
 
 export interface MonthlyTrendData {
     month: string;
     orderCount: number;
-    averageRating: number;
+    averageEatingRatio: number;  // 平均摂食量
     revenue: number;
 }
 
 export interface StatisticsData {
     dailyOrders: DailyOrderData[];
-    userRatings: UserRatingData[];
-    menuPopularity: MenuPopularityData[];
+    eatingRatioDistribution: EatingRatioDistribution[];  // 摂食量分布
     monthlyTrends: MonthlyTrendData[];
     totalUsers: number;
     totalOrders: number;
     totalRevenue: number;
-    averageRating: number;
+    averageEatingRatio: number;  // 平均摂食量
 }
 
 /**
@@ -72,7 +58,7 @@ export const calculateDailyStats = (records: MealRecord[]): DailyOrderData[] => 
                 date: dateKey,
                 orderCount: 0,
                 evaluationCount: 0,
-                averageRating: 0,
+                averageEatingRatio: 0,
                 totalRevenue: 0,
             });
         }
@@ -81,25 +67,25 @@ export const calculateDailyStats = (records: MealRecord[]): DailyOrderData[] => 
         dayData.orderCount++;
         dayData.totalRevenue += record.price || 500; // デフォルト価格
 
-        if (isValidRating(record.rating)) {
+        if (isValidEatingRatio(record.eatingRatio)) {
             dayData.evaluationCount++;
         }
     });
 
-    // 平均評価を計算
+    // 平均摂食量を計算
     dailyMap.forEach(dayData => {
         const dayRecords = records.filter(r => {
             if (!isValidDate(r.date)) return false;
 
             try {
-                return format(new Date(r.date), 'yyyy-MM-dd') === dayData.date && isValidRating(r.rating);
+                return format(new Date(r.date), 'yyyy-MM-dd') === dayData.date && isValidEatingRatio(r.eatingRatio);
             } catch (error) {
                 return false;
             }
         });
 
         if (dayRecords.length > 0) {
-            dayData.averageRating = dayRecords.reduce((sum, r) => sum + r.rating, 0) / dayRecords.length;
+            dayData.averageEatingRatio = dayRecords.reduce((sum, r) => sum + r.eatingRatio, 0) / dayRecords.length;
         }
     });
 
@@ -107,14 +93,14 @@ export const calculateDailyStats = (records: MealRecord[]): DailyOrderData[] => 
 };
 
 /**
- * 評価値が有効かどうかをチェック
+ * 摂食量が有効かどうかをチェック
  */
-const isValidRating = (rating: number): boolean => {
-    return typeof rating === 'number' &&
-        !isNaN(rating) &&
-        rating > 0 &&
-        rating <= 10 &&
-        isFinite(rating);
+const isValidEatingRatio = (eatingRatio: number): boolean => {
+    return typeof eatingRatio === 'number' &&
+        !isNaN(eatingRatio) &&
+        eatingRatio >= 1 &&
+        eatingRatio <= 10 &&
+        isFinite(eatingRatio);
 };
 
 /**
@@ -127,106 +113,86 @@ const isValidDate = (date: string): boolean => {
 };
 
 /**
- * 評価分布データを計算
+ * 摂食量分布データを計算
  */
-export const calculateRatingDistribution = (records: MealRecord[]): UserRatingData[] => {
-    const ratingCounts = new Map<number, number>();
-    const evaluatedRecords = records.filter(r => isValidRating(r.rating));
+export const calculateEatingRatioDistribution = (records: MealRecord[]): EatingRatioDistribution[] => {
+    const ratioCounts = new Map<number, number>();
+    const evaluatedRecords = records.filter(r => isValidEatingRatio(r.eatingRatio));
 
-    // 評価カウント
+    // 摂食量カウント
     evaluatedRecords.forEach(record => {
-        const rating = record.rating;
-        ratingCounts.set(rating, (ratingCounts.get(rating) || 0) + 1);
+        const ratio = record.eatingRatio;
+        ratioCounts.set(ratio, (ratioCounts.get(ratio) || 0) + 1);
     });
 
     const total = evaluatedRecords.length;
-    const result: UserRatingData[] = [];
+    const result: EatingRatioDistribution[] = [];
 
-    // 1-5の評価で結果を生成
-    for (let rating = 1; rating <= 5; rating++) {
-        const count = ratingCounts.get(rating) || 0;
+    // 1-10の摂食量で結果を生成
+    for (let ratio = 1; ratio <= 10; ratio++) {
+        const count = ratioCounts.get(ratio) || 0;
         const percentage = total > 0 ? (count / total) * 100 : 0;
+        const label = EATING_RATIO_LABELS[ratio as keyof typeof EATING_RATIO_LABELS];
 
         result.push({
-            rating,
+            ratio,
             count,
             percentage: Math.round(percentage * 10) / 10, // 小数点1桁
+            label,
         });
     }
 
     return result;
-};
-
-/**
- * メニュー人気度データを計算
- */
-export const calculateMenuPopularity = (records: MealRecord[]): MenuPopularityData[] => {
-    const menuMap = new Map<string, { count: number; totalRating: number; ratingCount: number }>();
-
-    records.forEach(record => {
-        const menuType = record.menuName || '通常食';
-
-        if (!menuMap.has(menuType)) {
-            menuMap.set(menuType, { count: 0, totalRating: 0, ratingCount: 0 });
-        }
-
-        const menuData = menuMap.get(menuType)!;
-        menuData.count++;
-
-        if (isValidRating(record.rating)) {
-            menuData.totalRating += record.rating;
-            menuData.ratingCount++;
-        }
-    });
-
-    const total = records.length;
-    const result: MenuPopularityData[] = [];
-
-    menuMap.forEach((data, menuType) => {
-        const averageRating = data.ratingCount > 0 ? data.totalRating / data.ratingCount : 0;
-        const percentage = total > 0 ? (data.count / total) * 100 : 0;
-
-        result.push({
-            menuType,
-            count: data.count,
-            averageRating: Math.round(averageRating * 10) / 10,
-            percentage: Math.round(percentage * 10) / 10,
-        });
-    });
-
-    return result.sort((a, b) => b.count - a.count);
 };
 
 /**
  * 月次トレンドデータを計算
  */
 export const calculateMonthlyTrends = (records: MealRecord[], months: number = 6): MonthlyTrendData[] => {
+    const monthlyMap = new Map<string, MonthlyTrendData>();
     const now = new Date();
-    const result: MonthlyTrendData[] = [];
 
+    // 過去N月分の月を初期化
     for (let i = months - 1; i >= 0; i--) {
-        const targetDate = new Date(now.getFullYear(), now.getMonth() - i, 1);
-        const monthStart = startOfMonth(targetDate);
-        const monthEnd = endOfMonth(targetDate);
-
-        const monthRecords = filterRecordsByDateRange(records, monthStart, monthEnd);
-        const evaluatedRecords = monthRecords.filter(r => isValidRating(r.rating));
-
-        const averageRating = evaluatedRecords.length > 0
-            ? evaluatedRecords.reduce((sum, r) => sum + r.rating, 0) / evaluatedRecords.length
-            : 0;
-
-        const revenue = monthRecords.reduce((sum, r) => sum + (r.price || 500), 0);
-
-        result.push({
-            month: format(targetDate, 'yyyy-MM'),
-            orderCount: monthRecords.length,
-            averageRating: Math.round(averageRating * 10) / 10,
-            revenue,
+        const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const monthKey = format(date, 'yyyy-MM');
+        monthlyMap.set(monthKey, {
+            month: monthKey,
+            orderCount: 0,
+            averageEatingRatio: 0,
+            revenue: 0,
         });
     }
 
-    return result;
+    // レコードを月別に集計
+    records.forEach(record => {
+        if (!isValidDate(record.date)) return;
+
+        const monthKey = format(new Date(record.date), 'yyyy-MM');
+        if (monthlyMap.has(monthKey)) {
+            const monthData = monthlyMap.get(monthKey)!;
+            monthData.orderCount++;
+            monthData.revenue += record.price || 500;
+        }
+    });
+
+    // 平均摂食量を計算
+    monthlyMap.forEach(monthData => {
+        const monthRecords = records.filter(r => {
+            if (!isValidDate(r.date)) return false;
+            try {
+                return format(new Date(r.date), 'yyyy-MM') === monthData.month && isValidEatingRatio(r.eatingRatio);
+            } catch (error) {
+                return false;
+            }
+        });
+
+        if (monthRecords.length > 0) {
+            monthData.averageEatingRatio = monthRecords.reduce((sum, r) => sum + r.eatingRatio, 0) / monthRecords.length;
+        }
+    });
+
+    return Array.from(monthlyMap.values()).sort((a, b) => a.month.localeCompare(b.month));
 };
 
 /**
@@ -240,26 +206,25 @@ export const calculateOverallStatistics = (
 ): StatisticsData => {
     let filteredRecords = records;
 
+    // 期間フィルタリング
     if (startDate && endDate) {
         filteredRecords = filterRecordsByDateRange(records, startDate, endDate);
     }
 
-    const evaluatedRecords = filteredRecords.filter(r => isValidRating(r.rating));
-    const averageRating = evaluatedRecords.length > 0
-        ? evaluatedRecords.reduce((sum, r) => sum + r.rating, 0) / evaluatedRecords.length
+    const totalRevenue = filteredRecords.reduce((sum, record) => sum + (record.price || 500), 0);
+    const evaluatedRecords = filteredRecords.filter(r => isValidEatingRatio(r.eatingRatio));
+    const averageEatingRatio = evaluatedRecords.length > 0
+        ? evaluatedRecords.reduce((sum, r) => sum + r.eatingRatio, 0) / evaluatedRecords.length
         : 0;
-
-    const totalRevenue = filteredRecords.reduce((sum, r) => sum + (r.price || 500), 0);
 
     return {
         dailyOrders: calculateDailyStats(filteredRecords),
-        userRatings: calculateRatingDistribution(filteredRecords),
-        menuPopularity: calculateMenuPopularity(filteredRecords),
-        monthlyTrends: calculateMonthlyTrends(records), // 全期間のトレンド
+        eatingRatioDistribution: calculateEatingRatioDistribution(filteredRecords),
+        monthlyTrends: calculateMonthlyTrends(filteredRecords),
         totalUsers: users.length,
         totalOrders: filteredRecords.length,
         totalRevenue,
-        averageRating: Math.round(averageRating * 10) / 10,
+        averageEatingRatio: Math.round(averageEatingRatio * 10) / 10,
     };
 };
 
@@ -272,28 +237,34 @@ export const calculateTodayStats = (records: MealRecord[]): {
     completedEvaluations: number;
     averageRating: number;
 } => {
-    const today = new Date();
-    const todayRecords = filterRecordsByDateRange(records, today, today);
-    const evaluatedRecords = todayRecords.filter(r => isValidRating(r.rating));
+    const today = format(new Date(), 'yyyy-MM-dd');
+    const todayRecords = records.filter(r => {
+        try {
+            return isValidDate(r.date) && format(new Date(r.date), 'yyyy-MM-dd') === today;
+        } catch (error) {
+            return false;
+        }
+    });
 
-    const averageRating = evaluatedRecords.length > 0
-        ? evaluatedRecords.reduce((sum, r) => sum + r.rating, 0) / evaluatedRecords.length
+    const evaluatedRecords = todayRecords.filter(r => isValidEatingRatio(r.eatingRatio));
+    const averageEatingRatio = evaluatedRecords.length > 0
+        ? evaluatedRecords.reduce((sum, r) => sum + r.eatingRatio, 0) / evaluatedRecords.length
         : 0;
 
     return {
         totalOrders: todayRecords.length,
         pendingEvaluations: todayRecords.length - evaluatedRecords.length,
         completedEvaluations: evaluatedRecords.length,
-        averageRating: Math.round(averageRating * 10) / 10,
+        averageRating: Math.round(averageEatingRatio * 10) / 10, // 互換性のため名前を維持
     };
 };
 
 /**
- * 週間統計を計算
+ * 週次統計を計算
  */
 export const calculateWeeklyStats = (records: MealRecord[]): DailyOrderData[] => {
     const now = new Date();
-    const weekStart = startOfWeek(now, { weekStartsOn: 1 }); // 月曜始まり
+    const weekStart = startOfWeek(now, { weekStartsOn: 1 }); // 月曜日開始
     const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
 
     const weekRecords = filterRecordsByDateRange(records, weekStart, weekEnd);

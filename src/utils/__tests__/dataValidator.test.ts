@@ -300,12 +300,12 @@ describe('データ検証機能', () => {
             expect(result.errors).toContain('利用者IDは空にできません');
         });
 
-        it('無効な評価値を検出する', () => {
-            const recordWithInvalidRating = createMockMealRecord({
-                rating: 15
+        it('無効な摂食量値を検出する', () => {
+            const recordWithInvalidEatingRatio = createMockMealRecord({
+                eatingRatio: 15
             });
 
-            const result = validateMealRecord(recordWithInvalidRating);
+            const result = validateMealRecord(recordWithInvalidEatingRatio);
 
             expect(result.isValid).toBe(false);
             expect(result.errors.some(error => error.includes('10以下'))).toBe(true);
@@ -359,7 +359,7 @@ describe('データ検証機能', () => {
             const result = validateDateRange(startDate, endDate, '日付範囲');
 
             expect(result.isValid).toBe(false);
-            expect(result.errors).toContain('開始日は終了日より前の日付を選択してください');
+            expect(result.errors).toContain('日付範囲の開始日は終了日より前である必要があります');
         });
 
         it('長期間の警告を出す', () => {

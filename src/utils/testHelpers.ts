@@ -71,10 +71,10 @@ export const createMockMealRecord = (overrides: Partial<MealRecord> = {}): MealR
         userGroup: mockUsers[0].group,
         userCategory: mockUsers[0].category,
         date: new Date().toISOString().split('T')[0], // 'yyyy-MM-dd' format
-        rating: 7,
+        eatingRatio: 7,
         price: mockUsers[0].price,
         menuName: mockMenuItem.name,
-        notes: 'テスト用の給食記録'
+        supportNotes: 'テスト用の給食記録'
     };
 
     return { ...baseRecord, ...overrides };
@@ -97,10 +97,10 @@ export const generateMockMealRecords = (users: User[], count: number): MealRecor
             userGroup: user.group,
             userCategory: user.category,
             date: recordDate.toISOString().split('T')[0],
-            rating: Math.floor(Math.random() * 10) + 1, // 1-10のランダム評価
+            eatingRatio: Math.floor(Math.random() * 10) + 1, // 1-10のランダム摂食量
             price: user.price,
             menuName: `テストメニュー${i + 1}`,
-            notes: `テスト記録 ${i + 1}`
+            supportNotes: `テスト記録 ${i + 1}`
         }));
     }
 
@@ -128,10 +128,10 @@ export const generateMockMealRecordsForDateRange = (
                 userGroup: user.group,
                 userCategory: user.category,
                 date: currentDate.toISOString().split('T')[0],
-                rating: Math.floor(Math.random() * 10) + 1,
+                eatingRatio: Math.floor(Math.random() * 10) + 1,
                 price: user.price,
                 menuName: `${currentDate.toLocaleDateString('ja-JP')}のメニュー`,
-                notes: `${currentDate.toLocaleDateString('ja-JP')}の記録`
+                supportNotes: `${currentDate.toLocaleDateString('ja-JP')}の記録`
             }));
             recordId++;
         }
@@ -179,7 +179,7 @@ export const createTestDate = (dateString: string): Date => {
 };
 
 // テスト用のランダムデータ生成
-export const generateRandomRating = (): number => {
+export const generateRandomEatingRatio = (): number => {
     return Math.floor(Math.random() * 10) + 1;
 };
 
@@ -220,7 +220,7 @@ export const mockMealRecords = generateMockMealRecords(mockUsers, 10);
 
 // テスト用のCSVデータ生成
 export const generateMockCSVData = (records: MealRecord[]): string => {
-    const headers = ['日付', '利用者名', 'グループ', 'カテゴリ', '料金', '評価', 'メニュー名', '備考'];
+    const headers = ['日付', '利用者名', 'グループ', 'カテゴリ', '料金', '摂食量', 'メニュー名', '支援記録'];
     const csvRows = [headers.join(',')];
 
     records.forEach(record => {
@@ -230,9 +230,9 @@ export const generateMockCSVData = (records: MealRecord[]): string => {
             record.userGroup,
             record.userCategory,
             record.price.toString(),
-            record.rating.toString(),
+            record.eatingRatio.toString(),
             record.menuName || '',
-            record.notes || ''
+            record.supportNotes || ''
         ];
         csvRows.push(row.join(','));
     });

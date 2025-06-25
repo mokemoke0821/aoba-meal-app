@@ -27,12 +27,10 @@ import {
     Legend,
     Line,
     LineChart,
-    Pie,
-    PieChart,
     ResponsiveContainer,
     Tooltip,
     XAxis,
-    YAxis,
+    YAxis
 } from 'recharts';
 import { useApp } from '../contexts/AppContext';
 // import { exportStatisticsReport } from '../utils/csvExport'; // 一時的に無効化
@@ -85,19 +83,23 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ onBack }) => {
             // デフォルト統計データを設定
             setStatisticsData({
                 dailyOrders: [],
-                userRatings: [
-                    { rating: 1, count: 0, percentage: 0 },
-                    { rating: 2, count: 0, percentage: 0 },
-                    { rating: 3, count: 0, percentage: 0 },
-                    { rating: 4, count: 0, percentage: 0 },
-                    { rating: 5, count: 0, percentage: 0 },
+                eatingRatioDistribution: [
+                    { ratio: 1, count: 0, percentage: 0, label: '1割程度' },
+                    { ratio: 2, count: 0, percentage: 0, label: '2割程度' },
+                    { ratio: 3, count: 0, percentage: 0, label: '3割程度' },
+                    { ratio: 4, count: 0, percentage: 0, label: '4割程度' },
+                    { ratio: 5, count: 0, percentage: 0, label: '5割程度' },
+                    { ratio: 6, count: 0, percentage: 0, label: '6割程度' },
+                    { ratio: 7, count: 0, percentage: 0, label: '7割程度' },
+                    { ratio: 8, count: 0, percentage: 0, label: '8割程度' },
+                    { ratio: 9, count: 0, percentage: 0, label: '9割程度' },
+                    { ratio: 10, count: 0, percentage: 0, label: '完食' },
                 ],
-                menuPopularity: [],
                 monthlyTrends: [],
                 totalUsers: state.users.length,
                 totalOrders: 0,
                 totalRevenue: 0,
-                averageRating: 0,
+                averageEatingRatio: 0,
             });
         }
     }, [state.mealRecords, state.users, dateRange]);
@@ -147,12 +149,10 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ onBack }) => {
         theme.palette.error.main,
     ];
 
-    const ratingColors = {
-        1: '#ef5350', // 赤
-        2: '#ff9800', // オレンジ
-        3: '#ffeb3b', // 黄色
-        4: '#4caf50', // 緑
-        5: '#2196f3', // 青
+    // 摂食量色設定
+    const eatingRatioColors = {
+        1: '#f44336', 2: '#ff5722', 3: '#ff9800', 4: '#ffb300', 5: '#ffc107',
+        6: '#ffeb3b', 7: '#8bc34a', 8: '#4caf50', 9: '#2196f3', 10: '#009688'
     };
 
     // カスタムツールチップ
@@ -287,7 +287,7 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ onBack }) => {
                                     {todayStats.pendingEvaluations}
                                 </Typography>
                                 <Typography variant="body2" color="text.secondary">
-                                    評価待ち
+                                    記録待ち
                                 </Typography>
                             </Box>
                             <Box sx={{ textAlign: 'center' }}>
@@ -295,15 +295,15 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ onBack }) => {
                                     {todayStats.completedEvaluations}
                                 </Typography>
                                 <Typography variant="body2" color="text.secondary">
-                                    評価済み
+                                    記録完了
                                 </Typography>
                             </Box>
                             <Box sx={{ textAlign: 'center' }}>
                                 <Typography variant="h4" sx={{ color: 'secondary.main', fontWeight: 700 }}>
-                                    {todayStats.averageRating.toFixed(1)}
+                                    {todayStats.averageRating.toFixed(1)}割
                                 </Typography>
                                 <Typography variant="body2" color="text.secondary">
-                                    平均評価
+                                    平均摂食量
                                 </Typography>
                             </Box>
                         </Box>
@@ -335,7 +335,7 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ onBack }) => {
                                 variant="outlined"
                             />
                             <Chip
-                                label={`平均評価: ${statisticsData.averageRating}点`}
+                                label={`平均摂食量: ${statisticsData.averageEatingRatio}割`}
                                 color="warning"
                                 variant="outlined"
                             />
@@ -375,7 +375,7 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ onBack }) => {
                                     dataKey="evaluationCount"
                                     stroke={chartColors[1]}
                                     strokeWidth={2}
-                                    name="評価数"
+                                    name="記録数"
                                     dot={{ fill: chartColors[1], strokeWidth: 2, r: 3 }}
                                 />
                             </LineChart>
@@ -384,64 +384,40 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ onBack }) => {
                 </Card>
             </Box>
 
-            {/* 評価分布グラフ */}
+            {/* 摂食量分布グラフ */}
             <Box sx={{ px: 3, mb: 3 }}>
                 <Card sx={{ borderRadius: '16px', boxShadow: theme.shadows[3] }}>
                     <CardContent sx={{ p: 3 }}>
                         <Typography variant="h6" sx={{ mb: 3, color: 'primary.main', fontWeight: 600 }}>
-                            ⭐ 評価分布
+                            🍽️ 摂食量分布
                         </Typography>
                         <ResponsiveContainer width="100%" height={300}>
-                            <BarChart data={statisticsData.userRatings}>
+                            <BarChart data={statisticsData.eatingRatioDistribution}>
                                 <CartesianGrid strokeDasharray="3 3" />
                                 <XAxis
-                                    dataKey="rating"
+                                    dataKey="label"
                                     tick={{ fontSize: 12 }}
-                                    tickFormatter={(value) => `${value}点`}
+                                    angle={-45}
+                                    textAnchor="end"
+                                    height={80}
                                 />
                                 <YAxis tick={{ fontSize: 12 }} />
                                 <Tooltip content={<CustomTooltip />} />
                                 <Bar dataKey="count" name="件数">
-                                    {statisticsData.userRatings.map((entry, index) => (
+                                    {statisticsData.eatingRatioDistribution.map((entry, index) => (
                                         <Cell
                                             key={`cell-${index}`}
-                                            fill={ratingColors[entry.rating as keyof typeof ratingColors]}
+                                            fill={eatingRatioColors[entry.ratio as keyof typeof eatingRatioColors]}
                                         />
                                     ))}
                                 </Bar>
                             </BarChart>
                         </ResponsiveContainer>
-                    </CardContent>
-                </Card>
-            </Box>
-
-            {/* メニュー人気度グラフ */}
-            <Box sx={{ px: 3, mb: 3 }}>
-                <Card sx={{ borderRadius: '16px', boxShadow: theme.shadows[3] }}>
-                    <CardContent sx={{ p: 3 }}>
-                        <Typography variant="h6" sx={{ mb: 3, color: 'primary.main', fontWeight: 600 }}>
-                            🍽️ メニュー人気度
-                        </Typography>
-                        <ResponsiveContainer width="100%" height={300}>
-                            <PieChart>
-                                <Pie
-                                    data={statisticsData.menuPopularity}
-                                    cx="50%"
-                                    cy="50%"
-                                    labelLine={false}
-                                    label={({ name, percentage }) => `${name} (${percentage}%)`}
-                                    outerRadius={80}
-                                    fill="#8884d8"
-                                    dataKey="count"
-                                    nameKey="menuType"
-                                >
-                                    {statisticsData.menuPopularity.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={chartColors[index % chartColors.length]} />
-                                    ))}
-                                </Pie>
-                                <Tooltip content={<CustomTooltip />} />
-                            </PieChart>
-                        </ResponsiveContainer>
+                        <Box sx={{ mt: 2, textAlign: 'center' }}>
+                            <Typography variant="body2" color="text.secondary">
+                                ※ 1割（少量）から10割（完食）までの摂食量分布
+                            </Typography>
+                        </Box>
                     </CardContent>
                 </Card>
             </Box>

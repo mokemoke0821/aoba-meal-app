@@ -1,6 +1,6 @@
 import {
     ArrowBack as ArrowBackIcon,
-    ThumbUp as ThumbUpIcon,
+    Restaurant as RestaurantIcon,
 } from '@mui/icons-material';
 import {
     Alert,
@@ -14,20 +14,27 @@ import {
     Container,
     Dialog,
     DialogContent,
+    TextField,
     Typography
 } from '@mui/material';
 import { format } from 'date-fns';
 import React, { useState } from 'react';
 import { useApp } from '../contexts/AppContext';
-import { GROUP_COLORS, RATING_EMOJIS, getGroupDisplayName } from '../types';
+import {
+    EATING_RATIO_EMOJIS,
+    EATING_RATIO_LABELS,
+    getGroupDisplayName,
+    GROUP_COLORS
+} from '../types';
 
-interface RatingInputProps {
+interface EatingRatioInputProps {
     onBack?: () => void;
 }
 
-const RatingInput: React.FC<RatingInputProps> = ({ onBack }) => {
+const EatingRatioInput: React.FC<EatingRatioInputProps> = ({ onBack }) => {
     const { state, dispatch } = useApp();
-    const [rating, setRating] = useState<number>(5);
+    const [eatingRatio, setEatingRatio] = useState<number>(10);
+    const [supportNotes, setSupportNotes] = useState<string>('');
     const [showThankYou, setShowThankYou] = useState(false);
 
     const { selectedUser } = state;
@@ -41,15 +48,15 @@ const RatingInput: React.FC<RatingInputProps> = ({ onBack }) => {
         }
     };
 
-    // 評価選択ハンドラー
-    const handleRatingSelect = (rating: number) => {
-        setRating(rating);
+    // 摂食量選択ハンドラー
+    const handleEatingRatioSelect = (ratio: number) => {
+        setEatingRatio(ratio);
     };
 
-    // 評価送信ハンドラー
+    // 摂食量送信ハンドラー
     const handleSubmit = async () => {
         if (selectedUser) {
-            // 既存の給食記録を更新（評価を追加）
+            // 既存の給食記録を更新（摂食量を追加）
             const todayRecords = state.mealRecords;
             const recordIndex = todayRecords.findIndex(
                 record => record.userId === selectedUser.id &&
@@ -60,7 +67,8 @@ const RatingInput: React.FC<RatingInputProps> = ({ onBack }) => {
                 const updatedRecords = [...todayRecords];
                 updatedRecords[recordIndex] = {
                     ...updatedRecords[recordIndex],
-                    rating: rating
+                    eatingRatio: eatingRatio,
+                    supportNotes: supportNotes
                 };
                 dispatch({ type: 'SET_MEAL_RECORDS', payload: updatedRecords });
             }
@@ -103,17 +111,18 @@ const RatingInput: React.FC<RatingInputProps> = ({ onBack }) => {
         );
     }
 
-    // 評価ボタンの生成
-    const renderRatingButtons = () => {
+    // 摂食量ボタンの生成
+    const renderEatingRatioButtons = () => {
         const buttons = [];
         for (let i = 1; i <= 10; i++) {
-            const emoji = RATING_EMOJIS[i as keyof typeof RATING_EMOJIS];
-            const isSelected = rating === i;
+            const emoji = EATING_RATIO_EMOJIS[i as keyof typeof EATING_RATIO_EMOJIS];
+            const label = EATING_RATIO_LABELS[i as keyof typeof EATING_RATIO_LABELS];
+            const isSelected = eatingRatio === i;
 
             buttons.push(
                 <ButtonBase
                     key={i}
-                    onClick={() => handleRatingSelect(i)}
+                    onClick={() => handleEatingRatioSelect(i)}
                     sx={{
                         width: '100%',
                         minHeight: '120px',
@@ -133,7 +142,7 @@ const RatingInput: React.FC<RatingInputProps> = ({ onBack }) => {
                         justifyContent: 'center',
                         p: 2,
                     }}
-                    aria-label={`評価 ${i}点`}
+                    aria-label={`摂食量 ${label}`}
                 >
                     <Typography
                         sx={{
@@ -144,13 +153,14 @@ const RatingInput: React.FC<RatingInputProps> = ({ onBack }) => {
                         {emoji}
                     </Typography>
                     <Typography
-                        variant="h3"
+                        variant="h6"
                         sx={{
                             fontWeight: 700,
                             color: isSelected ? 'primary.main' : 'text.primary',
+                            textAlign: 'center',
                         }}
                     >
-                        {i}
+                        {label}
                     </Typography>
                 </ButtonBase>
             );
@@ -172,10 +182,10 @@ const RatingInput: React.FC<RatingInputProps> = ({ onBack }) => {
                 </Button>
                 <Box>
                     <Typography variant="h3" component="h1" sx={{ color: 'primary.main' }}>
-                        🍱 給食の評価
+                        🍽️ 摂食量記録
                     </Typography>
                     <Typography variant="h6" component="h2">
-                        今日の給食はいかがでしたか？
+                        食事を食べることができた量を選択してください
                     </Typography>
                 </Box>
             </Box>
@@ -220,11 +230,11 @@ const RatingInput: React.FC<RatingInputProps> = ({ onBack }) => {
                 </CardContent>
             </Card>
 
-            {/* 評価選択エリア */}
+            {/* 摂食量選択エリア */}
             <Card sx={{ mb: 4, borderRadius: '16px' }}>
                 <CardContent sx={{ p: 4 }}>
                     <Typography variant="h5" sx={{ textAlign: 'center', mb: 3, fontWeight: 600 }}>
-                        評価を選んでください（1-10点）
+                        摂食量を選んでください（1割〜完食）
                     </Typography>
 
                     <Box
@@ -239,14 +249,35 @@ const RatingInput: React.FC<RatingInputProps> = ({ onBack }) => {
                             mb: 4,
                         }}
                     >
-                        {renderRatingButtons()}
+                        {renderEatingRatioButtons()}
                     </Box>
 
-                    {/* 選択された評価の表示 */}
+                    {/* 選択された摂食量の表示 */}
                     <Box sx={{ textAlign: 'center', mb: 3 }}>
                         <Typography variant="h4" sx={{ mb: 2 }}>
-                            選択中: {RATING_EMOJIS[rating as keyof typeof RATING_EMOJIS]} {rating}点
+                            選択中: {EATING_RATIO_EMOJIS[eatingRatio as keyof typeof EATING_RATIO_EMOJIS]} {EATING_RATIO_LABELS[eatingRatio as keyof typeof EATING_RATIO_LABELS]}
                         </Typography>
+                    </Box>
+
+                    {/* 支援記録入力 */}
+                    <Box sx={{ mb: 3 }}>
+                        <TextField
+                            fullWidth
+                            multiline
+                            rows={3}
+                            label="支援記録・備考（任意）"
+                            placeholder="食事の様子や特記事項があれば入力してください..."
+                            value={supportNotes}
+                            onChange={(e) => setSupportNotes(e.target.value)}
+                            sx={{
+                                '& .MuiInputBase-root': {
+                                    fontSize: '1.1rem',
+                                },
+                                '& .MuiInputLabel-root': {
+                                    fontSize: '1.1rem',
+                                }
+                            }}
+                        />
                     </Box>
 
                     {/* 送信ボタン */}
@@ -262,9 +293,9 @@ const RatingInput: React.FC<RatingInputProps> = ({ onBack }) => {
                                 borderRadius: '12px',
                                 px: 6,
                             }}
-                            startIcon={<ThumbUpIcon sx={{ fontSize: '2rem' }} />}
+                            startIcon={<RestaurantIcon sx={{ fontSize: '2rem' }} />}
                         >
-                            評価を送信
+                            摂食量を記録
                         </Button>
                     </Box>
                 </CardContent>
@@ -288,13 +319,13 @@ const RatingInput: React.FC<RatingInputProps> = ({ onBack }) => {
                         🎉
                     </Typography>
                     <Typography variant="h3" sx={{ mb: 2, fontWeight: 700, color: 'primary.main' }}>
-                        ありがとうございました！
+                        記録完了！
                     </Typography>
                     <Typography variant="h5" sx={{ mb: 3, color: 'text.secondary' }}>
-                        評価が送信されました
+                        摂食量が記録されました
                     </Typography>
                     <Typography variant="h4" sx={{ mb: 2 }}>
-                        {RATING_EMOJIS[rating as keyof typeof RATING_EMOJIS]} {rating}点
+                        {EATING_RATIO_EMOJIS[eatingRatio as keyof typeof EATING_RATIO_EMOJIS]} {EATING_RATIO_LABELS[eatingRatio as keyof typeof EATING_RATIO_LABELS]}
                     </Typography>
                     <Typography variant="body1" sx={{ color: 'text.secondary' }}>
                         自動的に前の画面に戻ります...
@@ -305,4 +336,4 @@ const RatingInput: React.FC<RatingInputProps> = ({ onBack }) => {
     );
 };
 
-export default RatingInput; 
+export default EatingRatioInput; 

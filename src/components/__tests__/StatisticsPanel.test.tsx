@@ -63,9 +63,9 @@ describe('StatisticsPanel', () => {
 
             expect(await screen.findByText('📈 今日の状況')).toBeInTheDocument();
             expect(screen.getByText('注文数')).toBeInTheDocument();
-            expect(screen.getByText('評価待ち')).toBeInTheDocument();
-            expect(screen.getByText('評価完了')).toBeInTheDocument();
-            expect(screen.getByText('平均評価')).toBeInTheDocument();
+            expect(screen.getByText('記録待ち')).toBeInTheDocument();
+            expect(screen.getByText('記録完了')).toBeInTheDocument();
+            expect(screen.getByText('平均摂食量')).toBeInTheDocument();
         });
 
         it('期間サマリーが表示される', async () => {
@@ -75,15 +75,14 @@ describe('StatisticsPanel', () => {
             expect(screen.getByText('利用者数')).toBeInTheDocument();
             expect(screen.getByText('総注文数')).toBeInTheDocument();
             expect(screen.getByText('総売上')).toBeInTheDocument();
-            expect(screen.getAllByText('平均評価').length).toBeGreaterThan(0);
+            expect(screen.getAllByText('平均摂食量').length).toBeGreaterThan(0);
         });
 
         it('グラフセクションが表示される', async () => {
             renderWithProviders(<StatisticsPanel onBack={mockOnBack} />);
 
-            expect(await screen.findByText('📈 日別注文・評価推移')).toBeInTheDocument();
-            expect(screen.getByText('⭐ 評価分布')).toBeInTheDocument();
-            expect(screen.getByText('🍽️ メニュー人気度')).toBeInTheDocument();
+            expect(await screen.findByText('📅 日別注文数推移')).toBeInTheDocument();
+            expect(screen.getByText('🍽️ 摂食量分布')).toBeInTheDocument();
             expect(screen.getByText('📊 月別トレンド')).toBeInTheDocument();
         });
     });
@@ -153,7 +152,7 @@ describe('StatisticsPanel', () => {
             // 新しいデータでモックを更新
             const newMealRecords = [
                 ...mockMealRecords,
-                createMockMealRecord({ rating: 9, price: 600 }),
+                createMockMealRecord({ eatingRatio: 9, price: 600 }),
             ];
 
             mockLocalStorage.getItem.mockReturnValue(JSON.stringify({
@@ -200,26 +199,17 @@ describe('StatisticsPanel', () => {
     describe('グラフ表示', () => {
         it('日別推移グラフが表示される', async () => {
             renderWithProviders(<StatisticsPanel onBack={mockOnBack} />);
-            const chartContainer = await screen.findByRole('region', { name: /日別注文・評価推移/i });
-            expect(chartContainer).toBeInTheDocument();
+            expect(await screen.findByText('📅 日別注文数推移')).toBeInTheDocument();
         });
 
-        it('評価分布グラフが表示される', async () => {
+        it('摂食量分布グラフが表示される', async () => {
             renderWithProviders(<StatisticsPanel onBack={mockOnBack} />);
-            const chartContainer = await screen.findByRole('region', { name: /評価分布/i });
-            expect(chartContainer).toBeInTheDocument();
-        });
-
-        it('メニュー人気度グラフが表示される', async () => {
-            renderWithProviders(<StatisticsPanel onBack={mockOnBack} />);
-            const chartContainer = await screen.findByRole('region', { name: /メニュー人気度/i });
-            expect(chartContainer).toBeInTheDocument();
+            expect(await screen.findByText('🍽️ 摂食量分布')).toBeInTheDocument();
         });
 
         it('月別トレンドグラフが表示される', async () => {
             renderWithProviders(<StatisticsPanel onBack={mockOnBack} />);
-            const chartContainer = await screen.findByRole('region', { name: /月別トレンド/i });
-            expect(chartContainer).toBeInTheDocument();
+            expect(await screen.findByText('📈 月次トレンド（過去6ヶ月）')).toBeInTheDocument();
         });
     });
 }); 

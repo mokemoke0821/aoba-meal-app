@@ -1,7 +1,7 @@
 {
   "short_name": "あおば給食",
-  "name": "あおば事業所給食管理アプリ",
-  "description": "就労移行支援事業所向け給食管理システム",
+  "name": "あおば給食摂食量管理アプリ",
+  "description": "就労移行支援事業所向け摂食量管理",
   "icons": [
     {
       "src": "favicon.ico",
