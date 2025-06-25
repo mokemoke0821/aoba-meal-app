@@ -69,11 +69,11 @@ describe('<App /> Integration Tests', () => {
         renderWithProviders(<App />);
 
         await waitFor(() => {
-            expect(screen.getByText('A型作業所')).toBeInTheDocument();
+            expect(screen.getByText('A型利用者')).toBeInTheDocument();
         });
-        expect(screen.getByText('B型作業所')).toBeInTheDocument();
+        expect(screen.getByText('B型利用者')).toBeInTheDocument();
 
-        fireEvent.click(screen.getByText('A型作業所'));
+        fireEvent.click(screen.getByText('A型利用者'));
 
         await waitFor(() => {
             expect(screen.getByText('利用者を選んでください')).toBeInTheDocument();

@@ -33,7 +33,7 @@ export const CATEGORY_CONFIG: Record<UserCategory, CategoryInfo> = {
   'A型': {
     id: 'A型',
     name: 'A型',
-    displayName: 'A型作業所',
+    displayName: 'A型利用者',
     color: '#1976d2',
     icon: '🏭',
     price: 100
@@ -41,7 +41,7 @@ export const CATEGORY_CONFIG: Record<UserCategory, CategoryInfo> = {
   'B型': {
     id: 'B型',
     name: 'B型',
-    displayName: 'B型作業所',
+    displayName: 'B型利用者',
     color: '#2e7d32',
     icon: '🛠️',
     price: 0
@@ -66,8 +66,8 @@ export const CATEGORY_CONFIG: Record<UserCategory, CategoryInfo> = {
 
 // グループ表示名マッピング（職員にとって分かりやすい名前）
 export const GROUP_DISPLAY_NAMES = {
-  'グループA': 'A型作業所',
-  'グループB': 'B型作業所',
+  'グループA': 'A型利用者',
+  'グループB': 'B型利用者',
   'グループC': '職員',
   'その他': '体験利用者'
 } as const;

@@ -658,8 +658,8 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers, o
                             startAdornment={<FilterIcon sx={{ mr: 1, color: 'action.active' }} />}
                         >
                             <MenuItem value="">すべて</MenuItem>
-                            <MenuItem value="グループA">A型作業所</MenuItem>
-                            <MenuItem value="グループB">B型作業所</MenuItem>
+                            <MenuItem value="グループA">A型利用者</MenuItem>
+                            <MenuItem value="グループB">B型利用者</MenuItem>
                             <MenuItem value="グループC">職員</MenuItem>
                             <MenuItem value="グループD">体験利用者</MenuItem>
                         </Select>
@@ -800,8 +800,8 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers, o
                                     <FormControl fullWidth>
                                         <InputLabel>グループ</InputLabel>
                                         <Select {...field} label="グループ">
-                                            <MenuItem value="グループA">A型作業所</MenuItem>
-                                            <MenuItem value="グループB">B型作業所</MenuItem>
+                                            <MenuItem value="グループA">A型利用者</MenuItem>
+                                            <MenuItem value="グループB">B型利用者</MenuItem>
                                             <MenuItem value="グループC">職員</MenuItem>
                                             <MenuItem value="グループD">体験利用者</MenuItem>
                                         </Select>

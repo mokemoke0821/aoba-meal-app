@@ -7,17 +7,21 @@ import '@testing-library/jest-dom';
 // Global timeout
 jest.setTimeout(60000);
 
+// TextEncoder/TextDecoder のモック（Material-UI X DataGrid用）
+global.TextEncoder = require('util').TextEncoder;
+global.TextDecoder = require('util').TextDecoder;
+
 // Console error suppression for known warnings
 const originalError = console.error;
 console.error = (...args: any[]) => {
-  if (
-    typeof args[0] === 'string' &&
-    (args[0].includes('Warning: ReactDOM.render is deprecated') ||
-     args[0].includes('Warning: React.createFactory is deprecated'))
-  ) {
-    return;
-  }
-  originalError.call(console, ...args);
+    if (
+        typeof args[0] === 'string' &&
+        (args[0].includes('Warning: ReactDOM.render is deprecated') ||
+            args[0].includes('Warning: React.createFactory is deprecated'))
+    ) {
+        return;
+    }
+    originalError.call(console, ...args);
 };
 
 // LocalStorage のモック

@@ -1,9 +1,16 @@
 import {
     ArrowBack as ArrowBackIcon,
+    CalendarMonth as CalendarMonthIcon,
     Download as DownloadIcon,
-    Refresh as RefreshIcon
+    ExpandMore as ExpandMoreIcon,
+    MonetizationOn as MonetizationOnIcon,
+    Refresh as RefreshIcon,
+    Today as TodayIcon
 } from '@mui/icons-material';
 import {
+    Accordion,
+    AccordionDetails,
+    AccordionSummary,
     Alert,
     Box,
     Button,
@@ -11,11 +18,17 @@ import {
     CardContent,
     Chip,
     Fab,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableRow,
     Typography,
     useMediaQuery,
-    useTheme,
+    useTheme
 } from '@mui/material';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
     Area,
@@ -47,6 +60,21 @@ interface DateRange {
     endDate: Date | null;
 }
 
+// 月次有料ユーザー統計の型定義
+interface MonthlyPaidUserStats {
+    month: string;                    // 'yyyy-MM'形式
+    users: Array<{
+        userId: string;
+        userName: string;
+        category: string;               // 'A型' | '職員' | '体験者'
+        orderCount: number;            // 月次利用回数
+        totalCost: number;             // 月次費用合計
+        averageEatingRatio: number;    // 月次平均摂食量
+    }>;
+    totalOrderCount: number;         // 月合計注文数
+    totalRevenue: number;           // 月合計売上
+}
+
 interface StatisticsPanelProps {
     onBack: () => void;
 }
@@ -62,11 +90,92 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ onBack }) => {
     });
     const [statisticsData, setStatisticsData] = useState<StatisticsData | null>(null);
 
+    // 有料ユーザー判定関数
+    const isPaidUser = (userCategory: string) => {
+        return ['A型', '体験者', '職員'].includes(userCategory);
+    };
+
     // 今日の統計（リアルタイム）
     const todayStats = useMemo(
         () => calculateTodayStats(state.mealRecords),
         [state.mealRecords]
     );
+
+    // 今日の有料ユーザー統計計算
+    const todayPaidStats = useMemo(() => {
+        const today = format(new Date(), 'yyyy-MM-dd');
+        const todayRecords = state.mealRecords.filter(record => record.date === today);
+        const paidRecords = todayRecords.filter(record => isPaidUser(record.userCategory));
+
+        return {
+            totalPaidOrders: paidRecords.length,
+            totalPaidRevenue: paidRecords.reduce((sum, record) => sum + record.price, 0),
+            averagePaidEatingRatio: paidRecords.length > 0
+                ? parseFloat((paidRecords.reduce((sum, record) => sum + record.eatingRatio, 0) / paidRecords.length).toFixed(1))
+                : 0
+        };
+    }, [state.mealRecords]);
+
+    // 月次有料ユーザー統計計算
+    const monthlyPaidUserStats = useMemo(() => {
+        const monthlyStats: { [key: string]: MonthlyPaidUserStats } = {};
+
+        // 過去6ヶ月分のデータを準備
+        for (let i = 5; i >= 0; i--) {
+            const date = new Date();
+            date.setMonth(date.getMonth() - i);
+            const monthKey = format(date, 'yyyy-MM');
+            monthlyStats[monthKey] = {
+                month: monthKey,
+                users: [],
+                totalOrderCount: 0,
+                totalRevenue: 0
+            };
+        }
+
+        // 有料ユーザーのデータをグループ化
+        const paidRecords = state.mealRecords.filter(record => isPaidUser(record.userCategory));
+
+        paidRecords.forEach(record => {
+            try {
+                const recordDate = parseISO(record.date);
+                const monthKey = format(recordDate, 'yyyy-MM');
+
+                if (monthlyStats[monthKey]) {
+                    const existingUser = monthlyStats[monthKey].users.find(u => u.userId === record.userId);
+
+                    if (existingUser) {
+                        existingUser.orderCount++;
+                        existingUser.totalCost += record.price;
+                        existingUser.averageEatingRatio = parseFloat(
+                            ((existingUser.averageEatingRatio * (existingUser.orderCount - 1) + record.eatingRatio) / existingUser.orderCount).toFixed(1)
+                        );
+                    } else {
+                        monthlyStats[monthKey].users.push({
+                            userId: record.userId,
+                            userName: record.userName,
+                            category: record.userCategory,
+                            orderCount: 1,
+                            totalCost: record.price,
+                            averageEatingRatio: record.eatingRatio
+                        });
+                    }
+
+                    monthlyStats[monthKey].totalOrderCount++;
+                    monthlyStats[monthKey].totalRevenue += record.price;
+                }
+            } catch (error) {
+                console.warn('日付の解析に失敗しました:', record.date, error);
+            }
+        });
+
+        // 各月のユーザーを費用順でソート
+        Object.values(monthlyStats).forEach(stat => {
+            stat.users.sort((a, b) => b.totalCost - a.totalCost);
+        });
+
+        return Object.values(monthlyStats).reverse(); // 新しい月から表示
+    }, [state.mealRecords]);
 
     // 統計データの計算
     useEffect(() => {
@@ -153,6 +262,16 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ onBack }) => {
     const eatingRatioColors = {
         1: '#f44336', 2: '#ff5722', 3: '#ff9800', 4: '#ffb300', 5: '#ffc107',
         6: '#ffeb3b', 7: '#8bc34a', 8: '#4caf50', 9: '#2196f3', 10: '#009688'
+    };
+
+    // カテゴリ別色設定
+    const getCategoryColor = (category: string) => {
+        switch (category) {
+            case 'A型': return theme.palette.primary.main;
+            case '職員': return theme.palette.warning.main;
+            case '体験者': return theme.palette.secondary.main;
+            default: return theme.palette.grey[500];
+        }
     };
 
     // カスタムツールチップ
@@ -249,29 +368,24 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ onBack }) => {
                 </Box>
             </Box>
 
-            {/* 期間フィルター - 一時的に無効化 */}
-            {/*
-            <Box sx={{ p: 3 }}>
-                <DateRangeFilter
-                    dateRange={dateRange}
-                    onDateRangeChange={handleDateRangeChange}
-                    onApplyFilter={handleApplyFilter}
-                />
-            </Box>
-            */}
-
-            {/* 今日の統計カード */}
+            {/* 今日の統計カード（改善版） */}
             <Box sx={{ px: 3, mb: 3 }}>
                 <Card sx={{ borderRadius: '16px', boxShadow: theme.shadows[3] }}>
                     <CardContent sx={{ p: 3 }}>
-                        <Typography variant="h6" sx={{ mb: 3, color: 'primary.main', fontWeight: 600 }}>
-                            📈 今日の状況 ({format(new Date(), 'MM月dd日')})
+                        <Typography variant="h6" sx={{ mb: 3, color: 'primary.main', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <TodayIcon /> 今日の状況 ({format(new Date(), 'MM月dd日')})
+                        </Typography>
+
+                        {/* 全体統計 */}
+                        <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600, color: 'text.primary' }}>
+                            📊 全体統計
                         </Typography>
                         <Box
                             sx={{
                                 display: 'grid',
-                                gridTemplateColumns: isMobile ? '1fr' : 'repeat(4, 1fr)',
+                                gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)',
                                 gap: 2,
+                                mb: 3,
                             }}
                         >
                             <Box sx={{ textAlign: 'center' }}>
@@ -307,6 +421,142 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ onBack }) => {
                                 </Typography>
                             </Box>
                         </Box>
+
+                        {/* 有料ユーザー統計 */}
+                        <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600, color: 'text.primary', display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <MonetizationOnIcon /> 有料ユーザー統計
+                        </Typography>
+                        <Box
+                            sx={{
+                                display: 'grid',
+                                gridTemplateColumns: 'repeat(3, 1fr)',
+                                gap: 2,
+                            }}
+                        >
+                            <Box sx={{ textAlign: 'center' }}>
+                                <Typography variant="h4" sx={{ color: 'info.main', fontWeight: 700 }}>
+                                    {todayPaidStats.totalPaidOrders}
+                                </Typography>
+                                <Typography variant="body2" color="text.secondary">
+                                    有料注文数
+                                </Typography>
+                            </Box>
+                            <Box sx={{ textAlign: 'center' }}>
+                                <Typography variant="h4" sx={{ color: 'success.main', fontWeight: 700 }}>
+                                    ¥{todayPaidStats.totalPaidRevenue.toLocaleString()}
+                                </Typography>
+                                <Typography variant="body2" color="text.secondary">
+                                    本日売上
+                                </Typography>
+                            </Box>
+                            <Box sx={{ textAlign: 'center' }}>
+                                <Typography variant="h4" sx={{ color: 'warning.main', fontWeight: 700 }}>
+                                    {todayPaidStats.averagePaidEatingRatio.toFixed(1)}割
+                                </Typography>
+                                <Typography variant="body2" color="text.secondary">
+                                    有料平均摂食量
+                                </Typography>
+                            </Box>
+                        </Box>
+                    </CardContent>
+                </Card>
+            </Box>
+
+            {/* 月次有料ユーザー統計カード（新規追加） */}
+            <Box sx={{ px: 3, mb: 3 }}>
+                <Card sx={{ borderRadius: '16px', boxShadow: theme.shadows[3] }}>
+                    <CardContent sx={{ p: 3 }}>
+                        <Typography variant="h6" sx={{ mb: 3, color: 'primary.main', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <CalendarMonthIcon /> 月次有料ユーザー統計（過去6ヶ月）
+                        </Typography>
+
+                        {monthlyPaidUserStats.map((monthStat, index) => (
+                            <Accordion
+                                key={monthStat.month}
+                                sx={{
+                                    mb: 1,
+                                    borderRadius: '8px !important',
+                                    '&:before': { display: 'none' },
+                                    boxShadow: theme.shadows[1]
+                                }}
+                            >
+                                <AccordionSummary
+                                    expandIcon={<ExpandMoreIcon />}
+                                    sx={{
+                                        backgroundColor: theme.palette.grey[50],
+                                        borderRadius: '8px',
+                                        '&.Mui-expanded': {
+                                            borderBottomLeftRadius: 0,
+                                            borderBottomRightRadius: 0,
+                                        }
+                                    }}
+                                >
+                                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', pr: 2 }}>
+                                        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                                            {format(new Date(monthStat.month + '-01'), 'yyyy年MM月')}
+                                        </Typography>
+                                        <Box sx={{ display: 'flex', gap: 2 }}>
+                                            <Chip
+                                                label={`${monthStat.totalOrderCount}件`}
+                                                size="small"
+                                                color="primary"
+                                                variant="outlined"
+                                            />
+                                            <Chip
+                                                label={`¥${monthStat.totalRevenue.toLocaleString()}`}
+                                                size="small"
+                                                color="success"
+                                                variant="outlined"
+                                            />
+                                        </Box>
+                                    </Box>
+                                </AccordionSummary>
+                                <AccordionDetails sx={{ p: 0 }}>
+                                    {monthStat.users.length > 0 ? (
+                                        <TableContainer>
+                                            <Table size="small">
+                                                <TableHead>
+                                                    <TableRow>
+                                                        <TableCell>利用者名</TableCell>
+                                                        <TableCell>カテゴリ</TableCell>
+                                                        <TableCell align="right">利用回数</TableCell>
+                                                        <TableCell align="right">費用合計</TableCell>
+                                                        <TableCell align="right">平均摂食量</TableCell>
+                                                    </TableRow>
+                                                </TableHead>
+                                                <TableBody>
+                                                    {monthStat.users.map((user) => (
+                                                        <TableRow key={user.userId}>
+                                                            <TableCell>{user.userName}</TableCell>
+                                                            <TableCell>
+                                                                <Chip
+                                                                    label={user.category === 'A型' ? 'A型利用者' : user.category === '体験者' ? '体験利用者' : user.category}
+                                                                    size="small"
+                                                                    sx={{
+                                                                        backgroundColor: getCategoryColor(user.category),
+                                                                        color: 'white',
+                                                                        fontWeight: 600
+                                                                    }}
+                                                                />
+                                                            </TableCell>
+                                                            <TableCell align="right">{user.orderCount}回</TableCell>
+                                                            <TableCell align="right">¥{user.totalCost.toLocaleString()}</TableCell>
+                                                            <TableCell align="right">{user.averageEatingRatio.toFixed(1)}割</TableCell>
+                                                        </TableRow>
+                                                    ))}
+                                                </TableBody>
+                                            </Table>
+                                        </TableContainer>
+                                    ) : (
+                                        <Box sx={{ p: 3, textAlign: 'center' }}>
+                                            <Typography variant="body2" color="text.secondary">
+                                                この月のデータはありません
+                                            </Typography>
+                                        </Box>
+                                    )}
+                                </AccordionDetails>
+                            </Accordion>
+                        ))}
                     </CardContent>
                 </Card>
             </Box>

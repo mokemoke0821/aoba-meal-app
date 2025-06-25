@@ -65,7 +65,7 @@ export const calculateDailyStats = (records: MealRecord[]): DailyOrderData[] => 
 
         const dayData = dailyMap.get(dateKey)!;
         dayData.orderCount++;
-        dayData.totalRevenue += record.price || 500; // デフォルト価格
+        dayData.totalRevenue += record.price || 0;
 
         if (isValidEatingRatio(record.eatingRatio)) {
             dayData.evaluationCount++;
@@ -172,7 +172,7 @@ export const calculateMonthlyTrends = (records: MealRecord[], months: number = 6
         if (monthlyMap.has(monthKey)) {
             const monthData = monthlyMap.get(monthKey)!;
             monthData.orderCount++;
-            monthData.revenue += record.price || 500;
+            monthData.revenue += record.price || 0;
         }
     });
 
@@ -211,7 +211,7 @@ export const calculateOverallStatistics = (
         filteredRecords = filterRecordsByDateRange(records, startDate, endDate);
     }
 
-    const totalRevenue = filteredRecords.reduce((sum, record) => sum + (record.price || 500), 0);
+    const totalRevenue = filteredRecords.reduce((sum, record) => sum + (record.price || 0), 0);
     const evaluatedRecords = filteredRecords.filter(r => isValidEatingRatio(r.eatingRatio));
     const averageEatingRatio = evaluatedRecords.length > 0
         ? evaluatedRecords.reduce((sum, r) => sum + r.eatingRatio, 0) / evaluatedRecords.length
