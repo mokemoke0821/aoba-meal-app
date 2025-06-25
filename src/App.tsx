@@ -4,10 +4,8 @@ import React from 'react';
 import AdminPanel from './components/AdminPanel';
 import CategorySelector from './components/CategorySelector';
 import MealOrder from './components/MealOrder';
-import MenuManagement from './components/MenuManagement';
 import { PlaceholderPage } from './components/PlaceholderPage';
 import RatingInput from './components/RatingInput';
-import Settings from './components/Settings';
 import StatisticsPanel from './components/StatisticsPanel';
 import UserManagement from './components/UserManagement';
 import UserSelector from './components/UserSelector';
@@ -69,24 +67,6 @@ const RatingInputWrapper: React.FC = () => {
   );
 };
 
-const MenuManagementWrapper: React.FC = () => {
-  const { dispatch } = useApp();
-  return (
-    <MenuManagement
-      onBack={() => dispatch({ type: 'SET_VIEW', payload: 'adminPanel' })}
-    />
-  );
-};
-
-const SettingsWrapper: React.FC = () => {
-  const { dispatch } = useApp();
-  return (
-    <Settings
-      onBack={() => dispatch({ type: 'SET_VIEW', payload: 'adminPanel' })}
-    />
-  );
-};
-
 const AppContent: React.FC = () => {
   const { state, dispatch } = useApp();
 
@@ -107,10 +87,6 @@ const AppContent: React.FC = () => {
         return <MealOrderWrapper />;
       case 'rating':
         return <RatingInputWrapper />;
-      case 'menuManagement':
-        return <MenuManagementWrapper />;
-      case 'settings':
-        return <SettingsWrapper />;
       case 'adminAuth':
         return (
           <PlaceholderPage

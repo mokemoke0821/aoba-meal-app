@@ -1,0 +1,386 @@
+import {
+    ArrowBack as ArrowBackIcon,
+    Cancel as CancelIcon,
+    Check as CheckIcon,
+    Person as PersonIcon,
+    Restaurant as RestaurantIcon
+} from '@mui/icons-material';
+import {
+    Alert,
+    Avatar,
+    Box,
+    Button,
+    Card,
+    CardContent,
+    Chip,
+    Container,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogTitle,
+    Divider,
+    Typography,
+} from '@mui/material';
+import { format } from 'date-fns';
+// import { ja } from 'date-fns/locale/ja'; // テスト環境でのエラーを回避
+import React, { useState } from 'react';
+import { useApp } from '../contexts/AppContext';
+import { getGroupDisplayName, GROUP_COLORS, MealRecord } from '../types';
+
+interface MealOrderProps {
+    onBack?: () => void;
+}
+
+const MealOrder: React.FC<MealOrderProps> = ({ onBack }) => {
+    const { state, dispatch } = useApp();
+    const [confirmOpen, setConfirmOpen] = useState(false);
+    const [cancelOpen, setCancelOpen] = useState(false);
+
+    const selectedUser = state.selectedUser;
+    const todayRecords = state.mealRecords.filter(record =>
+        record.date === format(new Date(), 'yyyy-MM-dd')
+    );
+
+    // 選択されたユーザーが今日既に食事をしているかチェック
+    const hasOrderedToday = selectedUser
+        ? todayRecords.some(record => record.userId === selectedUser.id)
+        : false;
+
+    // 戻るボタンハンドラー
+    const handleBack = () => {
+        if (onBack) {
+            onBack();
+        } else {
+            dispatch({ type: 'SET_VIEW', payload: 'userSelect' });
+        }
+    };
+
+    // 給食注文確認ダイアログ表示
+    const handleOrderConfirm = () => {
+        if (hasOrderedToday) {
+            alert('この利用者は今日既に給食を注文されています。');
+            return;
+        }
+        setConfirmOpen(true);
+    };
+
+    // 給食注文実行
+    const handleOrderExecute = () => {
+        if (selectedUser) {
+            // 給食記録を作成（摂食量は後で入力）
+            const newRecord: MealRecord = {
+                id: `meal_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                userId: selectedUser.id,
+                userName: selectedUser.name,
+                userGroup: selectedUser.group,
+                userCategory: selectedUser.category,
+                date: format(new Date(), 'yyyy-MM-dd'),
+                eatingRatio: 0, // 未記録状態
+                price: selectedUser.price,
+                menuName: state.currentMenu?.name || '今日の給食',
+                supportNotes: ''
+            };
+            dispatch({ type: 'ADD_MEAL_RECORD', payload: newRecord });
+        }
+        setConfirmOpen(false);
+        // 注文完了後は利用者選択画面に戻る
+        handleBack();
+    };
+
+    // 確認ダイアログのキャンセル
+    const handleConfirmCancel = () => {
+        setConfirmOpen(false);
+    };
+
+    // キャンセル確認ダイアログ表示
+    const handleCancelConfirm = () => {
+        setCancelOpen(true);
+    };
+
+    // 給食キャンセル実行
+    const handleCancelExecute = () => {
+        if (selectedUser) {
+            // 今日の食事記録を削除
+            const updatedRecords = state.mealRecords.filter(
+                record => !(record.userId === selectedUser.id && record.date === format(new Date(), 'yyyy-MM-dd'))
+            );
+            dispatch({ type: 'SET_MEAL_RECORDS', payload: updatedRecords });
+        }
+        setCancelOpen(false);
+        handleBack();
+    };
+
+    // キャンセルダイアログの取消
+    const handleCancelDialogCancel = () => {
+        setCancelOpen(false);
+    };
+
+    // ユーザーが選択されていない場合
+    if (!selectedUser) {
+        return (
+            <Container maxWidth="md" sx={{ py: 4 }}>
+                <Alert severity="error" sx={{ fontSize: '1.25rem', textAlign: 'center', mb: 4 }}>
+                    利用者が選択されていません。最初の画面に戻ります。
+                </Alert>
+                <Box sx={{ textAlign: 'center' }}>
+                    <Button
+                        variant="contained"
+                        size="large"
+                        onClick={handleBack}
+                        sx={{
+                            minHeight: '80px',
+                            fontSize: '1.5rem',
+                            fontWeight: 600,
+                            borderRadius: '12px',
+                        }}
+                        startIcon={<ArrowBackIcon sx={{ fontSize: '2rem' }} />}
+                    >
+                        利用者選択に戻る
+                    </Button>
+                </Box>
+            </Container>
+        );
+    }
+
+    const today = format(new Date(), 'yyyy年MM月dd日');
+
+    return (
+        <Container maxWidth="md" sx={{ py: 4 }}>
+            {/* ヘッダー */}
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
+                <Button
+                    variant="outlined"
+                    onClick={handleBack}
+                    sx={{ mr: 2 }}
+                    startIcon={<ArrowBackIcon />}
+                >
+                    ← 戻る
+                </Button>
+                <Box>
+                    <Typography variant="h3" component="h1" sx={{ color: 'primary.main' }}>
+                        🍱 給食注文
+                    </Typography>
+                    <Typography variant="h6" component="h2" sx={{ color: 'text.secondary' }}>
+                        {today}
+                    </Typography>
+                </Box>
+            </Box>
+
+            {/* 利用者情報カード */}
+            <Card
+                sx={{
+                    mb: 4,
+                    border: `3px solid ${GROUP_COLORS[selectedUser.group]}`,
+                    borderRadius: '16px',
+                }}
+            >
+                <CardContent sx={{ p: 4 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                        <Avatar
+                            sx={{
+                                width: 80,
+                                height: 80,
+                                bgcolor: GROUP_COLORS[selectedUser.group],
+                                mr: 3,
+                            }}
+                        >
+                            <PersonIcon sx={{ fontSize: '3rem' }} />
+                        </Avatar>
+                        <Box>
+                            <Typography variant="h3" component="h3" sx={{ fontWeight: 700, mb: 1 }}>
+                                {selectedUser.name} さん
+                            </Typography>
+                            <Chip
+                                label={getGroupDisplayName(selectedUser.group)}
+                                sx={{
+                                    backgroundColor: GROUP_COLORS[selectedUser.group],
+                                    color: 'white',
+                                    fontSize: '1.2rem',
+                                    fontWeight: 600,
+                                    px: 2,
+                                    py: 1,
+                                }}
+                            />
+                        </Box>
+                    </Box>
+
+                    <Divider sx={{ my: 3 }} />
+
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Typography variant="h4" sx={{ fontWeight: 600, color: 'text.secondary' }}>
+                            給食料金
+                        </Typography>
+                        <Typography variant="h3" sx={{ fontWeight: 700, color: 'primary.main' }}>
+                            ¥{selectedUser.price}
+                        </Typography>
+                    </Box>
+                </CardContent>
+            </Card>
+
+            {/* 既に注文済みの場合の警告 */}
+            {hasOrderedToday && (
+                <Alert severity="info" sx={{ mb: 4, fontSize: '1.25rem', textAlign: 'center' }}>
+                    {selectedUser.name}さんは今日既に給食を注文されています
+                </Alert>
+            )}
+
+            {/* アクションボタン */}
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                {/* 給食注文ボタン */}
+                {!hasOrderedToday && (
+                    <Button
+                        variant="contained"
+                        size="large"
+                        onClick={handleOrderConfirm}
+                        sx={{
+                            minHeight: '120px',
+                            fontSize: '2rem',
+                            fontWeight: 700,
+                            borderRadius: '16px',
+                            backgroundColor: 'primary.main',
+                            '&:hover': {
+                                backgroundColor: 'primary.dark',
+                            },
+                        }}
+                        startIcon={<RestaurantIcon sx={{ fontSize: '3rem' }} />}
+                    >
+                        給食を注文する
+                    </Button>
+                )}
+
+                {/* 給食キャンセルボタン */}
+                {hasOrderedToday && (
+                    <Button
+                        variant="outlined"
+                        size="large"
+                        onClick={handleCancelConfirm}
+                        sx={{
+                            minHeight: '80px',
+                            fontSize: '1.5rem',
+                            fontWeight: 600,
+                            borderRadius: '12px',
+                            color: 'error.main',
+                            borderColor: 'error.main',
+                            '&:hover': {
+                                backgroundColor: 'error.light',
+                                borderColor: 'error.main',
+                            },
+                        }}
+                        startIcon={<CancelIcon sx={{ fontSize: '2rem' }} />}
+                    >
+                        給食をキャンセルする
+                    </Button>
+                )}
+
+                {/* 摂食量入力ボタン（注文済みの場合のみ表示） */}
+                {hasOrderedToday && (
+                    <Button
+                        variant="outlined"
+                        size="large"
+                        onClick={() => dispatch({ type: 'SET_VIEW', payload: 'rating' })}
+                        sx={{
+                            minHeight: '80px',
+                            fontSize: '1.5rem',
+                            fontWeight: 600,
+                            borderRadius: '12px',
+                        }}
+                    >
+                        摂食量を記録する
+                    </Button>
+                )}
+            </Box>
+
+            {/* 注文確認ダイアログ */}
+            <Dialog
+                open={confirmOpen}
+                onClose={handleConfirmCancel}
+                maxWidth="sm"
+                fullWidth
+            >
+                <DialogTitle sx={{ fontSize: '1.5rem', fontWeight: 700 }}>
+                    <RestaurantIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
+                    給食注文確認
+                </DialogTitle>
+                <DialogContent>
+                    <Typography variant="h6" sx={{ mb: 2 }}>
+                        以下の内容で給食を注文しますか？
+                    </Typography>
+                    <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 2 }}>
+                        <Typography variant="body1" sx={{ mb: 1 }}>
+                            <strong>利用者:</strong> {selectedUser?.name}
+                        </Typography>
+                        <Typography variant="body1" sx={{ mb: 1 }}>
+                            <strong>グループ:</strong> {selectedUser && getGroupDisplayName(selectedUser.group)}
+                        </Typography>
+                        <Typography variant="body1" sx={{ mb: 1 }}>
+                            <strong>料金:</strong> ¥{selectedUser?.price}
+                        </Typography>
+                        <Typography variant="body1">
+                            <strong>日付:</strong> {today}
+                        </Typography>
+                    </Box>
+                </DialogContent>
+                <DialogActions sx={{ p: 3 }}>
+                    <Button
+                        onClick={handleConfirmCancel}
+                        variant="outlined"
+                        size="large"
+                        sx={{ mr: 2 }}
+                    >
+                        キャンセル
+                    </Button>
+                    <Button
+                        onClick={handleOrderExecute}
+                        variant="contained"
+                        size="large"
+                        startIcon={<CheckIcon />}
+                    >
+                        注文する
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* キャンセル確認ダイアログ */}
+            <Dialog
+                open={cancelOpen}
+                onClose={handleCancelDialogCancel}
+                maxWidth="sm"
+                fullWidth
+            >
+                <DialogTitle sx={{ fontSize: '1.5rem', fontWeight: 700, color: 'error.main' }}>
+                    <CancelIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
+                    給食キャンセル確認
+                </DialogTitle>
+                <DialogContent>
+                    <Typography variant="h6" sx={{ mb: 2 }}>
+                        {selectedUser?.name}さんの今日の給食をキャンセルしますか？
+                    </Typography>
+                    <Alert severity="warning" sx={{ mt: 2 }}>
+                        この操作は取り消せません。
+                    </Alert>
+                </DialogContent>
+                <DialogActions sx={{ p: 3 }}>
+                    <Button
+                        onClick={handleCancelDialogCancel}
+                        variant="outlined"
+                        size="large"
+                        sx={{ mr: 2 }}
+                    >
+                        戻る
+                    </Button>
+                    <Button
+                        onClick={handleCancelExecute}
+                        variant="contained"
+                        color="error"
+                        size="large"
+                        startIcon={<CancelIcon />}
+                    >
+                        キャンセルする
+                    </Button>
+                </DialogActions>
+            </Dialog>
+        </Container>
+    );
+};
+
+export default MealOrder; 

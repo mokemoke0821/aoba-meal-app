@@ -72,7 +72,7 @@ interface MonthlyPaidUserStats {
         averageEatingRatio: number;    // 月次平均摂食量
     }>;
     totalOrderCount: number;         // 月合計注文数
-    totalRevenue: number;           // 月合計売上
+    totalRevenue: number;           // 月合計料金記録
 }
 
 interface StatisticsPanelProps {
@@ -446,7 +446,7 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ onBack }) => {
                                     ¥{todayPaidStats.totalPaidRevenue.toLocaleString()}
                                 </Typography>
                                 <Typography variant="body2" color="text.secondary">
-                                    本日売上
+                                    本日料金記録
                                 </Typography>
                             </Box>
                             <Box sx={{ textAlign: 'center' }}>
@@ -580,7 +580,7 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ onBack }) => {
                                 variant="outlined"
                             />
                             <Chip
-                                label={`総売上: ${statisticsData.totalRevenue.toLocaleString()}円`}
+                                label={`料金記録合計: ${statisticsData.totalRevenue.toLocaleString()}円`}
                                 color="success"
                                 variant="outlined"
                             />
@@ -706,7 +706,7 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ onBack }) => {
                                     stroke={chartColors[2]}
                                     fill={chartColors[2]}
                                     fillOpacity={0.4}
-                                    name="売上"
+                                    name="料金記録"
                                 />
                             </AreaChart>
                         </ResponsiveContainer>

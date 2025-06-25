@@ -2,8 +2,6 @@ import {
     ArrowBack as ArrowBackIcon,
     Assessment as AssessmentIcon,
     People as PeopleIcon,
-    Restaurant as RestaurantIcon,
-    Settings as SettingsIcon,
 } from '@mui/icons-material';
 import {
     Box,
@@ -33,25 +31,11 @@ const AdminPanel: React.FC = () => {
             color: '#1976d2',
         },
         {
-            title: 'メニュー管理',
-            description: '給食メニューの管理',
-            icon: <RestaurantIcon sx={{ fontSize: '3rem' }} />,
-            action: () => dispatch({ type: 'SET_VIEW', payload: 'menuManagement' }),
-            color: '#2e7d32',
-        },
-        {
-            title: '統計・レポート',
-            description: '利用状況の確認',
+            title: '統計・データ管理',
+            description: '給食利用状況・料金管理・データ出力',
             icon: <AssessmentIcon sx={{ fontSize: '3rem' }} />,
             action: () => dispatch({ type: 'SET_VIEW', payload: 'statistics' }),
             color: '#f57c00',
-        },
-        {
-            title: '設定',
-            description: 'システム設定',
-            icon: <SettingsIcon sx={{ fontSize: '3rem' }} />,
-            action: () => dispatch({ type: 'SET_VIEW', payload: 'settings' }),
-            color: '#9c27b0',
         },
     ];
 
@@ -115,7 +99,7 @@ const AdminPanel: React.FC = () => {
 
                 <Box sx={{ mt: 6, textAlign: 'center' }}>
                     <Typography variant="body2" color="text.secondary">
-                        現在、基本機能のみ実装されています
+                        シンプルな給食管理システム - 必要な機能のみに特化
                     </Typography>
                 </Box>
             </Box>

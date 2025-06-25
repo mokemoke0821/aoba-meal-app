@@ -121,17 +121,24 @@ export interface AppState {
   requireAdminAuth: boolean; // 管理者認証要求フラグ
 }
 
-// ビュータイプ定義（簡素化版）
+// ビュータイプ定義
 export type ViewType =
-  | 'categorySelect'    // カテゴリ選択
-  | 'userSelect'        // 利用者選択
-  | 'mealOrder'         // 給食希望
-  | 'rating'            // 摂食量記録
+  | 'categorySelect'    // 新追加：カテゴリ選択
+  | 'userSelect'
+  | 'mealOrder'
+  | 'rating'           // 摂食量記録画面（互換性のため名前維持）
   | 'admin'             // 後方互換性のため
-  | 'adminPanel'        // 管理者パネル
-  | 'adminAuth'         // 管理者認証
-  | 'statistics'        // 統計・データ管理
-  | 'userManagement';   // 利用者管理
+  | 'adminPanel'        // 新追加：管理者パネル
+  | 'adminAuth'
+  | 'statistics'
+  | 'userManagement'
+  | 'menuManagement'
+  | 'settings'
+  | 'printReports'
+  | 'dailyReport'       // 新追加：当日レポート
+  | 'weeklyReport'      // 新追加：週次レポート
+  | 'monthlyReport'     // 新追加：月次レポート
+  | 'billingReport';    // 新追加：料金レポート
 
 // アクション型定義
 export type AppAction =

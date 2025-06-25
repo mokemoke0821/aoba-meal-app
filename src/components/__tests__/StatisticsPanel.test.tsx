@@ -89,7 +89,7 @@ describe('StatisticsPanel', () => {
             expect(await screen.findByText('📋 期間サマリー')).toBeInTheDocument();
             expect(screen.getByText('利用者数')).toBeInTheDocument();
             expect(screen.getByText('総注文数')).toBeInTheDocument();
-            expect(screen.getByText('総売上')).toBeInTheDocument();
+            expect(screen.getByText('料金記録合計')).toBeInTheDocument();
             expect(screen.getAllByText('平均摂食量').length).toBeGreaterThan(0);
         });
 
