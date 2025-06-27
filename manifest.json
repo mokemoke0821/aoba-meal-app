@@ -1,0 +1,33 @@
+{
+  "short_name": "あおば給食",
+  "name": "あおば給食摂食量管理アプリ",
+  "description": "就労移行支援事業所向け摂食量管理",
+  "icons": [
+    {
+      "src": "favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "logo192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "logo512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "/aoba-meal-app/",
+  "display": "standalone",
+  "theme_color": "#1976d2",
+  "background_color": "#ffffff",
+  "categories": [
+    "business",
+    "productivity",
+    "food"
+  ],
+  "lang": "ja",
+  "scope": "/aoba-meal-app/"
+}
