@@ -38,54 +38,53 @@ type AppAction =
 const initialState: AppState = {
   currentView: 'categorySelect',
   users: [
-    {
-      id: 'user_1',
-      name: '田中太郎',
-      group: 'グループA',
-      category: 'A型',
-      displayNumber: 1,
-      price: 100,
-      createdAt: new Date().toISOString(),
-      isActive: true,
-      trialUser: false,
-      notes: ''
-    },
-    {
-      id: 'user_2',
-      name: '佐藤花子',
-      group: 'グループB',
-      category: 'B型',
-      displayNumber: 1,
-      price: 0,
-      createdAt: new Date().toISOString(),
-      isActive: true,
-      trialUser: false,
-      notes: ''
-    },
-    {
-      id: 'user_3',
-      name: '山田次郎',
-      group: 'グループC',
-      category: '職員',
-      displayNumber: 1,
-      price: 400,
-      createdAt: new Date().toISOString(),
-      isActive: true,
-      trialUser: false,
-      notes: ''
-    },
-    {
-      id: 'user_4',
-      name: '鈴木美咲',
-      group: 'その他',
-      category: '体験者',
-      displayNumber: 1,
-      price: 400,
-      createdAt: new Date().toISOString(),
-      isActive: true,
-      trialUser: true,
-      notes: ''
-    }
+    // A型利用者（10人）
+    { id: 'user_a1', name: '田中太郎', group: 'グループA', category: 'A型', displayNumber: 1, price: 100, createdAt: new Date().toISOString(), isActive: true, trialUser: false, notes: '' },
+    { id: 'user_a2', name: '佐藤健一', group: 'グループA', category: 'A型', displayNumber: 2, price: 100, createdAt: new Date().toISOString(), isActive: true, trialUser: false, notes: '' },
+    { id: 'user_a3', name: '高橋美子', group: 'グループA', category: 'A型', displayNumber: 3, price: 100, createdAt: new Date().toISOString(), isActive: true, trialUser: false, notes: '' },
+    { id: 'user_a4', name: '鈴木一郎', group: 'グループA', category: 'A型', displayNumber: 4, price: 100, createdAt: new Date().toISOString(), isActive: true, trialUser: false, notes: '' },
+    { id: 'user_a5', name: '伊藤花音', group: 'グループA', category: 'A型', displayNumber: 5, price: 100, createdAt: new Date().toISOString(), isActive: true, trialUser: false, notes: '' },
+    { id: 'user_a6', name: '渡辺雄介', group: 'グループA', category: 'A型', displayNumber: 6, price: 100, createdAt: new Date().toISOString(), isActive: true, trialUser: false, notes: '' },
+    { id: 'user_a7', name: '小林さくら', group: 'グループA', category: 'A型', displayNumber: 7, price: 100, createdAt: new Date().toISOString(), isActive: true, trialUser: false, notes: '' },
+    { id: 'user_a8', name: '松本拓也', group: 'グループA', category: 'A型', displayNumber: 8, price: 100, createdAt: new Date().toISOString(), isActive: true, trialUser: false, notes: '' },
+    { id: 'user_a9', name: '青木結衣', group: 'グループA', category: 'A型', displayNumber: 9, price: 100, createdAt: new Date().toISOString(), isActive: true, trialUser: false, notes: '' },
+    { id: 'user_a10', name: '中村大輝', group: 'グループA', category: 'A型', displayNumber: 10, price: 100, createdAt: new Date().toISOString(), isActive: true, trialUser: false, notes: '' },
+
+    // B型利用者（10人）
+    { id: 'user_b1', name: '佐藤花子', group: 'グループB', category: 'B型', displayNumber: 1, price: 0, createdAt: new Date().toISOString(), isActive: true, trialUser: false, notes: '' },
+    { id: 'user_b2', name: '山田智子', group: 'グループB', category: 'B型', displayNumber: 2, price: 0, createdAt: new Date().toISOString(), isActive: true, trialUser: false, notes: '' },
+    { id: 'user_b3', name: '加藤翔太', group: 'グループB', category: 'B型', displayNumber: 3, price: 0, createdAt: new Date().toISOString(), isActive: true, trialUser: false, notes: '' },
+    { id: 'user_b4', name: '井上萌香', group: 'グループB', category: 'B型', displayNumber: 4, price: 0, createdAt: new Date().toISOString(), isActive: true, trialUser: false, notes: '' },
+    { id: 'user_b5', name: '森川誠', group: 'グループB', category: 'B型', displayNumber: 5, price: 0, createdAt: new Date().toISOString(), isActive: true, trialUser: false, notes: '' },
+    { id: 'user_b6', name: '斎藤由美', group: 'グループB', category: 'B型', displayNumber: 6, price: 0, createdAt: new Date().toISOString(), isActive: true, trialUser: false, notes: '' },
+    { id: 'user_b7', name: '武田康平', group: 'グループB', category: 'B型', displayNumber: 7, price: 0, createdAt: new Date().toISOString(), isActive: true, trialUser: false, notes: '' },
+    { id: 'user_b8', name: '西川真奈', group: 'グループB', category: 'B型', displayNumber: 8, price: 0, createdAt: new Date().toISOString(), isActive: true, trialUser: false, notes: '' },
+    { id: 'user_b9', name: '岡田雅人', group: 'グループB', category: 'B型', displayNumber: 9, price: 0, createdAt: new Date().toISOString(), isActive: true, trialUser: false, notes: '' },
+    { id: 'user_b10', name: '菅原咲希', group: 'グループB', category: 'B型', displayNumber: 10, price: 0, createdAt: new Date().toISOString(), isActive: true, trialUser: false, notes: '' },
+
+    // 職員（10人）
+    { id: 'user_s1', name: '山田次郎', group: 'グループC', category: '職員', displayNumber: 1, price: 400, createdAt: new Date().toISOString(), isActive: true, trialUser: false, notes: '' },
+    { id: 'user_s2', name: '田村美香', group: 'グループC', category: '職員', displayNumber: 2, price: 400, createdAt: new Date().toISOString(), isActive: true, trialUser: false, notes: '' },
+    { id: 'user_s3', name: '橋本亮', group: 'グループC', category: '職員', displayNumber: 3, price: 400, createdAt: new Date().toISOString(), isActive: true, trialUser: false, notes: '' },
+    { id: 'user_s4', name: '清水優香', group: 'グループC', category: '職員', displayNumber: 4, price: 400, createdAt: new Date().toISOString(), isActive: true, trialUser: false, notes: '' },
+    { id: 'user_s5', name: '福田隆志', group: 'グループC', category: '職員', displayNumber: 5, price: 400, createdAt: new Date().toISOString(), isActive: true, trialUser: false, notes: '' },
+    { id: 'user_s6', name: '野村恵子', group: 'グループC', category: '職員', displayNumber: 6, price: 400, createdAt: new Date().toISOString(), isActive: true, trialUser: false, notes: '' },
+    { id: 'user_s7', name: '石井正人', group: 'グループC', category: '職員', displayNumber: 7, price: 400, createdAt: new Date().toISOString(), isActive: true, trialUser: false, notes: '' },
+    { id: 'user_s8', name: '木村千春', group: 'グループC', category: '職員', displayNumber: 8, price: 400, createdAt: new Date().toISOString(), isActive: true, trialUser: false, notes: '' },
+    { id: 'user_s9', name: '長谷川達也', group: 'グループC', category: '職員', displayNumber: 9, price: 400, createdAt: new Date().toISOString(), isActive: true, trialUser: false, notes: '' },
+    { id: 'user_s10', name: '平野麻衣', group: 'グループC', category: '職員', displayNumber: 10, price: 400, createdAt: new Date().toISOString(), isActive: true, trialUser: false, notes: '' },
+
+    // 体験者（10人）
+    { id: 'user_t1', name: '鈴木美咲', group: 'その他', category: '体験者', displayNumber: 1, price: 400, createdAt: new Date().toISOString(), isActive: true, trialUser: true, notes: '' },
+    { id: 'user_t2', name: '新井健太', group: 'その他', category: '体験者', displayNumber: 2, price: 400, createdAt: new Date().toISOString(), isActive: true, trialUser: true, notes: '' },
+    { id: 'user_t3', name: '宮崎愛', group: 'その他', category: '体験者', displayNumber: 3, price: 400, createdAt: new Date().toISOString(), isActive: true, trialUser: true, notes: '' },
+    { id: 'user_t4', name: '内田洋平', group: 'その他', category: '体験者', displayNumber: 4, price: 400, createdAt: new Date().toISOString(), isActive: true, trialUser: true, notes: '' },
+    { id: 'user_t5', name: '原田みゆき', group: 'その他', category: '体験者', displayNumber: 5, price: 400, createdAt: new Date().toISOString(), isActive: true, trialUser: true, notes: '' },
+    { id: 'user_t6', name: '藤井慎一', group: 'その他', category: '体験者', displayNumber: 6, price: 400, createdAt: new Date().toISOString(), isActive: true, trialUser: true, notes: '' },
+    { id: 'user_t7', name: '村上彩香', group: 'その他', category: '体験者', displayNumber: 7, price: 400, createdAt: new Date().toISOString(), isActive: true, trialUser: true, notes: '' },
+    { id: 'user_t8', name: '谷口俊介', group: 'その他', category: '体験者', displayNumber: 8, price: 400, createdAt: new Date().toISOString(), isActive: true, trialUser: true, notes: '' },
+    { id: 'user_t9', name: '坂本理沙', group: 'その他', category: '体験者', displayNumber: 9, price: 400, createdAt: new Date().toISOString(), isActive: true, trialUser: true, notes: '' },
+    { id: 'user_t10', name: '吉田航', group: 'その他', category: '体験者', displayNumber: 10, price: 400, createdAt: new Date().toISOString(), isActive: true, trialUser: true, notes: '' }
   ],
   mealRecords: [],
   groups: ['グループA', 'グループB', 'グループC', 'その他'],
