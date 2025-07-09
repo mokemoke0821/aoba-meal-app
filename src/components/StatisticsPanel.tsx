@@ -6,7 +6,6 @@ import {
     Refresh as RefreshIcon,
     Today as TodayIcon
 } from '@mui/icons-material';
-import BackButton from './common/BackButton';
 import {
     Accordion,
     AccordionDetails,
@@ -17,7 +16,6 @@ import {
     Card,
     CardContent,
     Chip,
-    Fab,
     Table,
     TableBody,
     TableCell,
@@ -57,6 +55,7 @@ import {
     calculateTodayStats,
     StatisticsData,
 } from '../utils/statisticsCalculator';
+import BackButton from './common/BackButton';
 import DateRangeFilter, { DateRange } from './DateRangeFilter';
 
 interface MonthlyPaidUserStats {
@@ -378,19 +377,27 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ onBack }) => {
                     borderBottom: `1px solid ${theme.palette.divider}`,
                 }}
             >
-                <Typography
-                    variant={isMobile ? 'h5' : 'h4'}
-                    component="h1"
-                    sx={{
-                        color: 'primary.main',
-                        fontWeight: 700,
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 1,
-                    }}
-                >
-                    📊 統計・分析
-                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <BackButton 
+                        text="← 管理画面に戻る"
+                        onClick={onBack}
+                        sx={{ position: 'relative', margin: 0 }}
+                        aria-label="管理画面に戻る"
+                    />
+                    <Typography
+                        variant={isMobile ? 'h5' : 'h4'}
+                        component="h1"
+                        sx={{
+                            color: 'primary.main',
+                            fontWeight: 700,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 1,
+                        }}
+                    >
+                        📊 統計・分析
+                    </Typography>
+                </Box>
 
                 <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                     <Button
@@ -793,13 +800,7 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ onBack }) => {
                 </Box>
             )}
 
-            {/* 戻るボタン（統一デザイン） */}
-            <BackButton 
-                text="← 管理画面に戻る"
-                position="bottom-left"
-                onClick={onBack}
-                aria-label="管理画面に戻る"
-            />
+
         </Box>
     );
 };
