@@ -1,11 +1,7 @@
 import {
-    Restaurant as RestaurantIcon
-} from '@mui/icons-material';
-import {
     Alert,
     Avatar,
     Box,
-    Button,
     ButtonBase,
     Card,
     CardContent,
@@ -48,13 +44,10 @@ const EatingRatioInput: React.FC<EatingRatioInputProps> = ({ onBack }) => {
         }
     };
 
-    // 食べた量選択ハンドラー
-    const handleEatingRatioSelect = (ratio: number) => {
+    // 食べた量選択ハンドラー（選択と同時に記録保存）
+    const handleEatingRatioSelect = async (ratio: number) => {
         setEatingRatio(ratio);
-    };
-
-    // 食べた量送信ハンドラー
-    const handleSubmit = async () => {
+        
         if (selectedUser) {
             // 既存の給食記録を更新（食べた量を追加）
             const todayRecords = state.mealRecords;
@@ -67,7 +60,7 @@ const EatingRatioInput: React.FC<EatingRatioInputProps> = ({ onBack }) => {
                 const updatedRecords = [...todayRecords];
                 updatedRecords[recordIndex] = {
                     ...updatedRecords[recordIndex],
-                    eatingRatio: eatingRatio,
+                    eatingRatio: ratio,
                     supportNotes: supportNotes
                 };
                 dispatch({ type: 'SET_MEAL_RECORDS', payload: updatedRecords });
@@ -80,7 +73,7 @@ const EatingRatioInput: React.FC<EatingRatioInputProps> = ({ onBack }) => {
             setTimeout(() => {
                 setShowThankYou(false);
                 // 改良された成功メッセージ
-                alert(`✅ ${selectedUser.name}さんの食べた量評価（${eatingRatio}割）を記録しました！\n\nお疲れ様でした。\n次の利用者の方は、カテゴリを選択してください。`);
+                alert(`✅ ${selectedUser.name}さんの食べた量評価（${ratio}割）を記録しました！\n\nお疲れ様でした。\n次の利用者の方は、カテゴリを選択してください。`);
 
                 // 利用者選択状態をクリア
                 dispatch({ type: 'SET_SELECTED_USER', payload: null });
@@ -91,6 +84,8 @@ const EatingRatioInput: React.FC<EatingRatioInputProps> = ({ onBack }) => {
             }, 3000);
         }
     };
+
+
 
     // ユーザーが選択されていない場合
     if (!selectedUser) {
@@ -192,7 +187,7 @@ const EatingRatioInput: React.FC<EatingRatioInputProps> = ({ onBack }) => {
                         🍽️ 食べた量記録
                     </Typography>
                     <Typography variant="h6" component="h2">
-                        食事を食べることができた量を選択してください
+                        食べた量を押すと自動で記録されます
                     </Typography>
                 </Box>
             </Box>
@@ -241,7 +236,7 @@ const EatingRatioInput: React.FC<EatingRatioInputProps> = ({ onBack }) => {
             <Card sx={{ mb: 4, borderRadius: '16px' }}>
                 <CardContent sx={{ p: 4 }}>
                     <Typography variant="h5" sx={{ textAlign: 'center', mb: 3, fontWeight: 600 }}>
-                        食べた量を選んでください（1割〜完食）
+                        食べた量を押してください（1割〜完食）
                     </Typography>
 
                     <Box
@@ -259,15 +254,8 @@ const EatingRatioInput: React.FC<EatingRatioInputProps> = ({ onBack }) => {
                         {renderEatingRatioButtons()}
                     </Box>
 
-                    {/* 選択された食べた量の表示 */}
-                    <Box sx={{ textAlign: 'center', mb: 3 }}>
-                        <Typography variant="h4" sx={{ mb: 2 }}>
-                            選択中: {EATING_RATIO_EMOJIS[eatingRatio as keyof typeof EATING_RATIO_EMOJIS]} {EATING_RATIO_LABELS[eatingRatio as keyof typeof EATING_RATIO_LABELS]}
-                        </Typography>
-                    </Box>
-
                     {/* 支援記録入力 */}
-                    <Box sx={{ mb: 3 }}>
+                    <Box sx={{ textAlign: 'center' }}>
                         <TextField
                             fullWidth
                             multiline
@@ -282,28 +270,14 @@ const EatingRatioInput: React.FC<EatingRatioInputProps> = ({ onBack }) => {
                                 },
                                 '& .MuiInputLabel-root': {
                                     fontSize: '1.1rem',
-                                }
+                                },
+                                maxWidth: '600px',
+                                mx: 'auto'
                             }}
                         />
-                    </Box>
-
-                    {/* 送信ボタン */}
-                    <Box sx={{ textAlign: 'center' }}>
-                        <Button
-                            variant="contained"
-                            size="large"
-                            onClick={handleSubmit}
-                            sx={{
-                                minHeight: '80px',
-                                fontSize: '1.5rem',
-                                fontWeight: 600,
-                                borderRadius: '12px',
-                                px: 6,
-                            }}
-                            startIcon={<RestaurantIcon sx={{ fontSize: '2rem' }} />}
-                        >
-                            食べた量を記録
-                        </Button>
+                        <Typography variant="body2" sx={{ mt: 2, color: 'text.secondary', fontStyle: 'italic' }}>
+                            💡 食べた量ボタンを押すと自動で記録され、メイン画面に戻ります
+                        </Typography>
                     </Box>
                 </CardContent>
             </Card>
