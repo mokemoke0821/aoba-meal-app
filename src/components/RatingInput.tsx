@@ -7,8 +7,6 @@ import {
     CardContent,
     Chip,
     Container,
-    Dialog,
-    DialogContent,
     TextField,
     Typography
 } from '@mui/material';
@@ -31,7 +29,7 @@ const EatingRatioInput: React.FC<EatingRatioInputProps> = ({ onBack }) => {
     const { state, dispatch } = useApp();
     const [eatingRatio, setEatingRatio] = useState<number>(10);
     const [supportNotes, setSupportNotes] = useState<string>('');
-    const [showThankYou, setShowThankYou] = useState(false);
+
 
     const { selectedUser } = state;
 
@@ -66,22 +64,12 @@ const EatingRatioInput: React.FC<EatingRatioInputProps> = ({ onBack }) => {
                 dispatch({ type: 'SET_MEAL_RECORDS', payload: updatedRecords });
             }
 
-            // ありがとうメッセージを表示
-            setShowThankYou(true);
+            // 利用者選択状態をクリア
+            dispatch({ type: 'SET_SELECTED_USER', payload: null });
+            dispatch({ type: 'SET_SELECTED_CATEGORY', payload: null });
 
-            // 3秒後にカテゴリ選択画面に戻る
-            setTimeout(() => {
-                setShowThankYou(false);
-                // 改良された成功メッセージ
-                alert(`✅ ${selectedUser.name}さんの食べた量評価（${ratio}割）を記録しました！\n\nお疲れ様でした。\n次の利用者の方は、カテゴリを選択してください。`);
-
-                // 利用者選択状態をクリア
-                dispatch({ type: 'SET_SELECTED_USER', payload: null });
-                dispatch({ type: 'SET_SELECTED_CATEGORY', payload: null });
-
-                // 修正: カテゴリ選択画面に戻る（次の利用者が使いやすくするため）
-                dispatch({ type: 'SET_VIEW', payload: 'categorySelect' });
-            }, 3000);
+            // 直接カテゴリ選択画面に戻る
+            dispatch({ type: 'SET_VIEW', payload: 'categorySelect' });
         }
     };
 
@@ -282,37 +270,7 @@ const EatingRatioInput: React.FC<EatingRatioInputProps> = ({ onBack }) => {
                 </CardContent>
             </Card>
 
-            {/* ありがとうダイアログ */}
-            <Dialog
-                open={showThankYou}
-                maxWidth="sm"
-                fullWidth
-                PaperProps={{
-                    sx: {
-                        borderRadius: '20px',
-                        p: 4,
-                        textAlign: 'center',
-                    },
-                }}
-            >
-                <DialogContent sx={{ p: 6 }}>
-                    <Typography variant="h2" sx={{ mb: 3 }}>
-                        🎉
-                    </Typography>
-                    <Typography variant="h3" sx={{ mb: 2, fontWeight: 700, color: 'primary.main' }}>
-                        記録完了！
-                    </Typography>
-                    <Typography variant="h5" sx={{ mb: 3, color: 'text.secondary' }}>
-                        食べた量が記録されました
-                    </Typography>
-                    <Typography variant="h4" sx={{ mb: 2 }}>
-                        {EATING_RATIO_EMOJIS[eatingRatio as keyof typeof EATING_RATIO_EMOJIS]} {EATING_RATIO_LABELS[eatingRatio as keyof typeof EATING_RATIO_LABELS]}
-                    </Typography>
-                    <Typography variant="body1" sx={{ color: 'text.secondary' }}>
-                        自動的に前の画面に戻ります...
-                    </Typography>
-                </DialogContent>
-            </Dialog>
+
         </Container>
     );
 };
