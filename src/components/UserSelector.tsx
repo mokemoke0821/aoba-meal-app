@@ -1,16 +1,15 @@
-import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 import {
     Box,
     Button,
     Card,
     CardContent,
     Container,
-    IconButton,
     Typography
 } from '@mui/material';
 import React from 'react';
 import { useApp } from '../contexts/AppContext';
 import { getCategoryInfo } from '../types';
+import BackButton from './common/BackButton';
 
 const UserSelector: React.FC = () => {
     const { state, dispatch } = useApp();
@@ -54,9 +53,12 @@ const UserSelector: React.FC = () => {
         <Container maxWidth="md">
             <Box sx={{ py: 4 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                    <IconButton onClick={handleBackToCategory} sx={{ mr: 2 }}>
-                        <ArrowBackIcon />
-                    </IconButton>
+                    <BackButton 
+                        text="← カテゴリ選択に戻る"
+                        onClick={handleBackToCategory}
+                        sx={{ position: 'relative', margin: 0, mr: 2 }}
+                        aria-label="カテゴリ選択に戻る"
+                    />
                     <Typography variant="h4" component="h1">
                         {categoryInfo.icon} {categoryInfo.displayName}
                     </Typography>

@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import {
     Add as AddIcon,
-    ArrowBack as ArrowBackIcon,
     Delete as DeleteIcon,
     Download as DownloadIcon,
     Edit as EditIcon,
@@ -56,6 +55,7 @@ import {
     getCategoryPrice
 } from '../types';
 import { exportUsersCSV } from '../utils/csvExport';
+import BackButton from './common/BackButton';
 
 interface UserFormData {
     name: string;
@@ -571,15 +571,14 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers, o
             {/* Header */}
             <Box sx={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', mb: 3, gap: 2 }}>
                 {onBack && (
-                    <Button
-                        variant="outlined"
-                        startIcon={<ArrowBackIcon />}
+                    <BackButton 
+                        text="← 管理画面に戻る"
+                        position="top-left"
                         onClick={onBack}
                         size="large"
-                        sx={{ minHeight: '50px', fontSize: '1.1rem' }}
-                    >
-                        管理画面に戻る
-                    </Button>
+                        aria-label="管理画面に戻る"
+                        sx={{ position: 'relative', margin: 0 }}
+                    />
                 )}
                 <Typography variant="h4" sx={{ fontWeight: 600 }}>
                     👥 利用者管理

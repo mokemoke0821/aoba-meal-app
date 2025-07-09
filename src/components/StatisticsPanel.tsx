@@ -1,5 +1,4 @@
 import {
-    ArrowBack as ArrowBackIcon,
     CalendarMonth as CalendarMonthIcon,
     Download as DownloadIcon,
     ExpandMore as ExpandMoreIcon,
@@ -7,6 +6,7 @@ import {
     Refresh as RefreshIcon,
     Today as TodayIcon
 } from '@mui/icons-material';
+import BackButton from './common/BackButton';
 import {
     Accordion,
     AccordionDetails,
@@ -793,21 +793,13 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ onBack }) => {
                 </Box>
             )}
 
-            {/* 戻るボタン（フローティング） */}
-            <Fab
-                color="secondary"
+            {/* 戻るボタン（統一デザイン） */}
+            <BackButton 
+                text="← 管理画面に戻る"
+                position="bottom-left"
                 onClick={onBack}
-                sx={{
-                    position: 'fixed',
-                    bottom: 24,
-                    left: 24,
-                    width: 64,
-                    height: 64,
-                    zIndex: 1000,
-                }}
-            >
-                <ArrowBackIcon sx={{ fontSize: 32 }} />
-            </Fab>
+                aria-label="管理画面に戻る"
+            />
         </Box>
     );
 };

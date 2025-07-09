@@ -1,6 +1,5 @@
 import {
-    ArrowBack as ArrowBackIcon,
-    Restaurant as RestaurantIcon,
+    Restaurant as RestaurantIcon
 } from '@mui/icons-material';
 import {
     Alert,
@@ -26,6 +25,7 @@ import {
     getGroupDisplayName,
     GROUP_COLORS
 } from '../types';
+import BackButton from './common/BackButton';
 
 interface EatingRatioInputProps {
     onBack?: () => void;
@@ -100,20 +100,21 @@ const EatingRatioInput: React.FC<EatingRatioInputProps> = ({ onBack }) => {
                     利用者が選択されていません。最初の画面に戻ります。
                 </Alert>
                 <Box sx={{ textAlign: 'center' }}>
-                    <Button
+                    <BackButton 
+                        text="← 利用者選択に戻る"
+                        onClick={handleBack}
                         variant="contained"
                         size="large"
-                        onClick={handleBack}
-                        sx={{
+                        sx={{ 
+                            position: 'relative',
+                            margin: 0,
                             minHeight: '80px',
                             fontSize: '1.5rem',
                             fontWeight: 600,
                             borderRadius: '12px',
                         }}
-                        startIcon={<ArrowBackIcon sx={{ fontSize: '2rem' }} />}
-                    >
-                        利用者選択に戻る
-                    </Button>
+                        aria-label="利用者選択に戻る"
+                    />
                 </Box>
             </Container>
         );
@@ -180,14 +181,12 @@ const EatingRatioInput: React.FC<EatingRatioInputProps> = ({ onBack }) => {
         <Container maxWidth="lg" sx={{ py: 4 }}>
             {/* ヘッダー */}
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
-                <Button
-                    variant="outlined"
+                <BackButton 
+                    text="← 戻る"
                     onClick={handleBack}
-                    sx={{ mr: 2 }}
-                    startIcon={<ArrowBackIcon />}
-                >
-                    ← 戻る
-                </Button>
+                    sx={{ position: 'relative', margin: 0, mr: 2 }}
+                    aria-label="利用者選択に戻る"
+                />
                 <Box>
                     <Typography variant="h3" component="h1" sx={{ color: 'primary.main' }}>
                         🍽️ 食べた量記録

@@ -1,5 +1,4 @@
 import {
-    ArrowBack as ArrowBackIcon,
     Assessment as AssessmentIcon,
     People as PeopleIcon,
 } from '@mui/icons-material';
@@ -9,11 +8,11 @@ import {
     Card,
     CardContent,
     Container,
-    IconButton,
     Typography
 } from '@mui/material';
 import React from 'react';
 import { useApp } from '../contexts/AppContext';
+import BackButton from './common/BackButton';
 
 const AdminPanel: React.FC = () => {
     const { dispatch } = useApp();
@@ -43,9 +42,12 @@ const AdminPanel: React.FC = () => {
         <Container maxWidth="md">
             <Box sx={{ py: 4 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                    <IconButton onClick={handleBackToHome} sx={{ mr: 2 }}>
-                        <ArrowBackIcon />
-                    </IconButton>
+                    <BackButton 
+                        text="← メイン画面に戻る"
+                        onClick={handleBackToHome}
+                        sx={{ position: 'relative', margin: 0, mr: 2 }}
+                        aria-label="メイン画面に戻る"
+                    />
                     <Typography variant="h4" component="h1">
                         管理者メニュー
                     </Typography>

@@ -1,6 +1,6 @@
-import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
-import { Box, Button, Typography } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import React from 'react';
+import BackButton from './common/BackButton';
 
 interface PlaceholderPageProps {
     title: string;
@@ -13,14 +13,12 @@ export const PlaceholderPage: React.FC<PlaceholderPageProps> = ({ title, descrip
         <Box sx={{ p: 3 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
                 {onBack && (
-                    <Button
-                        variant="outlined"
+                    <BackButton 
+                        text="← 戻る"
                         onClick={onBack}
-                        sx={{ mr: 2 }}
-                        startIcon={<ArrowBackIcon />}
-                    >
-                        ← 戻る
-                    </Button>
+                        sx={{ position: 'relative', margin: 0, mr: 2 }}
+                        aria-label="前の画面に戻る"
+                    />
                 )}
                 <Typography variant="h4">
                     {title}
