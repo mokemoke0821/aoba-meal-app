@@ -6,9 +6,9 @@ import {
 } from '../statisticsCalculator';
 import { createMockMealRecord, generateMockUsers } from '../testHelpers';
 
-describe('摂食量統計計算機能', () => {
+describe('食べた量統計計算機能', () => {
     describe('calculateEatingRatioDistribution', () => {
-        it('摂食量分布を正しく計算できる', () => {
+        it('食べた量分布を正しく計算できる', () => {
             const records = [
                 createMockMealRecord({ eatingRatio: 1 }),
                 createMockMealRecord({ eatingRatio: 3 }),
@@ -47,7 +47,7 @@ describe('摂食量統計計算機能', () => {
             });
         });
 
-        it('摂食量0の記録を除外する', () => {
+        it('食べた量0の記録を除外する', () => {
             const records = [
                 createMockMealRecord({ eatingRatio: 0 }),
                 createMockMealRecord({ eatingRatio: 5 }),
@@ -83,7 +83,7 @@ describe('摂食量統計計算機能', () => {
         });
     });
 
-    describe('摂食量システム統合テスト', () => {
+    describe('食べた量システム統合テスト', () => {
         it('就労移行支援事業所の実用シナリオをテストする', () => {
             const users = [
                 { ...generateMockUsers(1)[0], category: 'A型' as const, price: 100 },
@@ -125,7 +125,7 @@ describe('摂食量統計計算機能', () => {
             expect(result.totalRevenue).toBe(500); // 100 + 0 + 400
             expect(result.averageEatingRatio).toBeCloseTo(7.67, 1); // (10 + 5 + 8) / 3
 
-            // 摂食量分布が適切に計算されることを確認
+            // 食べた量分布が適切に計算されることを確認
             const distribution = result.eatingRatioDistribution;
             expect(distribution.find(d => d.ratio === 5)?.count).toBe(1);
             expect(distribution.find(d => d.ratio === 8)?.count).toBe(1);

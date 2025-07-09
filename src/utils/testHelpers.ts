@@ -97,7 +97,7 @@ export const generateMockMealRecords = (users: User[], count: number): MealRecor
             userGroup: user.group,
             userCategory: user.category,
             date: recordDate.toISOString().split('T')[0],
-            eatingRatio: Math.floor(Math.random() * 10) + 1, // 1-10のランダム摂食量
+            eatingRatio: Math.floor(Math.random() * 10) + 1, // 1-10のランダム食べた量
             price: user.price,
             menuName: `テストメニュー${i + 1}`,
             supportNotes: `テスト記録 ${i + 1}`
@@ -220,7 +220,7 @@ export const mockMealRecords = generateMockMealRecords(mockUsers, 10);
 
 // テスト用のCSVデータ生成
 export const generateMockCSVData = (records: MealRecord[]): string => {
-    const headers = ['日付', '利用者名', 'グループ', 'カテゴリ', '料金', '摂食量', 'メニュー名', '支援記録'];
+    const headers = ['日付', '利用者名', 'グループ', 'カテゴリ', '料金', '食べた量', 'メニュー名', '支援記録'];
     const csvRows = [headers.join(',')];
 
     records.forEach(record => {

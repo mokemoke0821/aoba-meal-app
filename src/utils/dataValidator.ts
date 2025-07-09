@@ -459,8 +459,8 @@ export const validateMealRecord = (record: any): ValidationResult => {
     result.errors.push(...dateResult.errors);
     result.warnings.push(...dateResult.warnings);
 
-    // 摂食量バリデーション
-    const eatingRatioResult = validateNumber(record.eatingRatio, '摂食量', {
+    // 食べた量バリデーション
+    const eatingRatioResult = validateNumber(record.eatingRatio, '食べた量', {
         min: 1,
         max: 10,
         isInteger: true

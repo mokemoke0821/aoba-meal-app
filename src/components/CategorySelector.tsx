@@ -24,27 +24,11 @@ const CategorySelector: React.FC = () => {
         <Container maxWidth="md">
             <Box sx={{ py: 4 }}>
                 <Typography variant="h3" component="h1" gutterBottom align="center">
-                    あおば給食管理システム
+                    給食アプリ
                 </Typography>
-                <Typography variant="h5" component="h2" gutterBottom align="center" color="text.secondary">
-                    利用者カテゴリを選択してください
-                </Typography>
-
-                {/* 利用案内メッセージ */}
-                <Box sx={{ textAlign: 'center', mb: 4, mt: 2 }}>
-                    <Typography variant="h6" sx={{ color: 'text.secondary', mb: 1 }}>
-                        👥 ご利用される方のカテゴリを選択してください
-                    </Typography>
-                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                        複数の利用者が連続してご利用いただけます
-                    </Typography>
-                </Box>
 
                 {/* 1段目: A型利用者・B型利用者 */}
                 <Box sx={{ mb: 3 }}>
-                    <Typography variant="h6" align="center" sx={{ mb: 2, color: 'primary.main', fontWeight: 600 }}>
-                        🏢 就労継続支援事業
-                    </Typography>
                     <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 3 }}>
                         {categories.filter(category => category.id === 'A型' || category.id === 'B型').map((category) => (
                             <Card
@@ -52,9 +36,15 @@ const CategorySelector: React.FC = () => {
                                 sx={{
                                     cursor: 'pointer',
                                     transition: 'transform 0.2s, box-shadow 0.2s',
+                                    border: '3px solid',
+                                    borderColor: category.color,
+                                    borderRadius: '16px',
+                                    backgroundColor: `${category.color}15`,
                                     '&:hover': {
                                         transform: 'translateY(-4px)',
                                         boxShadow: 4,
+                                        borderColor: category.color,
+                                        backgroundColor: `${category.color}25`,
                                     }
                                 }}
                                 onClick={() => handleCategorySelect(category.id)}
@@ -67,7 +57,7 @@ const CategorySelector: React.FC = () => {
                                     >
                                         {category.icon}
                                     </Typography>
-                                    <Typography variant="h6" component="h3" gutterBottom>
+                                    <Typography variant="h5" component="h3" gutterBottom sx={{ fontSize: '28px', fontWeight: 'bold' }}>
                                         {category.displayName}
                                     </Typography>
                                     <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
@@ -94,9 +84,6 @@ const CategorySelector: React.FC = () => {
 
                 {/* 2段目: 体験者・職員 */}
                 <Box sx={{ mb: 4 }}>
-                    <Typography variant="h6" align="center" sx={{ mb: 2, color: 'secondary.main', fontWeight: 600 }}>
-                        👥 体験利用・スタッフ
-                    </Typography>
                     <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 3 }}>
                         {categories.filter(category => category.id === '体験者' || category.id === '職員').map((category) => (
                             <Card
@@ -104,9 +91,15 @@ const CategorySelector: React.FC = () => {
                                 sx={{
                                     cursor: 'pointer',
                                     transition: 'transform 0.2s, box-shadow 0.2s',
+                                    border: '3px solid',
+                                    borderColor: category.color,
+                                    borderRadius: '16px',
+                                    backgroundColor: `${category.color}15`,
                                     '&:hover': {
                                         transform: 'translateY(-4px)',
                                         boxShadow: 4,
+                                        borderColor: category.color,
+                                        backgroundColor: `${category.color}25`,
                                     }
                                 }}
                                 onClick={() => handleCategorySelect(category.id)}
@@ -119,7 +112,7 @@ const CategorySelector: React.FC = () => {
                                     >
                                         {category.icon}
                                     </Typography>
-                                    <Typography variant="h6" component="h3" gutterBottom>
+                                    <Typography variant="h5" component="h3" gutterBottom sx={{ fontSize: '28px', fontWeight: 'bold' }}>
                                         {category.displayName}
                                     </Typography>
                                     <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>

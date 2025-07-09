@@ -300,7 +300,7 @@ describe('データ検証機能', () => {
             expect(result.errors).toContain('利用者IDは空にできません');
         });
 
-        it('無効な摂食量値を検出する', () => {
+        it('無効な食べた量値を検出する', () => {
             const recordWithInvalidEatingRatio = createMockMealRecord({
                 eatingRatio: 15
             });

@@ -33,7 +33,7 @@ export const CATEGORY_CONFIG: Record<UserCategory, CategoryInfo> = {
   'A型': {
     id: 'A型',
     name: 'A型',
-    displayName: 'A型利用者',
+    displayName: 'A型',
     color: '#1976d2',
     icon: '🏭',
     price: 100
@@ -41,7 +41,7 @@ export const CATEGORY_CONFIG: Record<UserCategory, CategoryInfo> = {
   'B型': {
     id: 'B型',
     name: 'B型',
-    displayName: 'B型利用者',
+    displayName: 'B型',
     color: '#2e7d32',
     icon: '🛠️',
     price: 0
@@ -49,7 +49,7 @@ export const CATEGORY_CONFIG: Record<UserCategory, CategoryInfo> = {
   '体験者': {
     id: '体験者',
     name: '体験者',
-    displayName: '体験利用者',
+    displayName: '体験者',
     color: '#9c27b0',
     icon: '🌱',
     price: 400
@@ -66,10 +66,10 @@ export const CATEGORY_CONFIG: Record<UserCategory, CategoryInfo> = {
 
 // グループ表示名マッピング（職員にとって分かりやすい名前）
 export const GROUP_DISPLAY_NAMES = {
-  'グループA': 'A型利用者',
-  'グループB': 'B型利用者',
+  'グループA': 'A型',
+  'グループB': 'B型',
   'グループC': '職員',
-  'その他': '体験利用者'
+  'その他': '体験者'
 } as const;
 
 // グループ表示名を取得する関数
@@ -85,7 +85,7 @@ export interface MealRecord {
   userGroup: string;
   userCategory: UserCategory;  // 新追加：カテゴリ
   date: string;
-  eatingRatio: number;  // 摂食量（1-10: 1割～10割）
+  eatingRatio: number;  // 食べた量（1-10: 1割～10割）
   price: number;
   menuName?: string;
   supportNotes?: string;  // 支援記録・備考
@@ -126,7 +126,7 @@ export type ViewType =
   | 'categorySelect'    // カテゴリ選択
   | 'userSelect'        // 利用者選択
   | 'mealOrder'         // 給食希望
-  | 'rating'            // 摂食量記録
+  | 'rating'            // 食べた量記録
   | 'admin'             // 後方互換性のため
   | 'adminPanel'        // 管理者パネル
   | 'adminAuth'         // 管理者認証
@@ -150,13 +150,13 @@ export type AppAction =
   | { type: 'SET_REQUIRE_ADMIN_AUTH'; payload: boolean }
   | { type: 'RESET_STATE'; payload: AppState };
 
-// 摂食量用の絵文字マッピング
+// 食べた量用の絵文字マッピング
 export const EATING_RATIO_EMOJIS = {
   1: '🍽️', 2: '🥄', 3: '🍴', 4: '🥢', 5: '🍽️',
   6: '🍽️', 7: '🍽️', 8: '🍽️', 9: '🍽️', 10: '✨🍽️'
 } as const;
 
-// 摂食量ラベル
+// 食べた量ラベル
 export const EATING_RATIO_LABELS = {
   1: '1割程度', 2: '2割程度', 3: '3割程度', 4: '4割程度', 5: '5割程度',
   6: '6割程度', 7: '7割程度', 8: '8割程度', 9: '9割程度', 10: '完食'
@@ -223,25 +223,25 @@ export interface DailyStats {
   date: string;
   orderCount: number;
   evaluationCount: number;
-  averageEatingRatio: number;  // 平均摂食量
+  averageEatingRatio: number;  // 平均食べた量
   totalRevenue: number;
 }
 
 export interface MonthlyTrendStats {
   month: string;
   orderCount: number;
-  averageEatingRatio: number;  // 平均摂食量
+  averageEatingRatio: number;  // 平均食べた量
   revenue: number;
 }
 
 export interface StatisticsResult {
   dailyOrders: DailyStats[];
-  eatingRatioDistribution: EatingRatioDistribution[];  // 摂食量分布
+  eatingRatioDistribution: EatingRatioDistribution[];  // 食べた量分布
   monthlyTrends: MonthlyTrendStats[];
   totalUsers: number;
   totalOrders: number;
   totalRevenue: number;
-  averageEatingRatio: number;  // 平均摂食量
+  averageEatingRatio: number;  // 平均食べた量
 }
 
 // エラー処理用型定義（新追加）

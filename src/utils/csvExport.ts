@@ -63,7 +63,7 @@ export const exportStatisticsCSV = (
         '表示番号',
         'カテゴリ',
         'グループ',
-        '摂食量（割）',
+        '食べた量（割）',
         '料金（円）',
         'メニュー',
         '支援記録・備考'
@@ -162,7 +162,7 @@ export const exportMonthlyReportCSV = (
         categoryStats[category].avgEating += record.eatingRatio;
     });
 
-    // 平均摂食量計算
+    // 平均食べた量計算
     Object.keys(categoryStats).forEach(key => {
         const category = key as UserCategory;
         const stats = categoryStats[category];
@@ -175,13 +175,13 @@ export const exportMonthlyReportCSV = (
         `作成日: ${format(new Date(), 'yyyy年MM月dd日 HH:mm')}`,
         '',
         '【カテゴリ別集計】',
-        ['カテゴリ', '利用回数', '料金合計（円）', '平均摂食量（割）'].map(h => escapeCsvValue(h)).join(','),
+        ['カテゴリ', '利用回数', '料金合計（円）', '平均食べた量（割）'].map(h => escapeCsvValue(h)).join(','),
         ...Object.entries(categoryStats).map(([category, stats]) =>
             [category, stats.count, stats.total, stats.avgEating].map(cell => escapeCsvValue(cell)).join(',')
         ),
         '',
         '【詳細記録】',
-        ['日付', '利用者名', 'カテゴリ', '摂食量（割）', '料金（円）', 'メニュー', '備考'].map(h => escapeCsvValue(h)).join(','),
+        ['日付', '利用者名', 'カテゴリ', '食べた量（割）', '料金（円）', 'メニュー', '備考'].map(h => escapeCsvValue(h)).join(','),
         ...monthRecords
             .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
             .map(record => [
@@ -235,7 +235,7 @@ export const exportPeriodReportCSV = (
         categoryStats[category].avgEating += record.eatingRatio;
     });
 
-    // 平均摂食量計算
+    // 平均食べた量計算
     Object.keys(categoryStats).forEach(key => {
         const category = key as UserCategory;
         const stats = categoryStats[category];
@@ -252,16 +252,16 @@ export const exportPeriodReportCSV = (
         ['項目', '値'].map(h => escapeCsvValue(h)).join(','),
         ['総利用回数', totalRecords].map(cell => escapeCsvValue(cell)).join(','),
         ['総料金記録', `${totalRevenue}円`].map(cell => escapeCsvValue(cell)).join(','),
-        ['平均摂食量', `${avgEatingRatio}割`].map(cell => escapeCsvValue(cell)).join(','),
+        ['平均食べた量', `${avgEatingRatio}割`].map(cell => escapeCsvValue(cell)).join(','),
         '',
         '【カテゴリ別統計】',
-        ['カテゴリ', '利用回数', '料金合計（円）', '平均摂食量（割）'].map(h => escapeCsvValue(h)).join(','),
+        ['カテゴリ', '利用回数', '料金合計（円）', '平均食べた量（割）'].map(h => escapeCsvValue(h)).join(','),
         ...Object.entries(categoryStats).map(([category, stats]) =>
             [category, stats.count, stats.total, stats.avgEating].map(cell => escapeCsvValue(cell)).join(',')
         ),
         '',
         '【詳細記録】',
-        ['日付', '利用者名', 'カテゴリ', '摂食量（割）', '料金（円）', 'メニュー', '備考'].map(h => escapeCsvValue(h)).join(','),
+        ['日付', '利用者名', 'カテゴリ', '食べた量（割）', '料金（円）', 'メニュー', '備考'].map(h => escapeCsvValue(h)).join(','),
         ...periodRecords
             .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
             .map(record => [

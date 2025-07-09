@@ -77,7 +77,7 @@ export const loadCurrentMenu = (): MenuItem | null => {
 
 // CSV出力用のデータ変換
 const convertRecordsToCSV = (records: MealRecord[]): string => {
-    const headers = ['日付', '利用者名', 'グループ', '料金', '摂食量', 'メニュー名', '支援記録'];
+    const headers = ['日付', '利用者名', 'グループ', '料金', '食べた量', 'メニュー名', '支援記録'];
     const csvData = records.map(record => [
         record.date,
         record.userName,

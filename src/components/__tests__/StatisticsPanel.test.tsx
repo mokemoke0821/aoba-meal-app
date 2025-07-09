@@ -80,7 +80,7 @@ describe('StatisticsPanel', () => {
             expect(screen.getByText('注文数')).toBeInTheDocument();
             expect(screen.getByText('記録待ち')).toBeInTheDocument();
             expect(screen.getByText('記録完了')).toBeInTheDocument();
-            expect(screen.getByText('平均摂食量')).toBeInTheDocument();
+            expect(screen.getByText('平均食べた量')).toBeInTheDocument();
         });
 
         it('期間サマリーが表示される', async () => {
@@ -90,14 +90,14 @@ describe('StatisticsPanel', () => {
             expect(screen.getByText('利用者数')).toBeInTheDocument();
             expect(screen.getByText('総注文数')).toBeInTheDocument();
             expect(screen.getByText('料金記録合計')).toBeInTheDocument();
-            expect(screen.getAllByText('平均摂食量').length).toBeGreaterThan(0);
+            expect(screen.getAllByText('平均食べた量').length).toBeGreaterThan(0);
         });
 
         it('グラフセクションが表示される', async () => {
             renderWithProviders(<StatisticsPanel onBack={mockOnBack} />);
 
             expect(await screen.findByText('📅 日別注文数推移')).toBeInTheDocument();
-            expect(screen.getByText('🍽️ 摂食量分布')).toBeInTheDocument();
+            expect(screen.getByText('🍽️ 食べた量分布')).toBeInTheDocument();
             expect(screen.getByText('📊 月別トレンド')).toBeInTheDocument();
         });
     });
@@ -217,9 +217,9 @@ describe('StatisticsPanel', () => {
             expect(await screen.findByText('📅 日別注文数推移')).toBeInTheDocument();
         });
 
-        it('摂食量分布グラフが表示される', async () => {
+        it('食べた量分布グラフが表示される', async () => {
             renderWithProviders(<StatisticsPanel onBack={mockOnBack} />);
-            expect(await screen.findByText('🍽️ 摂食量分布')).toBeInTheDocument();
+            expect(await screen.findByText('🍽️ 食べた量分布')).toBeInTheDocument();
         });
 
         it('月別トレンドグラフが表示される', async () => {

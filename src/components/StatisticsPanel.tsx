@@ -67,7 +67,7 @@ interface MonthlyPaidUserStats {
         category: string;               // 'A型' | '職員' | '体験者'
         orderCount: number;            // 月次利用回数
         totalCost: number;             // 月次費用合計
-        averageEatingRatio: number;    // 月次平均摂食量
+        averageEatingRatio: number;    // 月次平均食べた量
     }>;
     totalOrderCount: number;         // 月合計注文数
     totalRevenue: number;           // 月合計料金記録
@@ -302,7 +302,7 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ onBack }) => {
         theme.palette.error.main,
     ];
 
-    // 摂食量色設定
+    // 食べた量色設定
     const eatingRatioColors = {
         1: '#f44336', 2: '#ff5722', 3: '#ff9800', 4: '#ffb300', 5: '#ffc107',
         6: '#ffeb3b', 7: '#8bc34a', 8: '#4caf50', 9: '#2196f3', 10: '#009688'
@@ -488,7 +488,7 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ onBack }) => {
                                     {todayStats.averageRating.toFixed(1)}割
                                 </Typography>
                                 <Typography variant="body2" color="text.secondary">
-                                    平均摂食量
+                                    平均食べた量
                                 </Typography>
                             </Box>
                         </Box>
@@ -525,7 +525,7 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ onBack }) => {
                                     {todayPaidStats.averagePaidEatingRatio.toFixed(1)}割
                                 </Typography>
                                 <Typography variant="body2" color="text.secondary">
-                                    有料平均摂食量
+                                    有料平均食べた量
                                 </Typography>
                             </Box>
                         </Box>
@@ -592,7 +592,7 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ onBack }) => {
                                                         <TableCell>カテゴリ</TableCell>
                                                         <TableCell align="right">利用回数</TableCell>
                                                         <TableCell align="right">費用合計</TableCell>
-                                                        <TableCell align="right">平均摂食量</TableCell>
+                                                        <TableCell align="right">平均食べた量</TableCell>
                                                     </TableRow>
                                                 </TableHead>
                                                 <TableBody>
@@ -656,7 +656,7 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ onBack }) => {
                                 variant="outlined"
                             />
                             <Chip
-                                label={`平均摂食量: ${statisticsData.averageEatingRatio}割`}
+                                label={`平均食べた量: ${statisticsData.averageEatingRatio}割`}
                                 color="warning"
                                 variant="outlined"
                             />
@@ -705,12 +705,12 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ onBack }) => {
                 </Card>
             </Box>
 
-            {/* 摂食量分布グラフ */}
+            {/* 食べた量分布グラフ */}
             <Box sx={{ px: 3, mb: 3 }}>
                 <Card sx={{ borderRadius: '16px', boxShadow: theme.shadows[3] }}>
                     <CardContent sx={{ p: 3 }}>
                         <Typography variant="h6" sx={{ mb: 3, color: 'primary.main', fontWeight: 600 }}>
-                            🍽️ 摂食量分布
+                            🍽️ 食べた量分布
                         </Typography>
                         <ResponsiveContainer width="100%" height={300}>
                             <BarChart data={statisticsData.eatingRatioDistribution}>
@@ -736,7 +736,7 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ onBack }) => {
                         </ResponsiveContainer>
                         <Box sx={{ mt: 2, textAlign: 'center' }}>
                             <Typography variant="body2" color="text.secondary">
-                                ※ 1割（少量）から10割（完食）までの摂食量分布
+                                ※ 1割（少量）から10割（完食）までの食べた量分布
                             </Typography>
                         </Box>
                     </CardContent>
@@ -800,7 +800,7 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ onBack }) => {
                 sx={{
                     position: 'fixed',
                     bottom: 24,
-                    right: 24,
+                    left: 24,
                     width: 64,
                     height: 64,
                     zIndex: 1000,

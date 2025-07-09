@@ -569,10 +569,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers, o
     return (
         <Box sx={{ p: 3 }}>
             {/* Header */}
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                <Typography variant="h4" sx={{ fontWeight: 600 }}>
-                    👥 利用者管理
-                </Typography>
+            <Box sx={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', mb: 3, gap: 2 }}>
                 {onBack && (
                     <Button
                         variant="outlined"
@@ -584,6 +581,9 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers, o
                         管理画面に戻る
                     </Button>
                 )}
+                <Typography variant="h4" sx={{ fontWeight: 600 }}>
+                    👥 利用者管理
+                </Typography>
             </Box>
 
             {/* Statistics Cards */}

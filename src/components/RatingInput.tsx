@@ -48,15 +48,15 @@ const EatingRatioInput: React.FC<EatingRatioInputProps> = ({ onBack }) => {
         }
     };
 
-    // 摂食量選択ハンドラー
+    // 食べた量選択ハンドラー
     const handleEatingRatioSelect = (ratio: number) => {
         setEatingRatio(ratio);
     };
 
-    // 摂食量送信ハンドラー
+    // 食べた量送信ハンドラー
     const handleSubmit = async () => {
         if (selectedUser) {
-            // 既存の給食記録を更新（摂食量を追加）
+            // 既存の給食記録を更新（食べた量を追加）
             const todayRecords = state.mealRecords;
             const recordIndex = todayRecords.findIndex(
                 record => record.userId === selectedUser.id &&
@@ -80,7 +80,7 @@ const EatingRatioInput: React.FC<EatingRatioInputProps> = ({ onBack }) => {
             setTimeout(() => {
                 setShowThankYou(false);
                 // 改良された成功メッセージ
-                alert(`✅ ${selectedUser.name}さんの摂食量評価（${eatingRatio}割）を記録しました！\n\nお疲れ様でした。\n次の利用者の方は、カテゴリを選択してください。`);
+                alert(`✅ ${selectedUser.name}さんの食べた量評価（${eatingRatio}割）を記録しました！\n\nお疲れ様でした。\n次の利用者の方は、カテゴリを選択してください。`);
 
                 // 利用者選択状態をクリア
                 dispatch({ type: 'SET_SELECTED_USER', payload: null });
@@ -119,7 +119,7 @@ const EatingRatioInput: React.FC<EatingRatioInputProps> = ({ onBack }) => {
         );
     }
 
-    // 摂食量ボタンの生成
+    // 食べた量ボタンの生成
     const renderEatingRatioButtons = () => {
         const buttons = [];
         for (let i = 1; i <= 10; i++) {
@@ -150,7 +150,7 @@ const EatingRatioInput: React.FC<EatingRatioInputProps> = ({ onBack }) => {
                         justifyContent: 'center',
                         p: 2,
                     }}
-                    aria-label={`摂食量 ${label}`}
+                    aria-label={`食べた量 ${label}`}
                 >
                     <Typography
                         sx={{
@@ -190,7 +190,7 @@ const EatingRatioInput: React.FC<EatingRatioInputProps> = ({ onBack }) => {
                 </Button>
                 <Box>
                     <Typography variant="h3" component="h1" sx={{ color: 'primary.main' }}>
-                        🍽️ 摂食量記録
+                        🍽️ 食べた量記録
                     </Typography>
                     <Typography variant="h6" component="h2">
                         食事を食べることができた量を選択してください
@@ -238,11 +238,11 @@ const EatingRatioInput: React.FC<EatingRatioInputProps> = ({ onBack }) => {
                 </CardContent>
             </Card>
 
-            {/* 摂食量選択エリア */}
+            {/* 食べた量選択エリア */}
             <Card sx={{ mb: 4, borderRadius: '16px' }}>
                 <CardContent sx={{ p: 4 }}>
                     <Typography variant="h5" sx={{ textAlign: 'center', mb: 3, fontWeight: 600 }}>
-                        摂食量を選んでください（1割〜完食）
+                        食べた量を選んでください（1割〜完食）
                     </Typography>
 
                     <Box
@@ -260,7 +260,7 @@ const EatingRatioInput: React.FC<EatingRatioInputProps> = ({ onBack }) => {
                         {renderEatingRatioButtons()}
                     </Box>
 
-                    {/* 選択された摂食量の表示 */}
+                    {/* 選択された食べた量の表示 */}
                     <Box sx={{ textAlign: 'center', mb: 3 }}>
                         <Typography variant="h4" sx={{ mb: 2 }}>
                             選択中: {EATING_RATIO_EMOJIS[eatingRatio as keyof typeof EATING_RATIO_EMOJIS]} {EATING_RATIO_LABELS[eatingRatio as keyof typeof EATING_RATIO_LABELS]}
@@ -303,7 +303,7 @@ const EatingRatioInput: React.FC<EatingRatioInputProps> = ({ onBack }) => {
                             }}
                             startIcon={<RestaurantIcon sx={{ fontSize: '2rem' }} />}
                         >
-                            摂食量を記録
+                            食べた量を記録
                         </Button>
                     </Box>
                 </CardContent>
@@ -330,7 +330,7 @@ const EatingRatioInput: React.FC<EatingRatioInputProps> = ({ onBack }) => {
                         記録完了！
                     </Typography>
                     <Typography variant="h5" sx={{ mb: 3, color: 'text.secondary' }}>
-                        摂食量が記録されました
+                        食べた量が記録されました
                     </Typography>
                     <Typography variant="h4" sx={{ mb: 2 }}>
                         {EATING_RATIO_EMOJIS[eatingRatio as keyof typeof EATING_RATIO_EMOJIS]} {EATING_RATIO_LABELS[eatingRatio as keyof typeof EATING_RATIO_LABELS]}

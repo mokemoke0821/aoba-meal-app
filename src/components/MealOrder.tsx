@@ -67,7 +67,7 @@ const MealOrder: React.FC<MealOrderProps> = ({ onBack }) => {
     // 給食注文実行
     const handleOrderExecute = () => {
         if (selectedUser) {
-            // 給食記録を作成（摂食量は後で入力）
+            // 給食記録を作成（食べた量は後で入力）
             const newRecord: MealRecord = {
                 id: `meal_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
                 userId: selectedUser.id,
@@ -293,7 +293,7 @@ const MealOrder: React.FC<MealOrderProps> = ({ onBack }) => {
                     </Button>
                 )}
 
-                {/* 摂食量入力ボタン（注文済みの場合のみ表示） */}
+                {/* 食べた量入力ボタン（注文済みの場合のみ表示） */}
                 {hasOrderedToday && (
                     <Button
                         variant="outlined"
@@ -306,7 +306,7 @@ const MealOrder: React.FC<MealOrderProps> = ({ onBack }) => {
                             borderRadius: '12px',
                         }}
                     >
-                        摂食量を記録する
+                        食べた量を記録する
                     </Button>
                 )}
             </Box>

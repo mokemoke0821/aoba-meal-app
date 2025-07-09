@@ -5,25 +5,25 @@ export interface DailyOrderData {
     date: string;
     orderCount: number;
     evaluationCount: number;
-    averageEatingRatio: number;  // 平均摂食量
+    averageEatingRatio: number;  // 平均食べた量
     totalRevenue: number;
 }
 
 export interface MonthlyTrendData {
     month: string;
     orderCount: number;
-    averageEatingRatio: number;  // 平均摂食量
+    averageEatingRatio: number;  // 平均食べた量
     revenue: number;
 }
 
 export interface StatisticsData {
     dailyOrders: DailyOrderData[];
-    eatingRatioDistribution: EatingRatioDistribution[];  // 摂食量分布
+    eatingRatioDistribution: EatingRatioDistribution[];  // 食べた量分布
     monthlyTrends: MonthlyTrendData[];
     totalUsers: number;
     totalOrders: number;
     totalRevenue: number;
-    averageEatingRatio: number;  // 平均摂食量
+    averageEatingRatio: number;  // 平均食べた量
 }
 
 /**
@@ -72,7 +72,7 @@ export const calculateDailyStats = (records: MealRecord[]): DailyOrderData[] => 
         }
     });
 
-    // 平均摂食量を計算
+    // 平均食べた量を計算
     dailyMap.forEach(dayData => {
         const dayRecords = records.filter(r => {
             if (!isValidDate(r.date)) return false;
@@ -93,7 +93,7 @@ export const calculateDailyStats = (records: MealRecord[]): DailyOrderData[] => 
 };
 
 /**
- * 摂食量が有効かどうかをチェック
+ * 食べた量が有効かどうかをチェック
  */
 const isValidEatingRatio = (eatingRatio: number): boolean => {
     return typeof eatingRatio === 'number' &&
@@ -113,13 +113,13 @@ const isValidDate = (date: string): boolean => {
 };
 
 /**
- * 摂食量分布データを計算
+ * 食べた量分布データを計算
  */
 export const calculateEatingRatioDistribution = (records: MealRecord[]): EatingRatioDistribution[] => {
     const ratioCounts = new Map<number, number>();
     const evaluatedRecords = records.filter(r => isValidEatingRatio(r.eatingRatio));
 
-    // 摂食量カウント
+    // 食べた量カウント
     evaluatedRecords.forEach(record => {
         const ratio = record.eatingRatio;
         ratioCounts.set(ratio, (ratioCounts.get(ratio) || 0) + 1);
@@ -128,7 +128,7 @@ export const calculateEatingRatioDistribution = (records: MealRecord[]): EatingR
     const total = evaluatedRecords.length;
     const result: EatingRatioDistribution[] = [];
 
-    // 1-10の摂食量で結果を生成
+    // 1-10の食べた量で結果を生成
     for (let ratio = 1; ratio <= 10; ratio++) {
         const count = ratioCounts.get(ratio) || 0;
         const percentage = total > 0 ? (count / total) * 100 : 0;
@@ -176,7 +176,7 @@ export const calculateMonthlyTrends = (records: MealRecord[], months: number = 6
         }
     });
 
-    // 平均摂食量を計算
+    // 平均食べた量を計算
     monthlyMap.forEach(monthData => {
         const monthRecords = records.filter(r => {
             if (!isValidDate(r.date)) return false;
