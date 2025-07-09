@@ -13,6 +13,7 @@ import {
 import { format } from 'date-fns';
 import React, { useState } from 'react';
 import { useApp } from '../contexts/AppContext';
+import { useNotification } from '../contexts/NotificationContext';
 import {
     EATING_RATIO_EMOJIS,
     EATING_RATIO_LABELS,
@@ -27,6 +28,7 @@ interface EatingRatioInputProps {
 
 const EatingRatioInput: React.FC<EatingRatioInputProps> = ({ onBack }) => {
     const { state, dispatch } = useApp();
+    const { showSuccess } = useNotification();
     const [eatingRatio, setEatingRatio] = useState<number>(10);
     const [supportNotes, setSupportNotes] = useState<string>('');
 
@@ -62,14 +64,23 @@ const EatingRatioInput: React.FC<EatingRatioInputProps> = ({ onBack }) => {
                     supportNotes: supportNotes
                 };
                 dispatch({ type: 'SET_MEAL_RECORDS', payload: updatedRecords });
+                
+                // 🆕 成功メッセージを追加
+                const ratioLabel = EATING_RATIO_LABELS[ratio as keyof typeof EATING_RATIO_LABELS];
+                showSuccess(
+                    `🍽️ ${selectedUser.name}さんの摂食量を記録しました！\n摂食量: ${ratioLabel}\n\n次の利用者の方は、カテゴリを選択してください。`, 
+                    4000
+                );
             }
 
             // 利用者選択状態をクリア
             dispatch({ type: 'SET_SELECTED_USER', payload: null });
             dispatch({ type: 'SET_SELECTED_CATEGORY', payload: null });
 
-            // 直接カテゴリ選択画面に戻る
-            dispatch({ type: 'SET_VIEW', payload: 'categorySelect' });
+            // 画面遷移を少し遅らせる（メッセージを見せるため）
+            setTimeout(() => {
+                dispatch({ type: 'SET_VIEW', payload: 'categorySelect' });
+            }, 500);
         }
     };
 

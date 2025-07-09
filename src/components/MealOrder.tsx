@@ -24,6 +24,7 @@ import { format } from 'date-fns';
 // import { ja } from 'date-fns/locale/ja'; // テスト環境でのエラーを回避
 import React, { useState } from 'react';
 import { useApp } from '../contexts/AppContext';
+import { useNotification } from '../contexts/NotificationContext';
 import { getGroupDisplayName, GROUP_COLORS, MealRecord } from '../types';
 import BackButton from './common/BackButton';
 
@@ -33,6 +34,7 @@ interface MealOrderProps {
 
 const MealOrder: React.FC<MealOrderProps> = ({ onBack }) => {
     const { state, dispatch } = useApp();
+    const { showError, showSuccess, showInfo } = useNotification();
     const [confirmOpen, setConfirmOpen] = useState(false);
     const [cancelOpen, setCancelOpen] = useState(false);
 
@@ -58,7 +60,7 @@ const MealOrder: React.FC<MealOrderProps> = ({ onBack }) => {
     // 給食注文確認ダイアログ表示
     const handleOrderConfirm = () => {
         if (hasOrderedToday) {
-            alert('この利用者は今日既に給食を注文されています。');
+            showError('この利用者は今日既に給食を注文されています。');
             return;
         }
         setConfirmOpen(true);
@@ -83,16 +85,16 @@ const MealOrder: React.FC<MealOrderProps> = ({ onBack }) => {
             dispatch({ type: 'ADD_MEAL_RECORD', payload: newRecord });
 
             // 改良された成功メッセージ
+            showSuccess(`🍱 ${selectedUser.name}さんの給食注文が完了しました！\n次の利用者の方は、カテゴリを選択してください。`, 4000);
+
+            // 利用者選択状態をクリア
+            dispatch({ type: 'SET_SELECTED_USER', payload: null });
+            dispatch({ type: 'SET_SELECTED_CATEGORY', payload: null });
+
+            // メッセージを見せるため少し遅延してから画面遷移
             setTimeout(() => {
-                alert(`✅ ${selectedUser.name}さんの給食注文が完了しました！\n\n次の利用者の方は、カテゴリを選択してください。`);
-
-                // 利用者選択状態をクリア
-                dispatch({ type: 'SET_SELECTED_USER', payload: null });
-                dispatch({ type: 'SET_SELECTED_CATEGORY', payload: null });
-
-                // 修正: カテゴリ選択画面に戻る（次の利用者が使いやすくするため）
                 dispatch({ type: 'SET_VIEW', payload: 'categorySelect' });
-            }, 100); // 画面更新後にメッセージ表示
+            }, 500);
         }
         setConfirmOpen(false);
     };
@@ -117,16 +119,16 @@ const MealOrder: React.FC<MealOrderProps> = ({ onBack }) => {
             dispatch({ type: 'SET_MEAL_RECORDS', payload: updatedRecords });
 
             // キャンセル完了メッセージ
+            showInfo(`❌ ${selectedUser.name}さんの給食注文をキャンセルしました。\n次の利用者の方は、カテゴリを選択してください。`, 4000);
+
+            // 利用者選択状態をクリア
+            dispatch({ type: 'SET_SELECTED_USER', payload: null });
+            dispatch({ type: 'SET_SELECTED_CATEGORY', payload: null });
+
+            // メッセージを見せるため少し遅延してから画面遷移
             setTimeout(() => {
-                alert(`❌ ${selectedUser.name}さんの給食注文をキャンセルしました。\n\n次の利用者の方は、カテゴリを選択してください。`);
-
-                // 利用者選択状態をクリア
-                dispatch({ type: 'SET_SELECTED_USER', payload: null });
-                dispatch({ type: 'SET_SELECTED_CATEGORY', payload: null });
-
-                // カテゴリ選択画面に戻る
                 dispatch({ type: 'SET_VIEW', payload: 'categorySelect' });
-            }, 100);
+            }, 500);
         }
         setCancelOpen(false);
     };

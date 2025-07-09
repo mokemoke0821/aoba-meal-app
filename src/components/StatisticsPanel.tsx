@@ -44,6 +44,7 @@ import {
     YAxis
 } from 'recharts';
 import { useApp } from '../contexts/AppContext';
+import { useNotification } from '../contexts/NotificationContext';
 import {
     exportMonthlyReportCSV,
     exportPeriodReportCSV,
@@ -80,6 +81,7 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ onBack }) => {
     const { state } = useApp();
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+    const { showSuccess, showError, showWarning } = useNotification();
 
     const [dateRange, setDateRange] = useState<DateRange>({
         startDate: null,
@@ -213,7 +215,6 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ onBack }) => {
 
     const handleRefresh = () => {
         try {
-            // 強制的に再計算
             const stats = calculateOverallStatistics(
                 state.mealRecords,
                 state.users,
@@ -223,7 +224,7 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ onBack }) => {
             setStatisticsData(stats);
         } catch (error) {
             console.error('Statistics refresh error:', error);
-            alert('統計データの更新中にエラーが発生しました');
+            showError('統計データの更新中にエラーが発生しました');
         }
     };
 
@@ -239,13 +240,13 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ onBack }) => {
                 );
 
                 // 成功メッセージ
-                alert('統計データをCSVファイルとしてダウンロードしました');
+                showSuccess('📊 統計データをCSVファイルとしてダウンロードしました');
             } else {
-                alert('出力するデータがありません');
+                showWarning('出力するデータがありません');
             }
         } catch (error) {
             console.error('CSV出力エラー:', error);
-            alert('CSV出力中にエラーが発生しました');
+            showError('CSV出力中にエラーが発生しました');
         }
     };
 
@@ -253,10 +254,10 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ onBack }) => {
     const handleExportUsers = () => {
         try {
             exportUsersCSV(state.users);
-            alert('利用者データをCSVファイルとしてダウンロードしました');
+            showSuccess('👥 利用者データをCSVファイルとしてダウンロードしました');
         } catch (error) {
             console.error('CSV出力エラー:', error);
-            alert('CSV出力中にエラーが発生しました');
+            showError('CSV出力中にエラーが発生しました');
         }
     };
 
@@ -265,10 +266,10 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ onBack }) => {
         try {
             const now = new Date();
             exportMonthlyReportCSV(state.mealRecords, now.getFullYear(), now.getMonth() + 1);
-            alert('月次レポートをCSVファイルとしてダウンロードしました');
+            showSuccess('📅 月次レポートをCSVファイルとしてダウンロードしました');
         } catch (error) {
             console.error('CSV出力エラー:', error);
-            alert('CSV出力中にエラーが発生しました');
+            showError('CSV出力中にエラーが発生しました');
         }
     };
 
@@ -282,13 +283,13 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ onBack }) => {
                     dateRange.startDate,
                     dateRange.endDate
                 );
-                alert('期間指定レポートをCSVファイルとしてダウンロードしました');
+                showSuccess('📋 期間指定レポートをCSVファイルとしてダウンロードしました');
             } else {
-                alert('開始日と終了日を両方とも選択してください');
+                showWarning('開始日と終了日を両方とも選択してください');
             }
         } catch (error) {
             console.error('CSV出力エラー:', error);
-            alert('CSV出力中にエラーが発生しました');
+            showError('CSV出力中にエラーが発生しました');
         }
     };
 

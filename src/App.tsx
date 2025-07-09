@@ -10,6 +10,7 @@ import StatisticsPanel from './components/StatisticsPanel';
 import UserManagement from './components/UserManagement';
 import UserSelector from './components/UserSelector';
 import { AppProvider, useApp } from './contexts/AppContext';
+import { NotificationProvider } from './contexts/NotificationContext';
 import { User } from './types';
 
 const theme = createTheme({
@@ -111,9 +112,11 @@ const App: React.FC = () => {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <AppProvider>
-        <AppContent />
-      </AppProvider>
+      <NotificationProvider>
+        <AppProvider>
+          <AppContent />
+        </AppProvider>
+      </NotificationProvider>
     </ThemeProvider>
   );
 };
