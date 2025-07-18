@@ -57,17 +57,19 @@ const CategorySelector: React.FC = () => {
                                     >
                                         {category.icon}
                                     </Typography>
-                                    <Typography variant="h5" component="h3" gutterBottom sx={{ fontSize: '28px', fontWeight: 'bold' }}>
+                                    <Typography variant="h4" component="h3" gutterBottom sx={{ fontSize: '36px', fontWeight: 'bold' }}>
                                         {category.displayName}
                                     </Typography>
-                                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                                    <Typography variant="h6" color="text.secondary" sx={{ mb: 2, fontSize: '20px' }}>
                                         料金: {category.price}円
                                     </Typography>
                                     <Button
                                         variant="contained"
+                                        size="large"
                                         fullWidth
                                         sx={{
                                             backgroundColor: category.color,
+                                            fontSize: '18px',
                                             '&:hover': {
                                                 backgroundColor: category.color,
                                                 filter: 'brightness(0.9)',
@@ -112,17 +114,19 @@ const CategorySelector: React.FC = () => {
                                     >
                                         {category.icon}
                                     </Typography>
-                                    <Typography variant="h5" component="h3" gutterBottom sx={{ fontSize: '28px', fontWeight: 'bold' }}>
+                                    <Typography variant="h4" component="h3" gutterBottom sx={{ fontSize: '36px', fontWeight: 'bold' }}>
                                         {category.displayName}
                                     </Typography>
-                                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                                    <Typography variant="h6" color="text.secondary" sx={{ mb: 2, fontSize: '20px' }}>
                                         料金: {category.price}円
                                     </Typography>
                                     <Button
                                         variant="contained"
+                                        size="large"
                                         fullWidth
                                         sx={{
                                             backgroundColor: category.color,
+                                            fontSize: '18px',
                                             '&:hover': {
                                                 backgroundColor: category.color,
                                                 filter: 'brightness(0.9)',

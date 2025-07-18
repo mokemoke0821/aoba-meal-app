@@ -35,7 +35,7 @@ export const CATEGORY_CONFIG: Record<UserCategory, CategoryInfo> = {
     name: 'A型',
     displayName: 'A型',
     color: '#1976d2',
-    icon: '🏭',
+    icon: '',
     price: 100
   },
   'B型': {
@@ -43,7 +43,7 @@ export const CATEGORY_CONFIG: Record<UserCategory, CategoryInfo> = {
     name: 'B型',
     displayName: 'B型',
     color: '#2e7d32',
-    icon: '🛠️',
+    icon: '',
     price: 0
   },
   '体験者': {
@@ -51,7 +51,7 @@ export const CATEGORY_CONFIG: Record<UserCategory, CategoryInfo> = {
     name: '体験者',
     displayName: '体験者',
     color: '#9c27b0',
-    icon: '🌱',
+    icon: '',
     price: 400
   },
   '職員': {
@@ -59,7 +59,7 @@ export const CATEGORY_CONFIG: Record<UserCategory, CategoryInfo> = {
     name: '職員',
     displayName: '職員',
     color: '#f57c00',
-    icon: '👥',
+    icon: '',
     price: 400
   }
 } as const;
