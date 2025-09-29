@@ -24,7 +24,7 @@ const CategorySelector: React.FC = () => {
         <Container maxWidth="md">
             <Box sx={{ py: 4 }}>
                 <Typography variant="h3" component="h1" gutterBottom align="center">
-                    給食アプリ
+                    利用者区分を選択してください
                 </Typography>
 
                 {/* 1段目: A型利用者・B型利用者 */}
@@ -63,21 +63,6 @@ const CategorySelector: React.FC = () => {
                                     <Typography variant="h6" color="text.secondary" sx={{ mb: 2, fontSize: '20px' }}>
                                         料金: {category.price}円
                                     </Typography>
-                                    <Button
-                                        variant="contained"
-                                        size="large"
-                                        fullWidth
-                                        sx={{
-                                            backgroundColor: category.color,
-                                            fontSize: '18px',
-                                            '&:hover': {
-                                                backgroundColor: category.color,
-                                                filter: 'brightness(0.9)',
-                                            }
-                                        }}
-                                    >
-                                        選択
-                                    </Button>
                                 </CardContent>
                             </Card>
                         ))}
@@ -120,21 +105,6 @@ const CategorySelector: React.FC = () => {
                                     <Typography variant="h6" color="text.secondary" sx={{ mb: 2, fontSize: '20px' }}>
                                         料金: {category.price}円
                                     </Typography>
-                                    <Button
-                                        variant="contained"
-                                        size="large"
-                                        fullWidth
-                                        sx={{
-                                            backgroundColor: category.color,
-                                            fontSize: '18px',
-                                            '&:hover': {
-                                                backgroundColor: category.color,
-                                                filter: 'brightness(0.9)',
-                                            }
-                                        }}
-                                    >
-                                        選択
-                                    </Button>
                                 </CardContent>
                             </Card>
                         ))}
