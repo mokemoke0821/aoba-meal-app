@@ -1,4 +1,5 @@
 {
+  "id": "/aoba-meal-app/",
   "short_name": "あおば給食",
   "name": "あおば給食摂食量管理アプリ",
   "description": "あおば給食の摂食量を記録・管理するPWAアプリ",
