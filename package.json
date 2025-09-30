@@ -34,11 +34,11 @@
     "workbox-webpack-plugin": "^7.3.0"
   },
   "scripts": {
-    "start": "cross-env NODE_OPTIONS=\"--max-old-space-size=4096\" react-scripts start",
-    "build": "cross-env NODE_OPTIONS=\"--max-old-space-size=8192\" DISABLE_ESLINT_PLUGIN=true GENERATE_SOURCEMAP=false react-scripts build",
-    "build:dev": "cross-env NODE_OPTIONS=\"--max-old-space-size=6144\" react-scripts build",
-    "test": "cross-env NODE_OPTIONS=\"--max-old-space-size=4096\" react-scripts test --testTimeout=60000 --transformIgnorePatterns=\"node_modules/(?!(date-fns|@mui|@emotion)/)\"",
-    "test:ci": "cross-env NODE_OPTIONS=\"--max-old-space-size=4096\" react-scripts test --watchAll=false --testTimeout=60000 --coverage",
+    "start": "cross-env NODE_OPTIONS=\"--max-old-space-size=4096\" craco start",
+    "build": "cross-env NODE_OPTIONS=\"--max-old-space-size=8192\" DISABLE_ESLINT_PLUGIN=true GENERATE_SOURCEMAP=false craco build",
+    "build:dev": "cross-env NODE_OPTIONS=\"--max-old-space-size=6144\" craco build",
+    "test": "cross-env NODE_OPTIONS=\"--max-old-space-size=4096\" craco test --testTimeout=60000 --transformIgnorePatterns=\"node_modules/(?!(date-fns|@mui|@emotion)/)\"",
+    "test:ci": "cross-env NODE_OPTIONS=\"--max-old-space-size=4096\" craco test --watchAll=false --testTimeout=60000 --coverage",
     "eject": "react-scripts eject",
     "predeploy": "npm run build",
     "deploy": "gh-pages -d build",
@@ -64,18 +64,22 @@
     ]
   },
   "devDependencies": {
+    "@craco/craco": "^7.1.0",
     "@mui/icons-material": "^7.1.2",
     "@testing-library/user-event": "^14.6.1",
     "@types/file-saver": "^2.0.7",
     "@types/jest": "^30.0.0",
     "@types/testing-library__user-event": "^4.1.1",
     "babel-jest": "^29.7.0",
+    "craco-workbox": "^0.2.0",
     "cross-env": "^7.0.3",
     "gh-pages": "^6.3.0",
     "identity-obj-proxy": "^3.0.0",
     "resolve-url-loader": "^5.0.0",
     "ts-jest": "^29.4.0",
+    "vite-plugin-pwa": "^1.0.3",
     "web-vitals": "^5.0.3",
-    "webpack-cli": "^6.0.1"
+    "webpack-cli": "^6.0.1",
+    "workbox-window": "^7.3.0"
   }
 }
