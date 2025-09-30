@@ -1,33 +1,39 @@
 {
-  "short_name": "給食アプリ",
-  "name": "給食アプリ",
-  "description": "給食管理アプリケーション",
+  "short_name": "あおば給食",
+  "name": "あおば給食摂食量管理アプリ",
+  "description": "あおば給食の摂食量を記録・管理するPWAアプリ",
   "icons": [
     {
-      "src": "favicon.ico",
-      "sizes": "64x64 32x32 24x24 16x16",
-      "type": "image/x-icon"
+      "src": "icons/icon-96x96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
-      "src": "logo192.png",
+      "src": "icons/icon-128x128.png",
+      "sizes": "128x128",
       "type": "image/png",
-      "sizes": "192x192"
+      "purpose": "any maskable"
     },
     {
-      "src": "logo512.png",
+      "src": "icons/icon-192x192.png",
+      "sizes": "192x192",
       "type": "image/png",
-      "sizes": "512x512"
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ],
   "start_url": "/aoba-meal-app/",
+  "scope": "/aoba-meal-app/",
   "display": "standalone",
+  "orientation": "portrait",
   "theme_color": "#1976d2",
   "background_color": "#ffffff",
-  "categories": [
-    "business",
-    "productivity",
-    "food"
-  ],
-  "lang": "ja",
-  "scope": "/aoba-meal-app/"
+  "categories": ["productivity", "health"],
+  "lang": "ja"
 }

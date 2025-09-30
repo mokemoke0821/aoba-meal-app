@@ -1,8 +1,9 @@
 import CssBaseline from '@mui/material/CssBaseline';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
-import React from 'react';
+import React, { useEffect } from 'react';
 import AdminPanel from './components/AdminPanel';
 import CategorySelector from './components/CategorySelector';
+import InstallPrompt from './components/InstallPrompt';
 import MealOrder from './components/MealOrder';
 import { PlaceholderPage } from './components/PlaceholderPage';
 import RatingInput from './components/RatingInput';
@@ -11,6 +12,7 @@ import UserManagement from './components/UserManagement';
 import UserSelector from './components/UserSelector';
 import { AppProvider, useApp } from './contexts/AppContext';
 import { NotificationProvider } from './contexts/NotificationContext';
+import { register as registerServiceWorker } from './registerServiceWorker';
 import { User } from './types';
 
 const theme = createTheme({
@@ -109,12 +111,25 @@ const AppContent: React.FC = () => {
 };
 
 const App: React.FC = () => {
+  useEffect(() => {
+    // Service Worker登録（production環境のみ）
+    registerServiceWorker({
+      onSuccess: () => {
+        console.log('[PWA] App installed and ready for offline use!');
+      },
+      onUpdate: () => {
+        console.log('[PWA] New content available! Please refresh.');
+      },
+    });
+  }, []);
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <NotificationProvider>
         <AppProvider>
           <AppContent />
+          <InstallPrompt />
         </AppProvider>
       </NotificationProvider>
     </ThemeProvider>
