@@ -1,7 +1,7 @@
 {
   "files": {
     "main.css": "/aoba-meal-app/static/css/main.4efb37a3.css",
-    "main.js": "/aoba-meal-app/static/js/main.19c91d0d.js",
+    "main.js": "/aoba-meal-app/static/js/main.ff20b84e.js",
     "static/js/685.b88dcdf4.chunk.js": "/aoba-meal-app/static/js/685.b88dcdf4.chunk.js",
     "workbox-e1b59a58.js": "/aoba-meal-app/workbox-e1b59a58.js",
     "service-worker.js": "/aoba-meal-app/service-worker.js",
@@ -9,6 +9,6 @@
   },
   "entrypoints": [
     "static/css/main.4efb37a3.css",
-    "static/js/main.19c91d0d.js"
+    "static/js/main.ff20b84e.js"
   ]
 }
