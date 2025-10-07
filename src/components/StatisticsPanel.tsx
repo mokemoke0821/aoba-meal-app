@@ -1,10 +1,12 @@
 import {
     CalendarMonth as CalendarMonthIcon,
+    CheckCircle as CheckCircleIcon,
     Download as DownloadIcon,
     ExpandMore as ExpandMoreIcon,
     HourglassEmpty as HourglassEmptyIcon,
     MonetizationOn as MonetizationOnIcon,
     Refresh as RefreshIcon,
+    RemoveCircle as RemoveCircleIcon,
     Today as TodayIcon
 } from '@mui/icons-material';
 import {
@@ -17,6 +19,7 @@ import {
     Card,
     CardContent,
     Chip,
+    Divider,
     Table,
     TableBody,
     TableCell,
@@ -118,41 +121,64 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ onBack }) => {
         };
     }, [state.mealRecords]);
 
-    // 記録待ち利用者の計算
-    const pendingUsers = useMemo(() => {
+    // 本日の利用者状況（3つの状態に分類）
+    const todayUserStatus = useMemo(() => {
         const today = format(new Date(), 'yyyy-MM-dd');
         const todayRecords = state.mealRecords.filter(record => record.date === today);
-
-        // 本日給食注文済みで、摂食量が未記録の利用者を抽出
-        // eatingRatio が 0（未記録）、null、または undefined の場合
-        const pendingRecords = todayRecords.filter(record =>
-            !record.eatingRatio || record.eatingRatio === 0
+        
+        // アクティブな利用者のみ対象
+        const activeUsers = state.users.filter(user => user.isActive !== false);
+        
+        // 記録済み利用者（eatingRatio: 1-10）
+        const completedRecords = todayRecords.filter(record => 
+            record.eatingRatio >= 1 && record.eatingRatio <= 10
         );
-
-        // 未記録の利用者IDを取得
+        const completedUserIds = new Set(completedRecords.map(record => record.userId));
+        
+        // 記録待ち利用者（eatingRatio: 0）
+        const pendingRecords = todayRecords.filter(record => 
+            record.eatingRatio === 0
+        );
         const pendingUserIds = new Set(pendingRecords.map(record => record.userId));
-
-        // 対応する利用者情報を取得
-        const pending = state.users.filter(user =>
-            user.isActive !== false && pendingUserIds.has(user.id)
-        );
-
-        // カテゴリごとにグループ化
-        const grouped = pending.reduce((acc, user) => {
-            if (!acc[user.category]) {
-                acc[user.category] = [];
-            }
-            acc[user.category].push(user);
-            return acc;
-        }, {} as Record<string, typeof pending>);
-
-        // 各カテゴリ内で表示番号順にソート
-        Object.values(grouped).forEach(users => {
-            users.sort((a, b) => a.displayNumber - b.displayNumber);
-        });
-
-        return grouped;
+        
+        // 注文なし利用者（MealRecordなし）
+        const orderedUserIds = new Set(todayRecords.map(record => record.userId));
+        
+        // 各状態の利用者を取得
+        const completed = activeUsers.filter(user => completedUserIds.has(user.id));
+        const pending = activeUsers.filter(user => pendingUserIds.has(user.id));
+        const noOrder = activeUsers.filter(user => !orderedUserIds.has(user.id));
+        
+        // カテゴリごとにグループ化するヘルパー関数
+        const groupByCategory = (users: typeof activeUsers) => {
+            const grouped = users.reduce((acc, user) => {
+                if (!acc[user.category]) {
+                    acc[user.category] = [];
+                }
+                acc[user.category].push(user);
+                return acc;
+            }, {} as Record<string, typeof users>);
+            
+            // 各カテゴリ内で表示番号順にソート
+            Object.values(grouped).forEach(categoryUsers => {
+                categoryUsers.sort((a, b) => a.displayNumber - b.displayNumber);
+            });
+            
+            return grouped;
+        };
+        
+        return {
+            completed: groupByCategory(completed),
+            pending: groupByCategory(pending),
+            noOrder: groupByCategory(noOrder),
+            completedCount: completed.length,
+            pendingCount: pending.length,
+            noOrderCount: noOrder.length,
+        };
     }, [state.users, state.mealRecords]);
+    
+    // 後方互換性のため、pendingUsers を残す
+    const pendingUsers = todayUserStatus.pending;
 
     // 月次有料ユーザー統計計算
     const monthlyPaidUserStats = useMemo(() => {
@@ -679,13 +705,166 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ onBack }) => {
                 </Card>
             </Box>
 
-            {/* 記録待ち利用者リスト（新規追加） */}
+            {/* 本日の利用者状況（3つの状態で表示） */}
+            <Box sx={{ px: 3, mb: 3 }}>
+                <Card sx={{ borderRadius: '16px', boxShadow: theme.shadows[3] }}>
+                    <CardContent sx={{ p: 3 }}>
+                        <Typography variant="h6" sx={{ mb: 3, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1 }}>
+                            📋 本日の利用者状況
+                        </Typography>
+
+                        {/* 状態サマリー */}
+                        <Box sx={{ display: 'flex', gap: 2, mb: 3, flexWrap: 'wrap' }}>
+                            <Chip
+                                icon={<CheckCircleIcon />}
+                                label={`記録完了: ${todayUserStatus.completedCount}名`}
+                                color="success"
+                                sx={{ fontWeight: 600, fontSize: '1rem', py: 2.5 }}
+                            />
+                            <Chip
+                                icon={<HourglassEmptyIcon />}
+                                label={`記録待ち: ${todayUserStatus.pendingCount}名`}
+                                color="warning"
+                                sx={{ fontWeight: 600, fontSize: '1rem', py: 2.5 }}
+                            />
+                            <Chip
+                                icon={<RemoveCircleIcon />}
+                                label={`注文なし: ${todayUserStatus.noOrderCount}名`}
+                                color="default"
+                                sx={{ fontWeight: 600, fontSize: '1rem', py: 2.5 }}
+                            />
+                        </Box>
+
+                        <Divider sx={{ mb: 3 }} />
+
+                        {/* 記録完了 */}
+                        <Box sx={{ mb: 3 }}>
+                            <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 2, color: 'success.main', display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <CheckCircleIcon /> 記録完了（{todayUserStatus.completedCount}名）
+                            </Typography>
+                            {todayUserStatus.completedCount === 0 ? (
+                                <Alert severity="info" sx={{ borderRadius: '8px' }}>
+                                    記録完了した利用者はまだいません
+                                </Alert>
+                            ) : (
+                                <Box>
+                                    {Object.entries(todayUserStatus.completed).map(([category, users]) => (
+                                        <Box key={category} sx={{ mb: 2 }}>
+                                            <Typography variant="subtitle2" sx={{ mb: 1, color: 'text.secondary', display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                <Chip label={category} size="small" sx={{ backgroundColor: getCategoryColor(category), color: 'white', fontWeight: 600 }} />
+                                                <span>({users.length}名)</span>
+                                            </Typography>
+                                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                                                {users.map((user) => (
+                                                    <Chip
+                                                        key={user.id}
+                                                        label={`${user.displayNumber} ${user.name}`}
+                                                        size="medium"
+                                                        sx={{
+                                                            backgroundColor: 'success.light',
+                                                            color: 'success.dark',
+                                                            fontWeight: 600,
+                                                            '&:hover': { backgroundColor: 'success.main', color: 'white' }
+                                                        }}
+                                                    />
+                                                ))}
+                                            </Box>
+                                        </Box>
+                                    ))}
+                                </Box>
+                            )}
+                        </Box>
+
+                        <Divider sx={{ mb: 3 }} />
+
+                        {/* 記録待ち */}
+                        <Box sx={{ mb: 3 }}>
+                            <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 2, color: 'warning.main', display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <HourglassEmptyIcon /> 記録待ち（{todayUserStatus.pendingCount}名）
+                            </Typography>
+                            {todayUserStatus.pendingCount === 0 ? (
+                                <Alert severity="success" sx={{ borderRadius: '8px' }}>
+                                    ✅ 記録待ちの利用者はいません！
+                                </Alert>
+                            ) : (
+                                <Box>
+                                    {Object.entries(todayUserStatus.pending).map(([category, users]) => (
+                                        <Box key={category} sx={{ mb: 2 }}>
+                                            <Typography variant="subtitle2" sx={{ mb: 1, color: 'text.secondary', display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                <Chip label={category} size="small" sx={{ backgroundColor: getCategoryColor(category), color: 'white', fontWeight: 600 }} />
+                                                <span>({users.length}名)</span>
+                                            </Typography>
+                                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                                                {users.map((user) => (
+                                                    <Chip
+                                                        key={user.id}
+                                                        label={`${user.displayNumber} ${user.name}`}
+                                                        size="medium"
+                                                        sx={{
+                                                            backgroundColor: 'warning.light',
+                                                            color: 'warning.dark',
+                                                            fontWeight: 600,
+                                                            '&:hover': { backgroundColor: 'warning.main', color: 'white' }
+                                                        }}
+                                                    />
+                                                ))}
+                                            </Box>
+                                        </Box>
+                                    ))}
+                                </Box>
+                            )}
+                        </Box>
+
+                        <Divider sx={{ mb: 3 }} />
+
+                        {/* 注文なし */}
+                        <Box>
+                            <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 2, color: 'text.secondary', display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <RemoveCircleIcon /> 注文なし（{todayUserStatus.noOrderCount}名）
+                            </Typography>
+                            {todayUserStatus.noOrderCount === 0 ? (
+                                <Alert severity="info" sx={{ borderRadius: '8px' }}>
+                                    全員が給食を注文しています
+                                </Alert>
+                            ) : (
+                                <Box>
+                                    {Object.entries(todayUserStatus.noOrder).map(([category, users]) => (
+                                        <Box key={category} sx={{ mb: 2 }}>
+                                            <Typography variant="subtitle2" sx={{ mb: 1, color: 'text.secondary', display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                <Chip label={category} size="small" sx={{ backgroundColor: getCategoryColor(category), color: 'white', fontWeight: 600 }} />
+                                                <span>({users.length}名)</span>
+                                            </Typography>
+                                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                                                {users.map((user) => (
+                                                    <Chip
+                                                        key={user.id}
+                                                        label={`${user.displayNumber} ${user.name}`}
+                                                        size="medium"
+                                                        sx={{
+                                                            backgroundColor: 'grey.300',
+                                                            color: 'text.secondary',
+                                                            fontWeight: 600,
+                                                            '&:hover': { backgroundColor: 'grey.400' }
+                                                        }}
+                                                    />
+                                                ))}
+                                            </Box>
+                                        </Box>
+                                    ))}
+                                </Box>
+                            )}
+                        </Box>
+                    </CardContent>
+                </Card>
+            </Box>
+
+            {/* 記録待ち利用者リスト（旧版 - 後方互換性のため残す） */}
             <Box sx={{ px: 3, mb: 3 }}>
                 <Card sx={{ borderRadius: '16px', boxShadow: theme.shadows[3], border: '2px solid', borderColor: 'warning.main' }}>
                     <CardContent sx={{ p: 3 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
                             <Typography variant="h6" sx={{ color: 'warning.main', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <HourglassEmptyIcon /> 本日の記録待ち利用者
+                                <HourglassEmptyIcon /> 本日の記録待ち利用者（簡易版）
                             </Typography>
                             <Chip
                                 label={`${Object.values(pendingUsers).flat().length}名`}
