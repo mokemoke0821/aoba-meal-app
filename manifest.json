@@ -1,5 +1,5 @@
 {
-  "id": "/aoba-meal-app/",
+  "id": "./",
   "short_name": "あおば給食",
   "name": "あおば給食摂食量管理アプリ",
   "description": "あおば給食の摂食量を記録・管理するPWAアプリ",
@@ -29,12 +29,31 @@
       "purpose": "maskable"
     }
   ],
-  "start_url": "/aoba-meal-app/",
-  "scope": "/aoba-meal-app/",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
   "theme_color": "#1976d2",
   "background_color": "#ffffff",
-  "categories": ["productivity", "health"],
-  "lang": "ja"
+  "categories": [
+    "productivity",
+    "health"
+  ],
+  "lang": "ja",
+  "screenshots": [
+    {
+      "src": "icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "あおば給食アプリ - メイン画面"
+    },
+    {
+      "src": "icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "あおば給食アプリ - デスクトップ版"
+    }
+  ]
 }
