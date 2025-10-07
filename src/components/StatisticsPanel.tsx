@@ -2,6 +2,7 @@ import {
     CalendarMonth as CalendarMonthIcon,
     Download as DownloadIcon,
     ExpandMore as ExpandMoreIcon,
+    HourglassEmpty as HourglassEmptyIcon,
     MonetizationOn as MonetizationOnIcon,
     Refresh as RefreshIcon,
     Today as TodayIcon
@@ -57,6 +58,8 @@ import {
     StatisticsData,
 } from '../utils/statisticsCalculator';
 import BackButton from './common/BackButton';
+import { DataDiagnosticsPanel } from './DataDiagnosticsPanel';
+import { DataManagementPanel } from './DataManagementPanel';
 import DateRangeFilter, { DateRange } from './DateRangeFilter';
 
 interface MonthlyPaidUserStats {
@@ -114,6 +117,42 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ onBack }) => {
                 : 0
         };
     }, [state.mealRecords]);
+
+    // 記録待ち利用者の計算
+    const pendingUsers = useMemo(() => {
+        const today = format(new Date(), 'yyyy-MM-dd');
+        const todayRecords = state.mealRecords.filter(record => record.date === today);
+
+        // 本日給食注文済みで、摂食量が未記録の利用者を抽出
+        // eatingRatio が 0（未記録）、null、または undefined の場合
+        const pendingRecords = todayRecords.filter(record =>
+            !record.eatingRatio || record.eatingRatio === 0
+        );
+
+        // 未記録の利用者IDを取得
+        const pendingUserIds = new Set(pendingRecords.map(record => record.userId));
+
+        // 対応する利用者情報を取得
+        const pending = state.users.filter(user =>
+            user.isActive !== false && pendingUserIds.has(user.id)
+        );
+
+        // カテゴリごとにグループ化
+        const grouped = pending.reduce((acc, user) => {
+            if (!acc[user.category]) {
+                acc[user.category] = [];
+            }
+            acc[user.category].push(user);
+            return acc;
+        }, {} as Record<string, typeof pending>);
+
+        // 各カテゴリ内で表示番号順にソート
+        Object.values(grouped).forEach(users => {
+            users.sort((a, b) => a.displayNumber - b.displayNumber);
+        });
+
+        return grouped;
+    }, [state.users, state.mealRecords]);
 
     // 月次有料ユーザー統計計算
     const monthlyPaidUserStats = useMemo(() => {
@@ -379,7 +418,7 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ onBack }) => {
                 }}
             >
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <BackButton 
+                    <BackButton
                         text="← 管理画面に戻る"
                         onClick={onBack}
                         sx={{ position: 'relative', margin: 0 }}
@@ -640,6 +679,82 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ onBack }) => {
                 </Card>
             </Box>
 
+            {/* 記録待ち利用者リスト（新規追加） */}
+            <Box sx={{ px: 3, mb: 3 }}>
+                <Card sx={{ borderRadius: '16px', boxShadow: theme.shadows[3], border: '2px solid', borderColor: 'warning.main' }}>
+                    <CardContent sx={{ p: 3 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                            <Typography variant="h6" sx={{ color: 'warning.main', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <HourglassEmptyIcon /> 本日の記録待ち利用者
+                            </Typography>
+                            <Chip
+                                label={`${Object.values(pendingUsers).flat().length}名`}
+                                color="warning"
+                                sx={{ fontWeight: 600 }}
+                            />
+                        </Box>
+
+                        {Object.values(pendingUsers).flat().length === 0 ? (
+                            <Alert severity="success" sx={{ borderRadius: '8px' }}>
+                                ✅ 本日は全員の記録が完了しています！
+                            </Alert>
+                        ) : (
+                            <Box>
+                                {Object.entries(pendingUsers).map(([category, users]) => (
+                                    <Box key={category} sx={{ mb: 2 }}>
+                                        <Typography
+                                            variant="subtitle2"
+                                            sx={{
+                                                mb: 1,
+                                                color: 'text.secondary',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: 1
+                                            }}
+                                        >
+                                            <Chip
+                                                label={category}
+                                                size="small"
+                                                sx={{
+                                                    backgroundColor: getCategoryColor(category),
+                                                    color: 'white',
+                                                    fontWeight: 600
+                                                }}
+                                            />
+                                            <span>({users.length}名)</span>
+                                        </Typography>
+                                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                                            {users.map((user) => (
+                                                <Chip
+                                                    key={user.id}
+                                                    label={`${user.displayNumber} ${user.name}`}
+                                                    variant="outlined"
+                                                    size="medium"
+                                                    sx={{
+                                                        borderColor: getCategoryColor(category),
+                                                        color: getCategoryColor(category),
+                                                        fontWeight: 500,
+                                                        '&:hover': {
+                                                            backgroundColor: `${getCategoryColor(category)}15`,
+                                                            borderWidth: 2
+                                                        }
+                                                    }}
+                                                />
+                                            ))}
+                                        </Box>
+                                    </Box>
+                                ))}
+                                <Box sx={{ mt: 2, pt: 2, borderTop: 1, borderColor: 'divider' }}>
+                                    <Typography variant="caption" color="text.secondary">
+                                        💡 ヒント: 記録画面から利用者を選択して摂食量を記録してください
+                                    </Typography>
+                                </Box>
+                            </Box>
+                        )}
+                    </CardContent>
+                </Card>
+            </Box>
+
             {/* 統計サマリー */}
             <Box sx={{ px: 3, mb: 3 }}>
                 <Card sx={{ borderRadius: '16px', boxShadow: theme.shadows[3] }}>
@@ -801,6 +916,15 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ onBack }) => {
                 </Box>
             )}
 
+            {/* データ診断パネル */}
+            <Box sx={{ px: 3, mb: 3 }}>
+                <DataDiagnosticsPanel />
+            </Box>
+
+            {/* データ管理パネル */}
+            <Box sx={{ px: 3, mb: 3 }}>
+                <DataManagementPanel />
+            </Box>
 
         </Box>
     );
