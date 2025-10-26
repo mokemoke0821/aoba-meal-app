@@ -62,7 +62,7 @@ describe('<App /> Integration Tests', () => {
         await waitFor(() => {
             expect(screen.getByText('🍽️ あおば給食管理')).toBeInTheDocument();
         });
-        expect(screen.getByText('利用者区分を選択してください')).toBeInTheDocument();
+        expect(screen.getByText('給食アプリ')).toBeInTheDocument();
     });
 
     test('カテゴリを選択するとユーザー選択画面に遷移すること', async () => {
