@@ -125,30 +125,30 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ onBack }) => {
     const todayUserStatus = useMemo(() => {
         const today = format(new Date(), 'yyyy-MM-dd');
         const todayRecords = state.mealRecords.filter(record => record.date === today);
-        
+
         // アクティブな利用者のみ対象
         const activeUsers = state.users.filter(user => user.isActive !== false);
-        
+
         // 記録済み利用者（eatingRatio: 1-10）
-        const completedRecords = todayRecords.filter(record => 
+        const completedRecords = todayRecords.filter(record =>
             record.eatingRatio >= 1 && record.eatingRatio <= 10
         );
         const completedUserIds = new Set(completedRecords.map(record => record.userId));
-        
+
         // 記録待ち利用者（eatingRatio: 0）
-        const pendingRecords = todayRecords.filter(record => 
+        const pendingRecords = todayRecords.filter(record =>
             record.eatingRatio === 0
         );
         const pendingUserIds = new Set(pendingRecords.map(record => record.userId));
-        
+
         // 注文なし利用者（MealRecordなし）
         const orderedUserIds = new Set(todayRecords.map(record => record.userId));
-        
+
         // 各状態の利用者を取得
         const completed = activeUsers.filter(user => completedUserIds.has(user.id));
         const pending = activeUsers.filter(user => pendingUserIds.has(user.id));
         const noOrder = activeUsers.filter(user => !orderedUserIds.has(user.id));
-        
+
         // カテゴリごとにグループ化するヘルパー関数
         const groupByCategory = (users: typeof activeUsers) => {
             const grouped = users.reduce((acc, user) => {
@@ -158,15 +158,15 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ onBack }) => {
                 acc[user.category].push(user);
                 return acc;
             }, {} as Record<string, typeof users>);
-            
+
             // 各カテゴリ内で表示番号順にソート
             Object.values(grouped).forEach(categoryUsers => {
                 categoryUsers.sort((a, b) => a.displayNumber - b.displayNumber);
             });
-            
+
             return grouped;
         };
-        
+
         return {
             completed: groupByCategory(completed),
             pending: groupByCategory(pending),
@@ -176,7 +176,7 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ onBack }) => {
             noOrderCount: noOrder.length,
         };
     }, [state.users, state.mealRecords]);
-    
+
     // 後方互換性のため、pendingUsers を残す
     const pendingUsers = todayUserStatus.pending;
 

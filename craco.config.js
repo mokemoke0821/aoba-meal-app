@@ -8,24 +8,48 @@ module.exports = {
           clientsClaim: true,
           skipWaiting: true,
 
-          // GitHub Pagesサブパス対応
+          // GitHub Pages対応
           navigateFallback: '/aoba-meal-app/index.html',
           navigateFallbackDenylist: [/^\/_/, /\/[^/?]+\.[^/]+$/],
 
           // キャッシュ対象から除外するパターン
           exclude: [
             /\.map$/,
-            /^manifest\.json$/,
             /asset-manifest\.json$/,
             /LICENSE/,
             /chrome-extension/,
           ],
 
-          // ランタイムキャッシュ設定
+          // ランタイムキャッシュ設定（オフライン対応強化）
           runtimeCaching: [
             {
+              // すべてのナビゲーションリクエスト（HTMLページ）
+              urlPattern: ({ request }) => request.mode === 'navigate',
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'pages',
+                expiration: {
+                  maxEntries: 50,
+                },
+              },
+            },
+            {
+              // すべての静的アセット（JS/CSS）
+              urlPattern: ({ request }) =>
+                request.destination === 'script' ||
+                request.destination === 'style',
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'static-resources',
+                expiration: {
+                  maxEntries: 60,
+                  maxAgeSeconds: 30 * 24 * 60 * 60, // 30日
+                },
+              },
+            },
+            {
               // 画像のキャッシュ
-              urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp)$/,
+              urlPattern: ({ request }) => request.destination === 'image',
               handler: 'CacheFirst',
               options: {
                 cacheName: 'images',
@@ -37,7 +61,7 @@ module.exports = {
             },
             {
               // フォントのキャッシュ
-              urlPattern: /\.(?:woff|woff2|ttf|otf)$/,
+              urlPattern: ({ request }) => request.destination === 'font',
               handler: 'CacheFirst',
               options: {
                 cacheName: 'fonts',
@@ -48,26 +72,13 @@ module.exports = {
               },
             },
             {
-              // 同一オリジンのナビゲーションリクエスト（サブパス対応）
-              urlPattern: ({ request, url }) => {
-                return request.mode === 'navigate' &&
-                       url.origin === self.location.origin &&
-                       url.pathname.startsWith('/aoba-meal-app/');
-              },
-              handler: 'NetworkFirst',
-              options: {
-                cacheName: 'pages',
-                networkTimeoutSeconds: 3,
-              },
-            },
-            {
-              // 静的アセット（JS/CSS）のキャッシュ
-              urlPattern: /\/aoba-meal-app\/static\/.*/,
+              // manifest.jsonとアイコン
+              urlPattern: /\.(json|png|ico)$/,
               handler: 'CacheFirst',
               options: {
-                cacheName: 'static-assets',
+                cacheName: 'assets',
                 expiration: {
-                  maxEntries: 60,
+                  maxEntries: 30,
                   maxAgeSeconds: 30 * 24 * 60 * 60, // 30日
                 },
               },

@@ -1,5 +1,5 @@
 import { saveAs } from 'file-saver';
-import { MealRecord, MenuItem, User } from '../types';
+import { MealRecord, MenuItem, User, UserCategory } from '../types';
 
 // LocalStorageのキー定義
 const STORAGE_KEYS = {
@@ -186,4 +186,155 @@ export const createBackup = (): void => {
         console.error('バックアップ作成に失敗しました:', error);
         throw new Error('バックアップ作成に失敗しました');
     }
+};
+
+/**
+ * JSONバックアップファイルからデータを復元
+ * @param file - アップロードされたJSONファイル
+ * @returns Promise<void>
+ * @throws Error - ファイル読み込み失敗、無効なフォーマット時
+ */
+export const importBackup = (file: File): Promise<void> => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+
+        reader.onload = (e) => {
+            try {
+                const content = e.target?.result as string;
+                const backupData = JSON.parse(content);
+
+                // バリデーション
+                if (!backupData.users || !Array.isArray(backupData.users)) {
+                    throw new Error('無効なバックアップファイル: usersデータが見つかりません');
+                }
+                if (!backupData.mealRecords || !Array.isArray(backupData.mealRecords)) {
+                    throw new Error('無効なバックアップファイル: mealRecordsデータが見つかりません');
+                }
+
+                // タイムスタンプチェック（オプショナル）
+                if (backupData.timestamp) {
+                    const backupDate = new Date(backupData.timestamp);
+                    console.log(`バックアップ作成日時: ${backupDate.toLocaleString('ja-JP')}`);
+                }
+
+                // データ復元
+                saveUsers(backupData.users);
+                saveMealRecords(backupData.mealRecords);
+
+                if (backupData.currentMenu) {
+                    saveCurrentMenu(backupData.currentMenu);
+                }
+
+                console.log('データ復元成功:', {
+                    users: backupData.users.length,
+                    records: backupData.mealRecords.length
+                });
+
+                resolve();
+            } catch (error) {
+                console.error('データ復元エラー:', error);
+                if (error instanceof SyntaxError) {
+                    reject(new Error('JSONファイルの形式が正しくありません'));
+                } else {
+                    reject(error);
+                }
+            }
+        };
+
+        reader.onerror = () => {
+            console.error('ファイル読み込みエラー');
+            reject(new Error('ファイルの読み込みに失敗しました'));
+        };
+
+        reader.readAsText(file);
+    });
+};
+
+/**
+ * 料金からユーザーカテゴリを判定
+ * @param price - 料金
+ * @returns UserCategory
+ */
+const determineCategory = (price: number): UserCategory => {
+    if (price === 100) return 'A型';
+    if (price === 0) return 'B型';
+    if (price === 400) return '職員';
+    return '体験者';
+};
+
+/**
+ * CSVファイルからユーザーデータをインポート
+ * @param file - アップロードされたCSVファイル
+ * @returns Promise<User[]> - インポートされたユーザーリスト
+ * @throws Error - ファイル読み込み失敗、無効なフォーマット時
+ */
+export const importUsersFromCSV = (file: File): Promise<User[]> => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+
+        reader.onload = (e) => {
+            try {
+                const content = e.target?.result as string;
+                const lines = content.split('\n');
+
+                if (lines.length < 2) {
+                    throw new Error('CSVファイルが空です');
+                }
+
+                // ヘッダー行を確認
+                const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+                console.log('CSVヘッダー:', headers);
+
+                const users: User[] = [];
+
+                // データ行を処理（ヘッダー行をスキップ）
+                for (let i = 1; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    if (!line) continue;
+
+                    const columns = line.split(',').map(col => col.trim().replace(/"/g, ''));
+
+                    if (columns.length < 5) {
+                        console.warn(`行 ${i + 1}: データが不足しています`, columns);
+                        continue;
+                    }
+
+                    // CSVフォーマット: 利用者名, グループ, 料金, 登録日, 状態
+                    const price = parseInt(columns[2]) || 0;
+                    const category = determineCategory(price);
+
+                    const user: User = {
+                        id: `user-${Date.now()}-${i}`,
+                        name: columns[0],
+                        group: columns[1] as any, // グループ型は既存の型に従う
+                        category: category,
+                        displayNumber: i,
+                        price: price,
+                        createdAt: columns[3] || new Date().toISOString(),
+                        isActive: columns[4] === '有効',
+                        trialUser: category === '体験者'
+                    };
+
+                    users.push(user);
+                }
+
+                if (users.length === 0) {
+                    throw new Error('有効なユーザーデータが見つかりませんでした');
+                }
+
+                console.log('CSVインポート成功:', users.length, 'ユーザー');
+                resolve(users);
+            } catch (error) {
+                console.error('CSVインポートエラー:', error);
+                reject(error);
+            }
+        };
+
+        reader.onerror = () => {
+            console.error('CSVファイル読み込みエラー');
+            reject(new Error('CSVファイルの読み込みに失敗しました'));
+        };
+
+        reader.readAsText(file);
+    });
 }; 
