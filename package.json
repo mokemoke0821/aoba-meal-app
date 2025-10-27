@@ -2,7 +2,7 @@
   "name": "aoba-meal-app",
   "version": "2.1.0",
   "private": true,
-  "homepage": ".",
+  "homepage": "https://mokemoke0821.github.io/aoba-meal-app",
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
@@ -35,7 +35,7 @@
   },
   "scripts": {
     "start": "cross-env NODE_OPTIONS=\"--max-old-space-size=4096\" craco start",
-    "build": "cross-env NODE_OPTIONS=\"--max-old-space-size=8192\" DISABLE_ESLINT_PLUGIN=true GENERATE_SOURCEMAP=false craco build",
+    "build": "cross-env NODE_OPTIONS=\"--max-old-space-size=8192\" DISABLE_ESLINT_PLUGIN=true GENERATE_SOURCEMAP=false PUBLIC_URL=/aoba-meal-app craco build",
     "build:dev": "cross-env NODE_OPTIONS=\"--max-old-space-size=6144\" craco build",
     "build:pwa": "npm run build && npm run test:pwa",
     "test": "cross-env NODE_OPTIONS=\"--max-old-space-size=4096\" craco test --testTimeout=60000 --transformIgnorePatterns=\"node_modules/(?!(date-fns|@mui|@emotion)/)\"",
