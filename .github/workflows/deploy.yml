@@ -3,15 +3,22 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [ main ]
-  workflow_dispatch:  # 手動実行を許可
+  workflow_dispatch:
 
-# 必要な権限を設定
+# GitHub Pages デプロイに必要な権限
 permissions:
-  contents: write
+  contents: read
+  pages: write
+  id-token: write
+
+# 同時実行を防ぐ（デプロイの競合を回避）
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
 
 jobs:
-  # ビルド＆デプロイジョブ
-  build-and-deploy:
+  # ビルドジョブ
+  build:
     runs-on: ubuntu-latest
     
     steps:
@@ -33,9 +40,20 @@ jobs:
           CI: false
           GENERATE_SOURCEMAP: false
           
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./build
-          publish_branch: gh-pages 
+          path: ./build
+
+  # デプロイジョブ
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4 
