@@ -35,6 +35,9 @@ import {
     loadUsers,
     saveUsers
 } from '../utils/storage';
+import BackupConfigPanel from './BackupConfigPanel';
+// Google Drive統合は今後実装予定
+// import GoogleDriveSettings from './GoogleDriveSettings';
 
 export const DataManagementPanel: React.FC = () => {
     const jsonFileInputRef = useRef<HTMLInputElement>(null);
@@ -299,6 +302,18 @@ export const DataManagementPanel: React.FC = () => {
                     </Button>
                 </CardContent>
             </Card>
+
+            {/* 新しいバックアップ設定パネル */}
+            <BackupConfigPanel onBackupCreated={() => {
+                setAutoBackupStatus(getAutoBackupStatus());
+                setMessage({
+                    type: 'success',
+                    text: 'バックアップを作成しました'
+                });
+            }} />
+
+            {/* Google Drive統合は今後実装予定 */}
+            {/* <GoogleDriveSettings /> */}
 
             <Divider sx={{ my: 2 }} />
 

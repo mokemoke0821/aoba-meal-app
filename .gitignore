@@ -11,6 +11,13 @@
 # production
 /build
 /dist
+/dist-electron
+*.exe
+*.dmg
+*.pkg
+*.deb
+*.rpm
+*.AppImage
 
 # misc
 .DS_Store
@@ -23,6 +30,66 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# あおば給食管理アプリ固有
-/src/data/backup
-*.csv
+# logs
+logs/
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+Thumbs.db
+Desktop.ini
+
+# Backup files
+*.backup
+*.bak
+
+# TypeScript
+*.tsbuildinfo
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Build files
+build-debug.log
+build-verification.log
+build.log
+deploy-log.txt
+deploy.log
+
+# Electron Builder output
+/out
+/release
+
+# モバイルテスト用ディレクトリ（Web版には不要）
+mobile/
+mobile-stable/
+test-expo-basic/
+
+# テストスクリプト
+test-scripts/
+
+# ドキュメント（重要なファイル以外）
+GOOGLE_DRIVE_STATUS_REPORT.md
+CLAUDE_AI_SUMMARY.md
+GOOGLE_CLOUD_SETUP.md
+GOOGLE_CLOUD_FIX.md
+CLEAR_CACHE.md
+CREATE_NEW_CLIENT_ID.md
+ADD_TEST_USER.md
+BACKUP_GUIDE.md
+ELECTRON_SETUP_GUIDE.md
+TEST_MATRIX.md
+TEST_RESULTS_PRODUCTION.md
+
+# デバッグ用ファイル
+debug-*.js
+debug-*.ts

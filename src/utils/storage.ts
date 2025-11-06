@@ -1,11 +1,12 @@
 import { saveAs } from 'file-saver';
-import { MealRecord, MenuItem, User, UserCategory } from '../types';
+import { MealRecord, MenuItem, User, UserCategory, BackupConfig } from '../types';
 
 // LocalStorageのキー定義
 const STORAGE_KEYS = {
     USERS: 'aoba-meal-users',
     MEAL_RECORDS: 'aoba-meal-records',
     CURRENT_MENU: 'aoba-current-menu',
+    BACKUP_CONFIG: 'aoba-backup-config',
 } as const;
 
 // ユーザーデータの保存
@@ -337,4 +338,104 @@ export const importUsersFromCSV = (file: File): Promise<User[]> => {
 
         reader.readAsText(file);
     });
+};
+
+// =====================================
+// バックアップ設定関連（新追加）
+// =====================================
+
+// デフォルトバックアップ設定
+const DEFAULT_BACKUP_CONFIG: BackupConfig = {
+    enabled: true,
+    frequency: 10 * 60 * 1000, // 10分（ミリ秒）
+    customPath: null,
+    keepLast: 10,
+    lastBackupTime: null,
+};
+
+/**
+ * バックアップ設定の保存
+ * @param config バックアップ設定
+ */
+export const saveBackupConfig = (config: BackupConfig): void => {
+    try {
+        localStorage.setItem(STORAGE_KEYS.BACKUP_CONFIG, JSON.stringify(config));
+        console.log('[バックアップ設定] 保存完了');
+    } catch (error) {
+        console.error('[バックアップ設定] 保存失敗:', error);
+        throw new Error('バックアップ設定の保存に失敗しました');
+    }
+};
+
+/**
+ * バックアップ設定の読み込み
+ * @returns バックアップ設定
+ */
+export const loadBackupConfig = (): BackupConfig => {
+    try {
+        const stored = localStorage.getItem(STORAGE_KEYS.BACKUP_CONFIG);
+        if (stored) {
+            const config = JSON.parse(stored);
+            console.log('[バックアップ設定] 読み込み完了');
+            return config;
+        }
+    } catch (error) {
+        console.error('[バックアップ設定] 読み込み失敗:', error);
+    }
+    console.log('[バックアップ設定] デフォルト設定を使用');
+    return DEFAULT_BACKUP_CONFIG;
+};
+
+/**
+ * バックアップファイル名生成（日時付き）
+ * @returns ファイル名（例: あおば給食データバックアップ_2025-11-05_14-30-00.json）
+ */
+export const generateBackupFilename = (): string => {
+    const now = new Date();
+    const dateStr = now.toISOString().split('T')[0]; // YYYY-MM-DD
+    const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '-'); // HH-MM-SS
+    return `あおば給食データバックアップ_${dateStr}_${timeStr}.json`;
+};
+
+/**
+ * カスタムパスへのバックアップ保存
+ * @param customPath カスタムパス（未使用、将来拡張用）
+ * @returns 保存されたファイル名
+ */
+export const saveBackupToCustomPath = async (
+    customPath: string | null
+): Promise<string> => {
+    try {
+        console.log('[バックアップ] 作成開始...');
+        
+        // バックアップデータを作成
+        const backupData = {
+            users: loadUsers(),
+            mealRecords: loadMealRecords(),
+            currentMenu: loadCurrentMenu(),
+            timestamp: new Date().toISOString(),
+        };
+        
+        // ファイル名生成
+        const filename = generateBackupFilename();
+        
+        // Blob作成
+        const blob = new Blob([JSON.stringify(backupData, null, 2)], {
+            type: 'application/json',
+        });
+        
+        // ファイル保存（file-saver使用）
+        saveAs(blob, filename);
+        
+        // 最終バックアップ時刻を更新
+        const config = loadBackupConfig();
+        config.lastBackupTime = new Date().toISOString();
+        saveBackupConfig(config);
+        
+        console.log('[バックアップ] 作成完了:', filename);
+        return filename;
+    } catch (error) {
+        console.error('[バックアップ] 作成失敗:', error);
+        throw error;
+    }
 }; 

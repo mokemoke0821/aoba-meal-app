@@ -253,3 +253,67 @@ export interface AppError {
 }
 
 export type ErrorHandler = (error: AppError | Error) => void;
+
+// バックアップ設定（新追加）
+export interface BackupConfig {
+  enabled: boolean;
+  frequency: number; // ミリ秒（5分/10分/30分/1時間）
+  customPath: string | null; // カスタムバックアップパス
+  keepLast: number; // 保持するバックアップ数（デフォルト: 10）
+  lastBackupTime: string | null;
+}
+
+// バックアップ頻度オプション（分単位）
+export type BackupFrequency = 5 | 10 | 30 | 60;
+
+// =====================================
+// Google Drive統合関連の型定義
+// =====================================
+
+// Google Drive認証状態
+export interface GoogleDriveAuthState {
+  isAuthenticated: boolean;
+  isInitialized: boolean;
+  user: GoogleDriveUser | null;
+  error: string | null;
+}
+
+// Google Driveユーザー情報
+export interface GoogleDriveUser {
+  id: string;
+  email: string;
+  name: string;
+  picture?: string;
+}
+
+// Google Drive同期設定
+export interface GoogleDriveSyncConfig {
+  enabled: boolean;
+  autoSync: boolean;
+  syncInterval: number; // ミリ秒
+  lastSyncTime: string | null;
+  folderId: string | null;
+}
+
+// Google Driveファイル情報
+export interface GoogleDriveFile {
+  id: string;
+  name: string;
+  mimeType: string;
+  createdTime: string;
+  modifiedTime: string;
+  size?: string;
+}
+
+// 同期ステータス
+export type SyncStatus = 'idle' | 'syncing' | 'success' | 'error';
+
+// 同期結果
+export interface SyncResult {
+  status: SyncStatus;
+  message: string;
+  timestamp: string;
+  filesUploaded?: number;
+  filesDownloaded?: number;
+  conflicts?: number;
+}

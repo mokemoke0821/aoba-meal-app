@@ -12,8 +12,11 @@ import UserManagement from './components/UserManagement';
 import UserSelector from './components/UserSelector';
 import { AppProvider, useApp } from './contexts/AppContext';
 import { NotificationProvider } from './contexts/NotificationContext';
+// Google Drive統合は今後実装予定（現在は簡易バックアップ機能のみ使用）
+// import { GoogleDriveProvider } from './contexts/GoogleDriveContext';
 import { register as registerServiceWorker } from './registerServiceWorker';
 import { User } from './types';
+import { loadBackupConfig, saveBackupToCustomPath } from './utils/storage';
 
 const theme = createTheme({
   palette: {
@@ -121,16 +124,41 @@ const App: React.FC = () => {
         console.log('[PWA] New content available! Please refresh.');
       },
     });
+
+    // 自動バックアップタイマー設定
+    const config = loadBackupConfig();
+    if (config.enabled) {
+      console.log(`[自動バックアップ] タイマー開始: ${config.frequency / 60000}分ごと`);
+      
+      const intervalId = setInterval(async () => {
+        try {
+          console.log('[自動バックアップ] 実行中...');
+          await saveBackupToCustomPath(config.customPath);
+          console.log('[自動バックアップ] 完了');
+        } catch (error) {
+          console.error('[自動バックアップ] 失敗:', error);
+        }
+      }, config.frequency);
+
+      // クリーンアップ
+      return () => {
+        console.log('[自動バックアップ] タイマー停止');
+        clearInterval(intervalId);
+      };
+    }
   }, []);
 
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <NotificationProvider>
+        {/* Google Drive統合は今後実装予定 */}
+        {/* <GoogleDriveProvider> */}
         <AppProvider>
           <AppContent />
           <InstallPrompt />
         </AppProvider>
+        {/* </GoogleDriveProvider> */}
       </NotificationProvider>
     </ThemeProvider>
   );

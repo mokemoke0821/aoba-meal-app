@@ -10,6 +10,7 @@
     "@mui/material": "^7.1.2",
     "@mui/x-data-grid": "^8.5.3",
     "@mui/x-date-pickers": "^8.5.3",
+    "@react-oauth/google": "^0.12.2",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",
@@ -17,10 +18,13 @@
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
     "@types/uuid": "^10.0.0",
+    "axios": "^1.13.2",
     "csv-writer": "^1.6.0",
     "date-fns": "^4.1.0",
+    "deep-diff": "^1.0.2",
     "file-saver": "^2.0.5",
     "framer-motion": "^12.19.1",
+    "gapi-script": "^1.2.0",
     "html2canvas": "^1.4.1",
     "jspdf": "^3.0.1",
     "react": "^19.2.0",
@@ -33,20 +37,81 @@
     "uuid": "^11.1.0",
     "workbox-webpack-plugin": "^7.3.0"
   },
+  "main": "electron/main.js",
   "scripts": {
-    "start": "cross-env NODE_OPTIONS=\"--max-old-space-size=4096\" craco start",
+    "start": "cross-env NODE_OPTIONS=\"--max-old-space-size=4096\" DISABLE_ESLINT_PLUGIN=true craco start",
     "build": "cross-env NODE_OPTIONS=\"--max-old-space-size=8192\" DISABLE_ESLINT_PLUGIN=true GENERATE_SOURCEMAP=false PUBLIC_URL=/aoba-meal-app craco build",
     "build:dev": "cross-env NODE_OPTIONS=\"--max-old-space-size=6144\" craco build",
     "build:pwa": "npm run build && npm run test:pwa",
+    "build:electron": "cross-env NODE_OPTIONS=\"--max-old-space-size=8192\" DISABLE_ESLINT_PLUGIN=true GENERATE_SOURCEMAP=false PUBLIC_URL=. craco build",
+    "electron": "electron .",
+    "electron:dev": "concurrently \"npm start\" \"wait-on http://localhost:3000 && electron .\"",
+    "electron:build": "npm run build:electron && electron-builder",
+    "electron:build:win": "npm run build:electron && electron-builder --win",
+    "electron:build:mac": "npm run build:electron && electron-builder --mac",
+    "electron:build:linux": "npm run build:electron && electron-builder --linux",
     "test": "cross-env NODE_OPTIONS=\"--max-old-space-size=4096\" craco test --testTimeout=60000 --transformIgnorePatterns=\"node_modules/(?!(date-fns|@mui|@emotion)/)\"",
     "test:ci": "cross-env NODE_OPTIONS=\"--max-old-space-size=4096\" craco test --watchAll=false --testTimeout=60000 --coverage",
     "test:pwa": "node scripts/test-pwa.js",
     "validate:manifest": "node -e \"console.log(JSON.parse(require('fs').readFileSync('public/manifest.json', 'utf-8')))\" && echo 'manifest.json is valid'",
     "eject": "react-scripts eject",
-    "predeploy": "npm run build",
+    "predeploy": "npm run check:homepage && npm run build",
     "deploy": "gh-pages -d build",
+    "deploy:quick": "npm run build && npm run deploy",
+    "deploy:force": "npm run build && npm run deploy && git checkout gh-pages && git pull && git commit --allow-empty -m \"chore: force GitHub Pages rebuild\" && git push && git checkout main",
+    "check:homepage": "node scripts/check-homepage.js",
     "lint": "eslint src --ext .ts,.tsx --max-warnings 0",
-    "lint:fix": "eslint src --ext .ts,.tsx --fix"
+    "lint:fix": "eslint src --ext .ts,.tsx --fix",
+    "release:patch": "node scripts/release.js patch",
+    "release:minor": "node scripts/release.js minor",
+    "release:major": "node scripts/release.js major"
+  },
+  "build": {
+    "appId": "com.aoba.meal-app",
+    "productName": "あおば給食管理",
+    "directories": {
+      "output": "dist-electron"
+    },
+    "files": [
+      "build/**/*",
+      "electron/**/*",
+      "node_modules/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ],
+      "icon": "public/icons/icon-512x512.png"
+    },
+    "mac": {
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "icon": "public/icons/icon-512x512.png",
+      "category": "public.app-category.productivity"
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb",
+        "rpm"
+      ],
+      "icon": "public/icons/icon-512x512.png",
+      "category": "Office"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "あおば給食管理"
+    },
+    "portable": {
+      "artifactName": "あおば給食管理-portable-${version}.${ext}"
+    }
   },
   "eslintConfig": {
     "extends": [
@@ -70,17 +135,25 @@
     "@craco/craco": "^7.1.0",
     "@mui/icons-material": "^7.1.2",
     "@testing-library/user-event": "^14.6.1",
+    "@types/deep-diff": "^1.0.5",
     "@types/file-saver": "^2.0.7",
+    "@types/gapi": "^0.0.47",
+    "@types/gapi.auth2": "^0.0.61",
     "@types/jest": "^30.0.0",
     "@types/testing-library__user-event": "^4.1.1",
     "babel-jest": "^29.7.0",
+    "concurrently": "^8.2.2",
     "craco-workbox": "^0.2.0",
     "cross-env": "^7.0.3",
+    "electron": "^32.3.3",
+    "electron-builder": "^25.1.8",
+    "electron-store": "^11.0.2",
     "gh-pages": "^6.3.0",
     "identity-obj-proxy": "^3.0.0",
     "resolve-url-loader": "^5.0.0",
     "ts-jest": "^29.4.0",
     "vite-plugin-pwa": "^1.0.3",
+    "wait-on": "^8.0.1",
     "web-vitals": "^5.0.3",
     "webpack-cli": "^6.0.1",
     "workbox-window": "^7.3.0"
