@@ -71,6 +71,7 @@ const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
                         label="開始日"
                         value={dateRange.startDate}
                         onChange={handleStartDateChange}
+                        maxDate={new Date()}
                         slotProps={{
                             textField: {
                                 size: 'small',
@@ -89,6 +90,7 @@ const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
                         value={dateRange.endDate}
                         onChange={handleEndDateChange}
                         minDate={dateRange.startDate || undefined}
+                        maxDate={new Date()}
                         slotProps={{
                             textField: {
                                 size: 'small',

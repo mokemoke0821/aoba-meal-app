@@ -56,7 +56,7 @@ export const exportStatisticsCSV = (
     // ユーザー情報マップを作成
     const userMap = new Map(users.map(user => [user.id, user]));
 
-    // CSV内容生成
+    // CSV内容生成（メニュー列を削除）
     const headers = [
         '日付',
         '利用者名',
@@ -65,7 +65,6 @@ export const exportStatisticsCSV = (
         'グループ',
         '食べた量（割）',
         '料金（円）',
-        'メニュー',
         '支援記録・備考'
     ];
 
@@ -79,7 +78,6 @@ export const exportStatisticsCSV = (
             record.userGroup,
             record.eatingRatio,
             record.price,
-            record.menuName || '',
             record.supportNotes || ''
         ];
     });
@@ -169,19 +167,25 @@ export const exportMonthlyReportCSV = (
         stats.avgEating = stats.count > 0 ? Math.round((stats.avgEating / stats.count) * 10) / 10 : 0;
     });
 
-    // CSV内容生成
+    // CSV内容生成（改善版: シンプルで見やすい構造）
+    const totalCount = monthRecords.length;
+    const totalAmount = Object.values(categoryStats).reduce((sum, stat) => sum + stat.total, 0);
+
     const reportContent = [
-        `${year}年${month}月 月次料金レポート`,
-        `作成日: ${format(new Date(), 'yyyy年MM月dd日 HH:mm')}`,
+        '【あおば月次料金レポート】',
+        ['対象年月', `${year}年${month}月`].map(cell => escapeCsvValue(cell)).join(','),
+        ['作成日', format(new Date(), 'yyyy年MM月dd日 HH:mm')].map(cell => escapeCsvValue(cell)).join(','),
+        ['合計料金', `${totalAmount}円`].map(cell => escapeCsvValue(cell)).join(','),
+        ['総利用回数', `${totalCount}回`].map(cell => escapeCsvValue(cell)).join(','),
         '',
         '【カテゴリ別集計】',
-        ['カテゴリ', '利用回数', '料金合計（円）', '平均食べた量（割）'].map(h => escapeCsvValue(h)).join(','),
+        ['カテゴリ', '利用回数', '料金合計', '平均食べた量'].map(h => escapeCsvValue(h)).join(','),
         ...Object.entries(categoryStats).map(([category, stats]) =>
-            [category, stats.count, stats.total, stats.avgEating].map(cell => escapeCsvValue(cell)).join(',')
+            [category, `${stats.count}回`, `${stats.total}円`, `${stats.avgEating}割`].map(cell => escapeCsvValue(cell)).join(',')
         ),
         '',
         '【詳細記録】',
-        ['日付', '利用者名', 'カテゴリ', '食べた量（割）', '料金（円）', 'メニュー', '備考'].map(h => escapeCsvValue(h)).join(','),
+        ['日付', '利用者名', 'カテゴリ', '食べた量（割）', '料金（円）', '備考'].map(h => escapeCsvValue(h)).join(','),
         ...monthRecords
             .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
             .map(record => [
@@ -190,7 +194,6 @@ export const exportMonthlyReportCSV = (
                 record.userCategory,
                 record.eatingRatio,
                 record.price,
-                record.menuName || '',
                 record.supportNotes || ''
             ].map(cell => escapeCsvValue(cell)).join(','))
     ].join('\n');
@@ -261,7 +264,7 @@ export const exportPeriodReportCSV = (
         ),
         '',
         '【詳細記録】',
-        ['日付', '利用者名', 'カテゴリ', '食べた量（割）', '料金（円）', 'メニュー', '備考'].map(h => escapeCsvValue(h)).join(','),
+        ['日付', '利用者名', 'カテゴリ', '食べた量（割）', '料金（円）', '備考'].map(h => escapeCsvValue(h)).join(','),
         ...periodRecords
             .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
             .map(record => [
@@ -270,10 +273,99 @@ export const exportPeriodReportCSV = (
                 record.userCategory,
                 record.eatingRatio,
                 record.price,
-                record.menuName || '',
                 record.supportNotes || ''
             ].map(cell => escapeCsvValue(cell)).join(','))
     ].join('\n');
 
     downloadCSV(filename, reportContent);
+};
+
+// 今日のデータCSV出力（新規追加）
+export const exportTodayCSV = (
+    mealRecords: MealRecord[],
+    users: User[]
+): void => {
+    const today = format(new Date(), 'yyyy-MM-dd');
+    const filename = `あおば給食_本日_${today}_${format(new Date(), 'HHmm')}.csv`;
+
+    // 今日のデータをフィルタリング
+    const todayRecords = mealRecords.filter(record => record.date === today);
+
+    // ユーザー情報マップを作成
+    const userMap = new Map(users.map(user => [user.id, user]));
+
+    // CSV内容生成（メニュー列なし）
+    const headers = [
+        '日付',
+        '利用者名',
+        '表示番号',
+        'カテゴリ',
+        'グループ',
+        '食べた量（割）',
+        '料金（円）',
+        '支援記録・備考'
+    ];
+
+    const rows = todayRecords.map(record => {
+        const user = userMap.get(record.userId);
+        return [
+            record.date,
+            record.userName,
+            user?.displayNumber || '',
+            record.userCategory,
+            record.userGroup,
+            record.eatingRatio,
+            record.price,
+            record.supportNotes || ''
+        ];
+    });
+
+    const csvContent = [
+        headers.map(h => escapeCsvValue(h)).join(','),
+        ...rows.map(row => row.map(cell => escapeCsvValue(cell)).join(','))
+    ].join('\n');
+
+    downloadCSV(filename, csvContent);
+};
+
+// 月別利用状況CSV出力（新規追加）
+export const exportMonthlyUserStatsCSV = (
+    userStats: Array<{
+        userId: string;
+        userName: string;
+        displayNumber: number;
+        category: string;
+        orderCount: number;
+        totalCost: number;
+        averageEatingRatio: number;
+    }>,
+    year: number,
+    month: number
+): void => {
+    const filename = `あおば月別利用状況_${year}年${month}月_${format(new Date(), 'yyyy-MM-dd_HHmm')}.csv`;
+
+    const headers = [
+        '利用者名',
+        '表示番号',
+        'カテゴリ',
+        '注文回数',
+        '料金合計',
+        '平均食べた量'
+    ];
+
+    const rows = userStats.map(stat => [
+        stat.userName,
+        stat.displayNumber,
+        stat.category,
+        `${stat.orderCount}回`,
+        `${stat.totalCost}円`,
+        `${stat.averageEatingRatio}割`
+    ]);
+
+    const csvContent = [
+        headers.map(h => escapeCsvValue(h)).join(','),
+        ...rows.map(row => row.map(cell => escapeCsvValue(cell)).join(','))
+    ].join('\n');
+
+    downloadCSV(filename, csvContent);
 }; 

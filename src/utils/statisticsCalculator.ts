@@ -269,4 +269,77 @@ export const calculateWeeklyStats = (records: MealRecord[]): DailyOrderData[] =>
 
     const weekRecords = filterRecordsByDateRange(records, weekStart, weekEnd);
     return calculateDailyStats(weekRecords);
+};
+
+/**
+ * 月別個人別統計データの型定義
+ */
+export interface MonthlyUserStat {
+    userId: string;
+    userName: string;
+    displayNumber: number;
+    category: string;
+    orderCount: number;
+    totalCost: number;
+    averageEatingRatio: number;
+}
+
+/**
+ * 月別個人別統計を計算（新規追加）
+ */
+export const calculateMonthlyUserStats = (
+    records: MealRecord[],
+    users: User[],
+    year: number,
+    month: number
+): MonthlyUserStat[] => {
+    // 指定月のデータをフィルタリング
+    const monthRecords = records.filter(record => {
+        if (!isValidDate(record.date)) return false;
+        const recordDate = new Date(record.date);
+        return recordDate.getFullYear() === year && recordDate.getMonth() + 1 === month;
+    });
+
+    // ユーザー情報マップを作成
+    const userMap = new Map(users.map(user => [user.id, user]));
+
+    // ユーザーごとにデータを集計
+    const userStatsMap = new Map<string, MonthlyUserStat>();
+
+    monthRecords.forEach(record => {
+        const user = userMap.get(record.userId);
+        if (!user) return;
+
+        if (!userStatsMap.has(record.userId)) {
+            userStatsMap.set(record.userId, {
+                userId: record.userId,
+                userName: record.userName,
+                displayNumber: user.displayNumber,
+                category: record.userCategory,
+                orderCount: 0,
+                totalCost: 0,
+                averageEatingRatio: 0
+            });
+        }
+
+        const stat = userStatsMap.get(record.userId)!;
+        stat.orderCount++;
+        stat.totalCost += record.price;
+
+        // 平均食べた量の累積（後で割り算）
+        if (isValidEatingRatio(record.eatingRatio)) {
+            stat.averageEatingRatio += record.eatingRatio;
+        }
+    });
+
+    // 平均食べた量を計算
+    const result = Array.from(userStatsMap.values()).map(stat => ({
+        ...stat,
+        averageEatingRatio: stat.orderCount > 0
+            ? Math.round((stat.averageEatingRatio / stat.orderCount) * 10) / 10
+            : 0
+    }));
+
+    // 表示番号順にソート
+    return result.sort((a, b) => a.displayNumber - b.displayNumber);
 }; 

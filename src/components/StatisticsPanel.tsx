@@ -20,6 +20,10 @@ import {
     CardContent,
     Chip,
     Divider,
+    FormControl,
+    InputLabel,
+    MenuItem,
+    Select,
     Table,
     TableBody,
     TableCell,
@@ -51,13 +55,17 @@ import { useApp } from '../contexts/AppContext';
 import { useNotification } from '../contexts/NotificationContext';
 import {
     exportMonthlyReportCSV,
+    exportMonthlyUserStatsCSV,
     exportPeriodReportCSV,
     exportStatisticsCSV,
+    exportTodayCSV,
     exportUsersCSV
 } from '../utils/csvExport';
 import {
+    calculateMonthlyUserStats,
     calculateOverallStatistics,
     calculateTodayStats,
+    MonthlyUserStat,
     StatisticsData,
 } from '../utils/statisticsCalculator';
 import BackButton from './common/BackButton';
@@ -94,6 +102,11 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ onBack }) => {
         endDate: null,
     });
     const [statisticsData, setStatisticsData] = useState<StatisticsData | null>(null);
+
+    // 月別利用状況用のstate（新規追加）
+    const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
+    const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth() + 1);
+    const [monthlyUserStats, setMonthlyUserStats] = useState<MonthlyUserStat[]>([]);
 
     // 有料ユーザー判定関数
     const isPaidUser = (userCategory: string) => {
@@ -277,6 +290,22 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ onBack }) => {
         }
     }, [state.mealRecords, state.users, dateRange]);
 
+    // 月別利用状況の計算（新規追加）
+    useEffect(() => {
+        try {
+            const stats = calculateMonthlyUserStats(
+                state.mealRecords,
+                state.users,
+                selectedYear,
+                selectedMonth
+            );
+            setMonthlyUserStats(stats);
+        } catch (error) {
+            console.error('Monthly user stats calculation error:', error);
+            setMonthlyUserStats([]);
+        }
+    }, [state.mealRecords, state.users, selectedYear, selectedMonth]);
+
 
     const handleRefresh = () => {
         try {
@@ -326,6 +355,17 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ onBack }) => {
         }
     };
 
+    // 今日のデータCSVエクスポート（新規追加）
+    const handleExportToday = () => {
+        try {
+            exportTodayCSV(state.mealRecords, state.users);
+            showSuccess('📅 今日のデータをCSVファイルとしてダウンロードしました');
+        } catch (error) {
+            console.error('CSV出力エラー:', error);
+            showError('CSV出力中にエラーが発生しました');
+        }
+    };
+
     // 月次CSVエクスポート
     const handleExportMonthly = () => {
         try {
@@ -352,6 +392,17 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ onBack }) => {
             } else {
                 showWarning('開始日と終了日を両方とも選択してください');
             }
+        } catch (error) {
+            console.error('CSV出力エラー:', error);
+            showError('CSV出力中にエラーが発生しました');
+        }
+    };
+
+    // 月別利用状況CSVエクスポート（新規追加）
+    const handleExportMonthlyUserStats = () => {
+        try {
+            exportMonthlyUserStatsCSV(monthlyUserStats, selectedYear, selectedMonth);
+            showSuccess('📊 月別利用状況をCSVファイルとしてダウンロードしました');
         } catch (error) {
             console.error('CSV出力エラー:', error);
             showError('CSV出力中にエラーが発生しました');
@@ -473,6 +524,16 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ onBack }) => {
                         sx={{ borderRadius: '8px' }}
                     >
                         更新
+                    </Button>
+                    <Button
+                        variant="contained"
+                        color="success"
+                        startIcon={<TodayIcon />}
+                        onClick={handleExportToday}
+                        sx={{ borderRadius: '8px' }}
+                        size={isMobile ? 'small' : 'medium'}
+                    >
+                        今日のデータCSV
                     </Button>
                     <Button
                         variant="contained"
@@ -701,6 +762,98 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ onBack }) => {
                                 </AccordionDetails>
                             </Accordion>
                         ))}
+                    </CardContent>
+                </Card>
+            </Box>
+
+            {/* 月別利用状況（新規追加） */}
+            <Box sx={{ px: 3, mb: 3 }}>
+                <Card sx={{ borderRadius: '16px', boxShadow: theme.shadows[3] }}>
+                    <CardContent sx={{ p: 3 }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 2 }}>
+                            <Typography variant="h6" sx={{ color: 'primary.main', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
+                                📊 月別利用状況
+                            </Typography>
+                            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
+                                <FormControl size="small" sx={{ minWidth: 120 }}>
+                                    <InputLabel>年</InputLabel>
+                                    <Select
+                                        value={selectedYear}
+                                        label="年"
+                                        onChange={(e) => setSelectedYear(Number(e.target.value))}
+                                    >
+                                        {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i).map(year => (
+                                            <MenuItem key={year} value={year}>{year}年</MenuItem>
+                                        ))}
+                                    </Select>
+                                </FormControl>
+                                <FormControl size="small" sx={{ minWidth: 100 }}>
+                                    <InputLabel>月</InputLabel>
+                                    <Select
+                                        value={selectedMonth}
+                                        label="月"
+                                        onChange={(e) => setSelectedMonth(Number(e.target.value))}
+                                    >
+                                        {Array.from({ length: 12 }, (_, i) => i + 1).map(month => (
+                                            <MenuItem key={month} value={month}>{month}月</MenuItem>
+                                        ))}
+                                    </Select>
+                                </FormControl>
+                                <Button
+                                    variant="contained"
+                                    startIcon={<DownloadIcon />}
+                                    onClick={handleExportMonthlyUserStats}
+                                    disabled={monthlyUserStats.length === 0}
+                                    sx={{ borderRadius: '8px' }}
+                                    size="small"
+                                >
+                                    CSV出力
+                                </Button>
+                            </Box>
+                        </Box>
+
+                        {monthlyUserStats.length > 0 ? (
+                            <TableContainer>
+                                <Table>
+                                    <TableHead>
+                                        <TableRow sx={{ backgroundColor: theme.palette.grey[50] }}>
+                                            <TableCell sx={{ fontWeight: 600 }}>利用者名</TableCell>
+                                            <TableCell sx={{ fontWeight: 600 }}>表示番号</TableCell>
+                                            <TableCell sx={{ fontWeight: 600 }}>カテゴリ</TableCell>
+                                            <TableCell align="right" sx={{ fontWeight: 600 }}>注文回数</TableCell>
+                                            <TableCell align="right" sx={{ fontWeight: 600 }}>料金合計</TableCell>
+                                            <TableCell align="right" sx={{ fontWeight: 600 }}>平均食べた量</TableCell>
+                                        </TableRow>
+                                    </TableHead>
+                                    <TableBody>
+                                        {monthlyUserStats.map((stat) => (
+                                            <TableRow key={stat.userId} hover>
+                                                <TableCell>{stat.userName}</TableCell>
+                                                <TableCell>{stat.displayNumber}</TableCell>
+                                                <TableCell>
+                                                    <Chip
+                                                        label={stat.category}
+                                                        size="small"
+                                                        sx={{
+                                                            backgroundColor: getCategoryColor(stat.category),
+                                                            color: 'white',
+                                                            fontWeight: 600
+                                                        }}
+                                                    />
+                                                </TableCell>
+                                                <TableCell align="right">{stat.orderCount}回</TableCell>
+                                                <TableCell align="right">¥{stat.totalCost.toLocaleString()}</TableCell>
+                                                <TableCell align="right">{stat.averageEatingRatio}割</TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </TableContainer>
+                        ) : (
+                            <Alert severity="info" sx={{ borderRadius: '8px' }}>
+                                {selectedYear}年{selectedMonth}月のデータがありません
+                            </Alert>
+                        )}
                     </CardContent>
                 </Card>
             </Box>
