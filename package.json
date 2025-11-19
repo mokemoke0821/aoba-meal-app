@@ -148,6 +148,7 @@
     "electron": "^32.3.3",
     "electron-builder": "^25.1.8",
     "electron-store": "^11.0.2",
+    "eslint-webpack-plugin": "^5.0.2",
     "gh-pages": "^6.3.0",
     "identity-obj-proxy": "^3.0.0",
     "resolve-url-loader": "^5.0.0",
