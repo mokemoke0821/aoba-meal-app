@@ -167,6 +167,56 @@ export const exportMonthlyReportCSV = (
         stats.avgEating = stats.count > 0 ? Math.round((stats.avgEating / stats.count) * 10) / 10 : 0;
     });
 
+    // 利用者別集計（新規追加）
+    interface UserStats {
+        userId: string;
+        userName: string;
+        userCategory: UserCategory;
+        orderCount: number;
+        totalCost: number;
+        totalEatingRatio: number;
+    }
+
+    const userStatsMap = new Map<string, UserStats>();
+
+    monthRecords.forEach(record => {
+        if (!userStatsMap.has(record.userId)) {
+            userStatsMap.set(record.userId, {
+                userId: record.userId,
+                userName: record.userName,
+                userCategory: record.userCategory,
+                orderCount: 0,
+                totalCost: 0,
+                totalEatingRatio: 0
+            });
+        }
+
+        const userStat = userStatsMap.get(record.userId)!;
+        userStat.orderCount++;
+        userStat.totalCost += record.price;
+        userStat.totalEatingRatio += record.eatingRatio;
+    });
+
+    // 利用者別統計を配列に変換してソート（カテゴリ別、利用者名順）
+    const userStatsList = Array.from(userStatsMap.values())
+        .map(stat => ({
+            ...stat,
+            avgEatingRatio: Math.round((stat.totalEatingRatio / stat.orderCount) * 10) / 10
+        }))
+        .sort((a, b) => {
+            // カテゴリ順: A型 → B型 → 体験者 → 職員
+            const categoryOrder: Record<UserCategory, number> = {
+                'A型': 1,
+                'B型': 2,
+                '体験者': 3,
+                '職員': 4
+            };
+            const categoryCompare = categoryOrder[a.userCategory] - categoryOrder[b.userCategory];
+            if (categoryCompare !== 0) return categoryCompare;
+            // 同じカテゴリ内では利用者名順
+            return a.userName.localeCompare(b.userName);
+        });
+
     // CSV内容生成（改善版: シンプルで見やすい構造）
     const totalCount = monthRecords.length;
     const totalAmount = Object.values(categoryStats).reduce((sum, stat) => sum + stat.total, 0);
@@ -182,6 +232,17 @@ export const exportMonthlyReportCSV = (
         ['カテゴリ', '利用回数', '料金合計', '平均食べた量'].map(h => escapeCsvValue(h)).join(','),
         ...Object.entries(categoryStats).map(([category, stats]) =>
             [category, `${stats.count}回`, `${stats.total}円`, `${stats.avgEating}割`].map(cell => escapeCsvValue(cell)).join(',')
+        ),
+        '',
+        '【利用者別集計】',
+        ['利用者名', 'カテゴリ', '注文回数', '料金合計', '平均食べた量'].map(h => escapeCsvValue(h)).join(','),
+        ...userStatsList.map(stat => [
+            stat.userName,
+            stat.userCategory,
+            `${stat.orderCount}回`,
+            `${stat.totalCost}円`,
+            `${stat.avgEatingRatio}割`
+        ].map(cell => escapeCsvValue(cell)).join(',')
         ),
         '',
         '【詳細記録】',

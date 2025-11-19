@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UAT フィードバックフォーム - あおば給食管理アプリ v2.1.0</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Segoe UI', 'メイリオ', Meiryo, sans-serif;
+            line-height: 1.6;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: #1976d2;
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .form-section {
+            padding: 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #333;
+        }
+        
+        .required {
+            color: #e74c3c;
+            margin-left: 5px;
+        }
+        
+        input[type="text"],
+        input[type="email"],
+        input[type="date"],
+        input[type="time"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #1976d2;
+        }
+        
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+        
+        .radio-group,
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 10px;
+        }
+        
+        .radio-group label,
+        .checkbox-group label {
+            display: inline-flex;
+            align-items: center;
+            font-weight: normal;
+            cursor: pointer;
+        }
+        
+        .radio-group input,
+        .checkbox-group input {
+            width: auto;
+            margin-right: 5px;
+        }
+        
+        .rating {
+            display: flex;
+            gap: 10px;
+            font-size: 30px;
+            margin-top: 10px;
+        }
+        
+        .rating input {
+            display: none;
+        }
+        
+        .rating label {
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .rating label:hover {
+            transform: scale(1.2);
+        }
+        
+        .rating input:checked + label {
+            filter: grayscale(0);
+        }
+        
+        .rating label {
+            filter: grayscale(100%);
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+        
+        button {
+            flex: 1;
+            padding: 15px 30px;
+            font-size: 16px;
+            font-weight: bold;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: #1976d2;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #1565c0;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(25, 118, 210, 0.3);
+        }
+        
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #333;
+        }
+        
+        .btn-secondary:hover {
+            background: #d0d0d0;
+        }
+        
+        .alert {
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        
+        .alert-error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        
+        .footer {
+            background: #f5f5f5;
+            padding: 20px;
+            text-align: center;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        @media (max-width: 600px) {
+            .form-section {
+                padding: 20px;
+            }
+            
+            .btn-group {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📋 UAT フィードバックフォーム</h1>
+            <p>あおば給食管理アプリ Electron版 v2.1.0</p>
+        </div>
+        
+        <div class="form-section">
+            <div id="alert" class="alert"></div>
+            
+            <form id="feedbackForm">
+                <!-- 基本情報 -->
+                <div class="form-group">
+                    <label for="testerName">テスター名 <span class="required">*</span></label>
+                    <input type="text" id="testerName" name="testerName" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="testerRole">役割 <span class="required">*</span></label>
+                    <select id="testerRole" name="testerRole" required>
+                        <option value="">選択してください</option>
+                        <option value="現場職員">現場職員</option>
+                        <option value="管理者">管理者</option>
+                        <option value="IT担当">IT担当</option>
+                        <option value="その他">その他</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="testDate">テスト実施日 <span class="required">*</span></label>
+                    <input type="date" id="testDate" name="testDate" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="testTime">テスト実施時刻</label>
+                    <input type="time" id="testTime" name="testTime">
+                </div>
+                
+                <!-- テストシナリオ -->
+                <div class="form-group">
+                    <label for="scenario">テストシナリオ <span class="required">*</span></label>
+                    <select id="scenario" name="scenario" required>
+                        <option value="">選択してください</option>
+                        <option value="1">シナリオ1: 初回起動と設定</option>
+                        <option value="2">シナリオ2: 摂食量記録（標準フロー）</option>
+                        <option value="3">シナリオ3: 記録の確認（統計画面）</option>
+                        <option value="4">シナリオ4: 複数利用者の記録</option>
+                        <option value="5">シナリオ5: データ管理（バックアップ・復元）</option>
+                        <option value="6">シナリオ6: CSV出力</option>
+                        <option value="7">シナリオ7: オフライン動作</option>
+                        <option value="8">シナリオ8: 長期間使用シミュレーション</option>
+                        <option value="9">シナリオ9: ウィンドウサイズ変更</option>
+                        <option value="10">シナリオ10: アンインストール</option>
+                        <option value="その他">その他</option>
+                    </select>
+                </div>
+                
+                <!-- テスト結果 -->
+                <div class="form-group">
+                    <label>テスト結果 <span class="required">*</span></label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="testResult" value="成功" required> ✅ 成功</label>
+                        <label><input type="radio" name="testResult" value="失敗" required> ❌ 失敗</label>
+                        <label><input type="radio" name="testResult" value="部分的成功" required> ⚠️ 部分的成功</label>
+                    </div>
+                </div>
+                
+                <!-- 問題の重要度 -->
+                <div class="form-group">
+                    <label for="severity">問題の重要度（失敗の場合）</label>
+                    <select id="severity" name="severity">
+                        <option value="">選択してください</option>
+                        <option value="Critical">🔴 Critical - 致命的（リリースブロッカー）</option>
+                        <option value="High">🟡 High - 重大（早急な修正が必要）</option>
+                        <option value="Medium">🟢 Medium - 中程度（修正推奨）</option>
+                        <option value="Low">⚪ Low - 軽微（修正可能）</option>
+                    </select>
+                </div>
+                
+                <!-- 問題の詳細 -->
+                <div class="form-group">
+                    <label for="issueDescription">問題の詳細（失敗の場合）</label>
+                    <textarea id="issueDescription" name="issueDescription" placeholder="何をしたときに、どのような問題が発生しましたか？"></textarea>
+                </div>
+                
+                <!-- 再現手順 -->
+                <div class="form-group">
+                    <label for="reproSteps">再現手順（失敗の場合）</label>
+                    <textarea id="reproSteps" name="reproSteps" placeholder="1. ○○をクリック&#10;2. △△を入力&#10;3. □□が表示される"></textarea>
+                </div>
+                
+                <!-- 期待される動作 -->
+                <div class="form-group">
+                    <label for="expectedBehavior">期待される動作</label>
+                    <textarea id="expectedBehavior" name="expectedBehavior" placeholder="本来はどのように動作すべきですか？"></textarea>
+                </div>
+                
+                <!-- 実際の動作 -->
+                <div class="form-group">
+                    <label for="actualBehavior">実際の動作</label>
+                    <textarea id="actualBehavior" name="actualBehavior" placeholder="実際にはどのように動作しましたか？"></textarea>
+                </div>
+                
+                <!-- 改善提案 -->
+                <div class="form-group">
+                    <label for="suggestions">改善提案・コメント</label>
+                    <textarea id="suggestions" name="suggestions" placeholder="より使いやすくするためのアイデアがあればお聞かせください"></textarea>
+                </div>
+                
+                <!-- 使いやすさ評価 -->
+                <div class="form-group">
+                    <label>使いやすさ評価</label>
+                    <div class="rating">
+                        <input type="radio" id="star5" name="rating" value="5">
+                        <label for="star5">⭐</label>
+                        <input type="radio" id="star4" name="rating" value="4">
+                        <label for="star4">⭐</label>
+                        <input type="radio" id="star3" name="rating" value="3">
+                        <label for="star3">⭐</label>
+                        <input type="radio" id="star2" name="rating" value="2">
+                        <label for="star2">⭐</label>
+                        <input type="radio" id="star1" name="rating" value="1">
+                        <label for="star1">⭐</label>
+                    </div>
+                    <small style="color: #666;">⭐⭐⭐⭐⭐ (5つ星が最高)</small>
+                </div>
+                
+                <!-- 業務で使用可能か -->
+                <div class="form-group">
+                    <label>このアプリを業務で使用できますか？ <span class="required">*</span></label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="production Ready" value="はい" required> はい、すぐに使用できる</label>
+                        <label><input type="radio" name="productionReady" value="修正後" required> 修正後なら使用できる</label>
+                        <label><input type="radio" name="productionReady" value="いいえ" required> いいえ、使用できない</label>
+                    </div>
+                </div>
+                
+                <!-- ボタン -->
+                <div class="btn-group">
+                    <button type="submit" class="btn-primary">📝 フィードバックを送信</button>
+                    <button type="reset" class="btn-secondary">🔄 クリア</button>
+                </div>
+            </form>
+        </div>
+        
+        <div class="footer">
+            <p>ありがとうございます。皆様のフィードバックは非常に貴重です。</p>
+            <p style="margin-top: 10px;">© 2025 あおば給食管理アプリ - v2.1.0</p>
+        </div>
+    </div>
+    
+    <script>
+        const form = document.getElementById('feedbackForm');
+        const alert = document.getElementById('alert');
+        
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // フォームデータを収集
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries());
+            
+            // JSON形式に変換
+            const jsonData = JSON.stringify(data, null, 2);
+            
+            // ファイル名生成
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+            const filename = `feedback_${data.scenario}_${timestamp}.json`;
+            
+            // ダウンロード
+            const blob = new Blob([jsonData], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            // 成功メッセージ
+            alert.className = 'alert alert-success';
+            alert.style.display = 'block';
+            alert.textContent = `✅ フィードバックが保存されました: ${filename}`;
+            
+            // スクロール
+            alert.scrollIntoView({ behavior: 'smooth' });
+            
+            // フォームクリア
+            setTimeout(() => {
+                if (confirm('フォームをクリアしますか？')) {
+                    form.reset();
+                    alert.style.display = 'none';
+                }
+            }, 2000);
+        });
+        
+        // 日付のデフォルト値を今日に設定
+        document.getElementById('testDate').valueAsDate = new Date();
+    </script>
+</body>
+</html>
+
+
