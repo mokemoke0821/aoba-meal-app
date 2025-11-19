@@ -481,7 +481,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers, o
         }
 
         onUpdateUsers(updatedUsers);
-        setSelectedRows([]);
+        setSelectedRows([] as unknown as GridRowSelectionModel);
         setBulkActionDialog({ open: false, action: '' });
     };
 
