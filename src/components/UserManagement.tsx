@@ -419,7 +419,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers, o
 
     // Bulk operations
     const handleBulkAction = (action: string) => {
-        if ((selectedRows as GridRowId[]).length === 0) {
+        if ((selectedRows as unknown as GridRowId[]).length === 0) {
             setSnackbar({
                 open: true,
                 message: '操作する利用者を選択してください',
