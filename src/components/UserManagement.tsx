@@ -432,13 +432,13 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers, o
     };
 
     const executeBulkAction = () => {
-        const selectedUsers = users.filter(user => selectedRows.includes(user.id));
+        const selectedUsers = users.filter(user => (selectedRows as unknown as GridRowId[]).includes(user.id));
         let updatedUsers = [...users];
 
         switch (bulkActionDialog.action) {
             case 'activate':
                 updatedUsers = users.map(user =>
-                    selectedRows.includes(user.id) ? { ...user, isActive: true } : user
+                    (selectedRows as unknown as GridRowId[]).includes(user.id) ? { ...user, isActive: true } : user
                 );
                 setSnackbar({
                     open: true,
@@ -449,7 +449,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers, o
 
             case 'deactivate':
                 updatedUsers = users.map(user =>
-                    selectedRows.includes(user.id) ? { ...user, isActive: false } : user
+                    (selectedRows as unknown as GridRowId[]).includes(user.id) ? { ...user, isActive: false } : user
                 );
                 setSnackbar({
                     open: true,
@@ -460,7 +460,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers, o
 
             case 'delete':
                 // 確認は既にダイアログで行われているため、直接削除を実行
-                updatedUsers = users.filter(user => !selectedRows.includes(user.id));
+                updatedUsers = users.filter(user => !(selectedRows as unknown as GridRowId[]).includes(user.id));
                 setSnackbar({
                     open: true,
                     message: `${selectedUsers.length}名の利用者を削除しました`,
@@ -470,7 +470,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers, o
 
             case 'changePaidStatus':
                 updatedUsers = users.map(user =>
-                    selectedRows.includes(user.id) ? { ...user, trialUser: false } : user
+                    (selectedRows as unknown as GridRowId[]).includes(user.id) ? { ...user, trialUser: false } : user
                 );
                 setSnackbar({
                     open: true,
