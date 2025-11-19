@@ -99,12 +99,9 @@ class ErrorBoundary extends React.Component<Props, State> {
             await navigator.clipboard.writeText(errorReport);
             // showSuccess('エラーレポートがクリップボードにコピーされました。管理者に報告してください。');
             // 通知システムを使用する場合は、コンポーネントを関数コンポーネントに変換する必要があります
-            // 一時的にconsole.logで代替
-            console.log('エラーレポートがクリップボードにコピーされました。');
         } catch (err) {
             console.error('Failed to copy error report:', err);
             // showError('エラーレポートのコピーに失敗しました。');
-            console.log('エラーレポートのコピーに失敗しました。');
         }
     };
 

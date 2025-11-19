@@ -26,7 +26,6 @@ export const isAutoBackupEnabled = (): boolean => {
 export const setAutoBackupEnabled = (enabled: boolean): void => {
     try {
         localStorage.setItem(AUTO_BACKUP_KEY, enabled.toString());
-        console.log('[自動バックアップ] 設定変更:', enabled ? '有効' : '無効');
     } catch (error) {
         console.error('自動バックアップ設定の保存エラー:', error);
     }
@@ -68,7 +67,6 @@ export const shouldCreateBackup = (): boolean => {
 export const performAutoBackup = async (): Promise<boolean> => {
     try {
         if (!shouldCreateBackup()) {
-            console.log('[自動バックアップ] バックアップ不要（まだ期間内）');
             return false;
         }
 
@@ -76,17 +74,14 @@ export const performAutoBackup = async (): Promise<boolean> => {
         const users = loadUsers();
 
         if (users.length === 0) {
-            console.log('[自動バックアップ] データなし、スキップ');
             return false;
         }
 
         // バックアップ作成
-        console.log('[自動バックアップ] バックアップ作成開始');
         createBackup();
 
         // 最終バックアップ日時を保存
         localStorage.setItem(LAST_BACKUP_KEY, new Date().toISOString());
-        console.log('[自動バックアップ] バックアップ完了');
 
         return true;
     } catch (error) {

@@ -348,17 +348,13 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers, o
                 break;
 
             case 'delete':
-                if (window.confirm(`選択した${selectedUsers.length}名の利用者を削除しますか？\nこの操作は取り消せません。`)) {
-                    updatedUsers = users.filter(user => !selectedRows.includes(user.id));
-                    setSnackbar({
-                        open: true,
-                        message: `${selectedUsers.length}名の利用者を削除しました`,
-                        severity: 'success'
-                    });
-                } else {
-                    setBulkActionDialog({ open: false, action: '' });
-                    return;
-                }
+                // 確認は既にダイアログで行われているため、直接削除を実行
+                updatedUsers = users.filter(user => !selectedRows.includes(user.id));
+                setSnackbar({
+                    open: true,
+                    message: `${selectedUsers.length}名の利用者を削除しました`,
+                    severity: 'success'
+                });
                 break;
 
             case 'changePaidStatus':
@@ -712,22 +708,48 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers, o
 
             {/* Selected Actions */}
             {selectedRows.length > 0 && (
-                <Box sx={{ mb: 2, p: 2, bgcolor: 'primary.50', borderRadius: 1 }}>
-                    <Typography variant="body2" color="primary" sx={{ mb: 1 }}>
+                <Box sx={{ mb: 2, p: 2, bgcolor: 'action.selected', borderRadius: 1, border: '1px solid', borderColor: 'primary.main' }}>
+                    <Typography variant="body2" color="primary" sx={{ mb: 1, fontWeight: 600 }}>
                         {selectedRows.length}名の利用者が選択されています
                     </Typography>
                     <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                        <Button size="small" onClick={() => handleBulkAction('activate')}>
+                        <Button 
+                            size="small" 
+                            variant="outlined"
+                            onClick={() => handleBulkAction('activate')}
+                        >
                             一括有効化
                         </Button>
-                        <Button size="small" onClick={() => handleBulkAction('deactivate')}>
+                        <Button 
+                            size="small" 
+                            variant="outlined"
+                            onClick={() => handleBulkAction('deactivate')}
+                        >
                             一括無効化
                         </Button>
-                        <Button size="small" onClick={() => handleBulkAction('changePaidStatus')}>
+                        <Button 
+                            size="small" 
+                            variant="outlined"
+                            onClick={() => handleBulkAction('changePaidStatus')}
+                        >
                             有料ユーザーに変更
                         </Button>
-                        <Button size="small" color="error" onClick={() => handleBulkAction('delete')}>
-                            一括削除
+                        <Button 
+                            size="small" 
+                            variant="contained"
+                            color="error" 
+                            startIcon={<DeleteIcon />}
+                            onClick={() => handleBulkAction('delete')}
+                            sx={{
+                                fontWeight: 600,
+                                boxShadow: 2,
+                                '&:hover': {
+                                    boxShadow: 4,
+                                    backgroundColor: 'error.dark'
+                                }
+                            }}
+                        >
+                            選択したユーザーを削除
                         </Button>
                     </Box>
                 </Box>
@@ -747,7 +769,8 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers, o
                     checkboxSelection
                     disableRowSelectionOnClick
                     loading={loading}
-                    onRowSelectionModelChange={(newSelection: any) => {
+                    rowSelectionModel={selectedRows}
+                    onRowSelectionModelChange={(newSelection: GridRowId[]) => {
                         setSelectedRows(newSelection);
                     }}
                     slots={{
@@ -860,18 +883,42 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers, o
             </Dialog>
 
             {/* Bulk Action Confirmation Dialog */}
-            <Dialog open={bulkActionDialog.open} onClose={() => setBulkActionDialog({ open: false, action: '' })}>
-                <DialogTitle>一括操作の確認</DialogTitle>
+            <Dialog 
+                open={bulkActionDialog.open} 
+                onClose={() => setBulkActionDialog({ open: false, action: '' })}
+                maxWidth="sm"
+                fullWidth
+            >
+                <DialogTitle>
+                    {bulkActionDialog.action === 'delete' ? '⚠️ 削除の確認' : '一括操作の確認'}
+                </DialogTitle>
                 <DialogContent>
-                    <Typography>
-                        選択した{selectedRows.length}名の利用者に対して以下の操作を実行しますか？
-                    </Typography>
-                    <Typography sx={{ mt: 1, fontWeight: 'bold' }}>
-                        {bulkActionDialog.action === 'activate' && '一括有効化'}
-                        {bulkActionDialog.action === 'deactivate' && '一括無効化'}
-                        {bulkActionDialog.action === 'delete' && '一括削除（取り消せません）'}
-                        {bulkActionDialog.action === 'changePaidStatus' && '有料ユーザーへの変更'}
-                    </Typography>
+                    {bulkActionDialog.action === 'delete' ? (
+                        <>
+                            <Alert severity="error" sx={{ mb: 2 }}>
+                                <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                    この操作は取り消せません
+                                </Typography>
+                            </Alert>
+                            <Typography variant="body1" sx={{ mb: 1 }}>
+                                選択した<strong>{selectedRows.length}名</strong>の利用者を削除しますか？
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                                削除された利用者のデータは完全に削除され、復元することはできません。
+                            </Typography>
+                        </>
+                    ) : (
+                        <>
+                            <Typography variant="body1">
+                                選択した{selectedRows.length}名の利用者に対して以下の操作を実行しますか？
+                            </Typography>
+                            <Typography sx={{ mt: 1, fontWeight: 'bold' }}>
+                                {bulkActionDialog.action === 'activate' && '一括有効化'}
+                                {bulkActionDialog.action === 'deactivate' && '一括無効化'}
+                                {bulkActionDialog.action === 'changePaidStatus' && '有料ユーザーへの変更'}
+                            </Typography>
+                        </>
+                    )}
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={() => setBulkActionDialog({ open: false, action: '' })}>
@@ -881,8 +928,9 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers, o
                         onClick={executeBulkAction}
                         variant="contained"
                         color={bulkActionDialog.action === 'delete' ? 'error' : 'primary'}
+                        startIcon={bulkActionDialog.action === 'delete' ? <DeleteIcon /> : undefined}
                     >
-                        実行
+                        {bulkActionDialog.action === 'delete' ? '削除する' : '実行'}
                     </Button>
                 </DialogActions>
             </Dialog>

@@ -37,8 +37,7 @@ const InstallPrompt: React.FC = () => {
     deferredPrompt.prompt();
 
     // ユーザーの選択を待つ
-    const { outcome } = await deferredPrompt.userChoice;
-    console.log(`[PWA] User response to install prompt: ${outcome}`);
+    await deferredPrompt.userChoice;
 
     // プロンプトを閉じる
     setDeferredPrompt(null);

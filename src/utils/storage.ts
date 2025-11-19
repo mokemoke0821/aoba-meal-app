@@ -212,12 +212,6 @@ export const importBackup = (file: File): Promise<void> => {
                     throw new Error('無効なバックアップファイル: mealRecordsデータが見つかりません');
                 }
 
-                // タイムスタンプチェック（オプショナル）
-                if (backupData.timestamp) {
-                    const backupDate = new Date(backupData.timestamp);
-                    console.log(`バックアップ作成日時: ${backupDate.toLocaleString('ja-JP')}`);
-                }
-
                 // データ復元
                 saveUsers(backupData.users);
                 saveMealRecords(backupData.mealRecords);
@@ -225,11 +219,6 @@ export const importBackup = (file: File): Promise<void> => {
                 if (backupData.currentMenu) {
                     saveCurrentMenu(backupData.currentMenu);
                 }
-
-                console.log('データ復元成功:', {
-                    users: backupData.users.length,
-                    records: backupData.mealRecords.length
-                });
 
                 resolve();
             } catch (error) {
@@ -284,7 +273,6 @@ export const importUsersFromCSV = (file: File): Promise<User[]> => {
 
                 // ヘッダー行を確認
                 const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
-                console.log('CSVヘッダー:', headers);
 
                 const users: User[] = [];
 
@@ -296,7 +284,6 @@ export const importUsersFromCSV = (file: File): Promise<User[]> => {
                     const columns = line.split(',').map(col => col.trim().replace(/"/g, ''));
 
                     if (columns.length < 5) {
-                        console.warn(`行 ${i + 1}: データが不足しています`, columns);
                         continue;
                     }
 
@@ -323,7 +310,6 @@ export const importUsersFromCSV = (file: File): Promise<User[]> => {
                     throw new Error('有効なユーザーデータが見つかりませんでした');
                 }
 
-                console.log('CSVインポート成功:', users.length, 'ユーザー');
                 resolve(users);
             } catch (error) {
                 console.error('CSVインポートエラー:', error);
@@ -360,7 +346,6 @@ const DEFAULT_BACKUP_CONFIG: BackupConfig = {
 export const saveBackupConfig = (config: BackupConfig): void => {
     try {
         localStorage.setItem(STORAGE_KEYS.BACKUP_CONFIG, JSON.stringify(config));
-        console.log('[バックアップ設定] 保存完了');
     } catch (error) {
         console.error('[バックアップ設定] 保存失敗:', error);
         throw new Error('バックアップ設定の保存に失敗しました');
@@ -376,13 +361,11 @@ export const loadBackupConfig = (): BackupConfig => {
         const stored = localStorage.getItem(STORAGE_KEYS.BACKUP_CONFIG);
         if (stored) {
             const config = JSON.parse(stored);
-            console.log('[バックアップ設定] 読み込み完了');
             return config;
         }
     } catch (error) {
         console.error('[バックアップ設定] 読み込み失敗:', error);
     }
-    console.log('[バックアップ設定] デフォルト設定を使用');
     return DEFAULT_BACKUP_CONFIG;
 };
 
@@ -406,8 +389,6 @@ export const saveBackupToCustomPath = async (
     customPath: string | null
 ): Promise<string> => {
     try {
-        console.log('[バックアップ] 作成開始...');
-        
         // バックアップデータを作成
         const backupData = {
             users: loadUsers(),
@@ -432,7 +413,6 @@ export const saveBackupToCustomPath = async (
         config.lastBackupTime = new Date().toISOString();
         saveBackupConfig(config);
         
-        console.log('[バックアップ] 作成完了:', filename);
         return filename;
     } catch (error) {
         console.error('[バックアップ] 作成失敗:', error);

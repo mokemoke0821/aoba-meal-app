@@ -74,7 +74,6 @@ export const DataDiagnosticsPanel: React.FC = () => {
             };
 
             setDiagnostics(info);
-            console.log('[診断] データ診断結果:', info);
         } catch (error) {
             console.error('[診断] 診断エラー:', error);
         }

@@ -29,13 +29,10 @@ const API_CACHE_PATTERNS = [
 
 // Install event - cache static assets
 self.addEventListener('install', (event: ExtendableEvent) => {
-    console.log('[ServiceWorker] Install event');
-
     event.waitUntil(
         (async () => {
             try {
                 const staticCache = await caches.open(STATIC_CACHE_NAME);
-                console.log('[ServiceWorker] Caching static assets');
                 await staticCache.addAll(STATIC_ASSETS);
 
                 // Skip waiting to activate immediately
@@ -49,8 +46,6 @@ self.addEventListener('install', (event: ExtendableEvent) => {
 
 // Activate event - clean up old caches
 self.addEventListener('activate', (event: ExtendableEvent) => {
-    console.log('[ServiceWorker] Activate event');
-
     event.waitUntil(
         (async () => {
             try {
@@ -60,10 +55,7 @@ self.addEventListener('activate', (event: ExtendableEvent) => {
                 await Promise.all(
                     cacheNames
                         .filter(cacheName => cacheName !== STATIC_CACHE_NAME && cacheName !== DYNAMIC_CACHE_NAME)
-                        .map(cacheName => {
-                            console.log('[ServiceWorker] Deleting old cache:', cacheName);
-                            return caches.delete(cacheName);
-                        })
+                        .map(cacheName => caches.delete(cacheName))
                 );
 
                 // Claim all clients
@@ -144,8 +136,6 @@ async function networkFirst(request: Request): Promise<Response> {
 
         return networkResponse;
     } catch (error) {
-        console.log('[ServiceWorker] Network failed, trying cache:', request.url);
-
         const cachedResponse = await cache.match(request);
         if (cachedResponse) {
             return cachedResponse;
@@ -165,8 +155,7 @@ async function staleWhileRevalidate(request: Request): Promise<Response> {
             cache.put(request, response.clone());
         }
         return response;
-    }).catch(error => {
-        console.log('[ServiceWorker] Background update failed:', error);
+    }).catch(() => {
         return new Response('Network failed', { status: 500 });
     });
 
@@ -275,7 +264,6 @@ async function getOfflinePage(): Promise<Response> {
 
 // Push notification event
 self.addEventListener('push', (event: PushEvent) => {
-    console.log('[ServiceWorker] Push Received.');
 
     const pushData = event.data?.json() ?? { title: '新しい通知', body: 'メッセージが届いています。' };
     const { title, body, icon, badge } = pushData;
@@ -295,8 +283,6 @@ self.addEventListener('push', (event: PushEvent) => {
 
 // Notification click handling
 self.addEventListener('notificationclick', (event: NotificationEvent) => {
-    console.log('[ServiceWorker] Notification clicked');
-
     event.notification.close();
 
     if (event.action === 'close') {
@@ -311,11 +297,9 @@ self.addEventListener('notificationclick', (event: NotificationEvent) => {
 // Background Sync event (not fully implemented in this example)
 self.addEventListener('sync', (event: any) => {
     if (event.tag === 'sync-new-data') {
-        console.log('[ServiceWorker] Background sync triggered');
         event.waitUntil(
             // Example: syncOfflineActions()
             new Promise<void>(resolve => {
-                console.log("Sync process would run here.");
                 resolve();
             })
         );
@@ -324,8 +308,6 @@ self.addEventListener('sync', (event: any) => {
 
 // Message handling from main thread
 self.addEventListener('message', (event: ExtendableMessageEvent) => {
-    console.log('[ServiceWorker] Message received:', event.data);
-
     if (event.data && event.data.type === 'SKIP_WAITING') {
         self.skipWaiting();
     }

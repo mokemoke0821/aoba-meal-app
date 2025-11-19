@@ -65,12 +65,10 @@ export const setupInitialData = (): void => {
 
     if (!existingUsers) {
         localStorage.setItem('aoba-meal-users', JSON.stringify(generateInitialUsers()));
-        console.log('サンプル利用者データを設定しました');
     }
 
     if (!existingMenu) {
         localStorage.setItem('aoba-current-menu', JSON.stringify(sampleTodayMenu));
-        console.log('本日のサンプルメニューを設定しました');
     }
 };
 

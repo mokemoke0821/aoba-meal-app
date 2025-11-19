@@ -169,43 +169,32 @@ export function AppProvider({ children, initialStateForTest }: AppProviderProps)
 
   // 🔄 起動時: localStorageからデータを読み込む
   useEffect(() => {
-    console.log('[データ読み込み] localStorageからデータを読み込み中...');
-
     const loadedUsers = loadUsers();
     const loadedRecords = loadMealRecords();
 
     if (loadedUsers.length > 0) {
-      console.log('[データ読み込み] ユーザー読み込み成功:', loadedUsers.length, '件');
       dispatch({ type: 'SET_USERS', payload: loadedUsers });
     } else {
-      console.log('[データ読み込み] localStorageにデータなし。初期データを使用');
       // 初回起動時は初期データを保存
       saveUsers(initialState.users);
     }
 
     if (loadedRecords.length > 0) {
-      console.log('[データ読み込み] 給食記録読み込み成功:', loadedRecords.length, '件');
       dispatch({ type: 'SET_MEAL_RECORDS', payload: loadedRecords });
     }
 
     // 自動バックアップを実行（必要な場合のみ）
-    performAutoBackup().then(created => {
-      if (created) {
-        console.log('[自動バックアップ] 起動時のバックアップが作成されました');
-      }
-    });
+    performAutoBackup();
   }, []); // 初回マウント時のみ実行
 
   // 💾 データ変更時: localStorageへ自動保存
   useEffect(() => {
     // ユーザーデータは必ず保存（初期データを含む）
-    console.log('[自動保存] ユーザーデータを保存:', state.users.length, '件');
     saveUsers(state.users);
   }, [state.users]);
 
   useEffect(() => {
     // 給食記録も必ず保存（空配列でも保存して、削除を反映）
-    console.log('[自動保存] 給食記録を保存:', state.mealRecords.length, '件');
     saveMealRecords(state.mealRecords);
   }, [state.mealRecords]);
 
