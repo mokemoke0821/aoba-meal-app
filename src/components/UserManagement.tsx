@@ -4,6 +4,7 @@ import {
     Delete as DeleteIcon,
     Download as DownloadIcon,
     Edit as EditIcon,
+    ExpandMore as ExpandMoreIcon,
     FilterList as FilterIcon,
     Person as PersonIcon,
     Search as SearchIcon,
@@ -12,6 +13,9 @@ import {
     VisibilityOff as VisibilityOffIcon
 } from '@mui/icons-material';
 import {
+    Accordion,
+    AccordionDetails,
+    AccordionSummary,
     Alert,
     Avatar,
     Box,
@@ -41,6 +45,7 @@ import {
     GridActionsCellItem,
     GridColDef,
     GridRowId,
+    GridRowSelectionModel,
     GridToolbar
 } from '@mui/x-data-grid';
 import React, { useMemo, useState } from 'react';
@@ -93,10 +98,13 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers, o
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedGroup, setSelectedGroup] = useState<Group | ''>('');
     const [showInactive, setShowInactive] = useState(false);
-    const [selectedRows, setSelectedRows] = useState<GridRowId[]>([]);
+    const [selectedRows, setSelectedRows] = useState<GridRowSelectionModel>([]);
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' as 'success' | 'error' | 'info' });
     const [loading, setLoading] = useState(false);
     const [bulkActionDialog, setBulkActionDialog] = useState({ open: false, action: '' });
+    const [bulkRegisterExpanded, setBulkRegisterExpanded] = useState(false);
+    const [bulkRegisterText, setBulkRegisterText] = useState('');
+    const [bulkRegisterGroup, setBulkRegisterGroup] = useState<Group>('グループB');
 
     // Form management
     const { handleSubmit, control, setValue, reset, formState: { errors } } = useForm<UserFormData>({
@@ -265,6 +273,109 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers, o
                 severity: 'success'
             });
         }
+    };
+
+    // 一括登録処理
+    const handleBulkRegister = () => {
+        if (!bulkRegisterText.trim()) {
+            setSnackbar({
+                open: true,
+                message: '利用者名を入力してください',
+                severity: 'error'
+            });
+            return;
+        }
+
+        // テキストを行ごとに分割
+        const lines = bulkRegisterText
+            .split('\n')
+            .map(line => line.trim())
+            .filter(line => line.length > 0);
+
+        if (lines.length === 0) {
+            setSnackbar({
+                open: true,
+                message: '有効な利用者名が入力されていません',
+                severity: 'error'
+            });
+            return;
+        }
+
+        const category = GROUP_TO_CATEGORY[bulkRegisterGroup];
+        const existingNames = new Set(users.map(u => u.name.trim().toLowerCase()));
+        const newUsers: User[] = [];
+        let duplicateCount = 0;
+
+        // カテゴリ別の最大表示番号を取得
+        const categoryUsers = users.filter(u => u.category === category);
+        let maxDisplayNumber = categoryUsers.length > 0
+            ? Math.max(...categoryUsers.map(u => u.displayNumber))
+            : 0;
+
+        lines.forEach((name, index) => {
+            const trimmedName = name.trim();
+            
+            // 空行はスキップ
+            if (!trimmedName) return;
+
+            // 名前の長さチェック
+            if (trimmedName.length > 50) {
+                duplicateCount++;
+                return;
+            }
+
+            // 重複チェック
+            if (existingNames.has(trimmedName.toLowerCase())) {
+                duplicateCount++;
+                return;
+            }
+
+            // 新規ユーザーを作成
+            maxDisplayNumber++;
+            const newUser: User = {
+                id: `user_${Date.now()}_${index}`,
+                name: trimmedName,
+                group: bulkRegisterGroup,
+                category: category,
+                displayNumber: maxDisplayNumber,
+                price: getCategoryPrice(category),
+                createdAt: new Date().toISOString(),
+                isActive: true,
+                trialUser: false,
+                notes: ''
+            };
+
+            newUsers.push(newUser);
+            existingNames.add(trimmedName.toLowerCase());
+        });
+
+        if (newUsers.length === 0) {
+            setSnackbar({
+                open: true,
+                message: `すべての利用者名が重複しているか、無効です（重複: ${duplicateCount}件）`,
+                severity: 'warning'
+            });
+            return;
+        }
+
+        // ユーザーを追加
+        const updatedUsers = [...users, ...newUsers];
+        onUpdateUsers(updatedUsers);
+
+        // 結果メッセージ
+        const message = duplicateCount > 0
+            ? `${newUsers.length}件の利用者を追加しました（重複スキップ: ${duplicateCount}件）`
+            : `${newUsers.length}件の利用者を追加しました`;
+
+        setSnackbar({
+            open: true,
+            message: message,
+            severity: 'success'
+        });
+
+        // テキストエリアをクリア
+        setBulkRegisterText('');
+        setBulkRegisterExpanded(false);
     };
 
     const handleToggleUserStatus = (userId: string) => {
@@ -706,6 +817,89 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers, o
                 </Box>
             </Toolbar>
 
+            {/* 一括登録パネル */}
+            <Accordion
+                expanded={bulkRegisterExpanded}
+                onChange={(_, isExpanded) => setBulkRegisterExpanded(isExpanded)}
+                sx={{ mb: 2 }}
+            >
+                <AccordionSummary
+                    expandIcon={<ExpandMoreIcon />}
+                    sx={{
+                        backgroundColor: 'action.hover',
+                        '&:hover': {
+                            backgroundColor: 'action.selected'
+                        }
+                    }}
+                >
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
+                        <AddIcon color="primary" />
+                        <Typography variant="h6" component="div">
+                            一括登録
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary" sx={{ ml: 2 }}>
+                            複数の利用者を一度に登録できます
+                        </Typography>
+                    </Box>
+                </AccordionSummary>
+                <AccordionDetails>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        <Alert severity="info" sx={{ mb: 1 }}>
+                            利用者名を1行に1名ずつ入力してください。空行は無視されます。重複する名前は自動的にスキップされます。
+                        </Alert>
+
+                        <FormControl fullWidth size="small">
+                            <InputLabel>グループ</InputLabel>
+                            <Select
+                                value={bulkRegisterGroup}
+                                onChange={(e) => setBulkRegisterGroup(e.target.value as Group)}
+                                label="グループ"
+                            >
+                                <MenuItem value="グループA">A型利用者</MenuItem>
+                                <MenuItem value="グループB">B型利用者</MenuItem>
+                                <MenuItem value="グループC">職員</MenuItem>
+                                <MenuItem value="その他">体験利用者</MenuItem>
+                            </Select>
+                        </FormControl>
+
+                        <TextField
+                            multiline
+                            rows={8}
+                            fullWidth
+                            placeholder="（例）&#10;山田 太郎&#10;鈴木 花子&#10;佐藤 次郎"
+                            value={bulkRegisterText}
+                            onChange={(e) => setBulkRegisterText(e.target.value)}
+                            sx={{
+                                '& .MuiInputBase-root': {
+                                    fontFamily: 'monospace',
+                                    fontSize: '0.95rem'
+                                }
+                            }}
+                        />
+
+                        <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+                            <Button
+                                variant="outlined"
+                                onClick={() => {
+                                    setBulkRegisterText('');
+                                    setBulkRegisterExpanded(false);
+                                }}
+                            >
+                                キャンセル
+                            </Button>
+                            <Button
+                                variant="contained"
+                                onClick={handleBulkRegister}
+                                disabled={!bulkRegisterText.trim()}
+                                startIcon={<AddIcon />}
+                            >
+                                登録する
+                            </Button>
+                        </Box>
+                    </Box>
+                </AccordionDetails>
+            </Accordion>
+
             {/* Selected Actions */}
             {selectedRows.length > 0 && (
                 <Box sx={{ mb: 2, p: 2, bgcolor: 'action.selected', borderRadius: 1, border: '1px solid', borderColor: 'primary.main' }}>
@@ -770,7 +964,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers, o
                     disableRowSelectionOnClick
                     loading={loading}
                     rowSelectionModel={selectedRows}
-                    onRowSelectionModelChange={(newSelection: GridRowId[]) => {
+                    onRowSelectionModelChange={(newSelection: GridRowSelectionModel) => {
                         setSelectedRows(newSelection);
                     }}
                     slots={{
