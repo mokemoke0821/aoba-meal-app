@@ -30,13 +30,6 @@ export async function saveUsersWithSync(users: User[]): Promise<void> {
     try {
         // LocalStorageに保存
         localStorage.setItem(KEYS.USERS, JSON.stringify(users));
-        console.log('[Storage Adapter] ユーザーデータをLocalStorageに保存');
-
-        // Google Drive統合は無効化されています
-        if (isGoogleDriveEnabled()) {
-            console.log('[Storage Adapter] Google Driveに同期中...');
-            // await performSync();
-        }
     } catch (error) {
         console.error('[Storage Adapter] ユーザーデータの保存に失敗:', error);
         throw error;
@@ -51,13 +44,6 @@ export async function saveMealRecordsWithSync(records: MealRecord[]): Promise<vo
     try {
         // LocalStorageに保存
         localStorage.setItem(KEYS.MEAL_RECORDS, JSON.stringify(records));
-        console.log('[Storage Adapter] 給食記録をLocalStorageに保存');
-
-        // Google Drive統合は無効化されています
-        if (isGoogleDriveEnabled()) {
-            console.log('[Storage Adapter] Google Driveに同期中...');
-            // await performSync();
-        }
     } catch (error) {
         console.error('[Storage Adapter] 給食記録の保存に失敗:', error);
         throw error;
@@ -123,7 +109,6 @@ export async function manualSync(): Promise<void> {
  * 自動同期を設定（現在は無効化）
  */
 export function setupAutoSync(): () => void {
-    console.log('[Storage Adapter] Google Drive統合は現在無効化されています（v2.2.0で実装予定）');
     return () => {}; // 何もしないクリーンアップ関数
 }
 

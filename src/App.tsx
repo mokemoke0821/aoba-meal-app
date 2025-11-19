@@ -118,23 +118,19 @@ const App: React.FC = () => {
     // Service Worker登録（production環境のみ）
     registerServiceWorker({
       onSuccess: () => {
-        console.log('[PWA] App installed and ready for offline use!');
+        // PWAインストール完了
       },
       onUpdate: () => {
-        console.log('[PWA] New content available! Please refresh.');
+        // 新しいコンテンツ利用可能
       },
     });
 
     // 自動バックアップタイマー設定
     const config = loadBackupConfig();
     if (config.enabled) {
-      console.log(`[自動バックアップ] タイマー開始: ${config.frequency / 60000}分ごと`);
-      
       const intervalId = setInterval(async () => {
         try {
-          console.log('[自動バックアップ] 実行中...');
           await saveBackupToCustomPath(config.customPath);
-          console.log('[自動バックアップ] 完了');
         } catch (error) {
           console.error('[自動バックアップ] 失敗:', error);
         }
@@ -142,7 +138,6 @@ const App: React.FC = () => {
 
       // クリーンアップ
       return () => {
-        console.log('[自動バックアップ] タイマー停止');
         clearInterval(intervalId);
       };
     }
