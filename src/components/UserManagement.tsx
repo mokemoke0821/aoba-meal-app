@@ -23,6 +23,7 @@ import {
     Card,
     CardContent,
     Chip,
+    CircularProgress,
     Dialog,
     DialogActions,
     DialogContent,
@@ -121,11 +122,12 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers, o
 
     // User statistics
     const userStats: UserStats = useMemo(() => {
+        const safeUsers = users || [];
         const stats: UserStats = {
-            totalUsers: users.length,
-            activeUsers: users.filter(u => u.isActive !== false).length,
-            trialUsers: users.filter(u => u.trialUser).length,
-            paidUsers: users.filter(u => !u.trialUser).length,
+            totalUsers: safeUsers.length,
+            activeUsers: safeUsers.filter(u => u.isActive !== false).length,
+            trialUsers: safeUsers.filter(u => u.trialUser).length,
+            paidUsers: safeUsers.filter(u => !u.trialUser).length,
             byGroup: {
                 'グループA': 0,
                 'グループB': 0,
@@ -134,7 +136,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers, o
             }
         };
 
-        users.forEach(user => {
+        safeUsers.forEach(user => {
             stats.byGroup[user.group]++;
         });
 
@@ -143,7 +145,8 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers, o
 
     // Filtered users
     const filteredUsers = useMemo(() => {
-        return users.filter(user => {
+        const safeUsers = users || [];
+        return safeUsers.filter(user => {
             const matchesSearch = user.name.toLowerCase().includes(searchQuery.toLowerCase());
             const matchesGroup = selectedGroup === '' || user.group === selectedGroup;
             const matchesActive = showInactive || user.isActive !== false;
@@ -951,31 +954,37 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers, o
 
             {/* Data Grid */}
             <Box sx={{ height: 600, width: '100%' }}>
-                <DataGrid
-                    rows={filteredUsers}
-                    columns={columns}
-                    initialState={{
-                        pagination: {
-                            paginationModel: { page: 0, pageSize: 25 },
-                        },
-                    }}
-                    pageSizeOptions={[25, 50, 100]}
-                    checkboxSelection
-                    disableRowSelectionOnClick
-                    loading={loading}
-                    rowSelectionModel={selectedRows}
-                    onRowSelectionModelChange={(newSelection: GridRowSelectionModel) => {
-                        setSelectedRows(newSelection);
-                    }}
-                    slots={{
-                        toolbar: GridToolbar
-                    }}
-                    sx={{
-                        '& .MuiDataGrid-row:hover': {
-                            backgroundColor: 'action.hover'
-                        }
-                    }}
-                />
+                {loading || users === undefined ? (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                        <CircularProgress />
+                    </Box>
+                ) : (
+                    <DataGrid
+                        rows={filteredUsers || []}
+                        columns={columns}
+                        initialState={{
+                            pagination: {
+                                paginationModel: { page: 0, pageSize: 25 },
+                            },
+                        }}
+                        pageSizeOptions={[25, 50, 100]}
+                        checkboxSelection
+                        disableRowSelectionOnClick
+                        loading={loading}
+                        rowSelectionModel={selectedRows || ([] as unknown as GridRowSelectionModel)}
+                        onRowSelectionModelChange={(newSelection: GridRowSelectionModel) => {
+                            setSelectedRows(newSelection);
+                        }}
+                        slots={{
+                            toolbar: GridToolbar
+                        }}
+                        sx={{
+                            '& .MuiDataGrid-row:hover': {
+                                backgroundColor: 'action.hover'
+                            }
+                        }}
+                    />
+                )}
             </Box>
 
             {/* User Form Dialog */}
