@@ -2,7 +2,7 @@
   "name": "aoba-meal-app",
   "version": "2.1.0",
   "private": true,
-  "homepage": ".",
+  "homepage": "https://mokemoke0821.github.io/aoba-meal-app",
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
