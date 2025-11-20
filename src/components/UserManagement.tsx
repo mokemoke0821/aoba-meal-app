@@ -49,7 +49,7 @@ import {
     GridRowSelectionModel,
     GridToolbar
 } from '@mui/x-data-grid';
-import React, { useMemo, useState, useCallback } from 'react';
+import React, { useMemo, useState, useCallback, useRef, useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import {
     GROUP_COLORS,
@@ -107,6 +107,13 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers, o
     const [bulkRegisterText, setBulkRegisterText] = useState('');
     const [bulkRegisterGroup, setBulkRegisterGroup] = useState<Group>('グループB');
 
+    // Handler refs for stable column definitions
+    const handlersRef = useRef<{
+        handleOpenDialog: (user?: User) => void;
+        handleToggleUserStatus: (userId: string) => void;
+        handleDeleteUser: (userId: string) => void;
+    } | null>(null);
+
     // Form management
     const { handleSubmit, control, setValue, reset, formState: { errors } } = useForm<UserFormData>({
         defaultValues: {
@@ -143,10 +150,24 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers, o
         return stats;
     }, [users]);
 
-    // Filtered users
+    // Filtered users with ID validation - only include users with valid, unique IDs
     const filteredUsers = useMemo(() => {
-        const safeUsers = users || [];
-        return safeUsers.filter(user => {
+        const safeUsers = (users || []).filter(user => {
+            // Ensure user has a valid, non-empty ID
+            return user && user.id && typeof user.id === 'string' && user.id.trim() !== '';
+        });
+        
+        // Remove duplicates by ID (keep first occurrence)
+        const seenIds = new Set<string>();
+        const uniqueUsers = safeUsers.filter(user => {
+            if (seenIds.has(user.id)) {
+                return false;
+            }
+            seenIds.add(user.id);
+            return true;
+        });
+
+        return uniqueUsers.filter(user => {
             const matchesSearch = user.name.toLowerCase().includes(searchQuery.toLowerCase());
             const matchesGroup = selectedGroup === '' || user.group === selectedGroup;
             const matchesActive = showInactive || user.isActive !== false;
@@ -277,6 +298,15 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers, o
             });
         }
     }, [users, onUpdateUsers]);
+
+    // Update handler refs when handlers change (must be after all handlers are defined)
+    useEffect(() => {
+        handlersRef.current = {
+            handleOpenDialog,
+            handleToggleUserStatus,
+            handleDeleteUser
+        };
+    }, [handleOpenDialog, handleToggleUserStatus, handleDeleteUser]);
 
     // 一括登録処理
     const handleBulkRegister = () => {
@@ -566,7 +596,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers, o
         event.target.value = '';
     };
 
-    // DataGrid columns (memoized to prevent recreation)
+    // DataGrid columns - stable definition using refs to prevent recreation
     const columns: GridColDef[] = useMemo(() => [
         {
             field: 'avatar',
@@ -656,29 +686,36 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers, o
             type: 'actions',
             headerName: '操作',
             width: 150,
-            getActions: (params) => [
-                <GridActionsCellItem
-                    icon={<EditIcon />}
-                    label="編集"
-                    onClick={() => handleOpenDialog(params.row)}
-                />,
-                <GridActionsCellItem
-                    icon={params.row.isActive !== false ? <VisibilityOffIcon /> : <VisibilityIcon />}
-                    label={params.row.isActive !== false ? '無効化' : '有効化'}
-                    onClick={() => handleToggleUserStatus(params.row.id)}
-                />,
-                <GridActionsCellItem
-                    icon={<DeleteIcon />}
-                    label="削除"
-                    onClick={() => handleDeleteUser(params.row.id)}
-                />
-            ]
+            getActions: (params) => {
+                const handlers = handlersRef.current;
+                if (!handlers) return [];
+                return [
+                    <GridActionsCellItem
+                        key="edit"
+                        icon={<EditIcon />}
+                        label="編集"
+                        onClick={() => handlers.handleOpenDialog(params.row)}
+                    />,
+                    <GridActionsCellItem
+                        key="toggle"
+                        icon={params.row.isActive !== false ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                        label={params.row.isActive !== false ? '無効化' : '有効化'}
+                        onClick={() => handlers.handleToggleUserStatus(params.row.id)}
+                    />,
+                    <GridActionsCellItem
+                        key="delete"
+                        icon={<DeleteIcon />}
+                        label="削除"
+                        onClick={() => handlers.handleDeleteUser(params.row.id)}
+                    />
+                ];
+            }
         }
-    ], [handleOpenDialog, handleToggleUserStatus, handleDeleteUser]);
+    ], []); // Empty dependency array - handlers accessed via ref
 
     // Strict guard: Do not mount DataGrid until users data is fully loaded and valid
     // This prevents DataGrid from initializing with undefined/null data, which causes internal Map/Set errors
-    if (!users || !Array.isArray(users)) {
+    if (!users || !Array.isArray(users) || users.length === 0) {
         // Show loading spinner while data is being fetched
         return (
             <Box sx={{ p: 3, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
@@ -686,6 +723,19 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers, o
                 <Typography variant="body2" color="text.secondary">
                     データを読み込んでいます...
                 </Typography>
+            </Box>
+        );
+    }
+
+    // Additional validation: Ensure all users have valid IDs before rendering DataGrid
+    const validUsers = users.filter(user => user && user.id && typeof user.id === 'string' && user.id.trim() !== '');
+    if (validUsers.length === 0 && users.length > 0) {
+        // Users exist but none have valid IDs - this is a data integrity issue
+        return (
+            <Box sx={{ p: 3, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+                <Alert severity="error" sx={{ mb: 2 }}>
+                    データに不整合があります。管理者にお問い合わせください。
+                </Alert>
             </Box>
         );
     }
@@ -976,7 +1026,14 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers, o
                     <DataGrid
                         rows={filteredUsers || []}
                         columns={columns}
-                        getRowId={(row) => String(row.id)}
+                        getRowId={(row) => {
+                            // Ensure ID is always a valid string with fallback
+                            if (row && row.id && typeof row.id === 'string' && row.id.trim() !== '') {
+                                return String(row.id);
+                            }
+                            // Fallback: generate a unique ID (should never happen with our validation)
+                            return `fallback-${Math.random().toString(36).substr(2, 9)}`;
+                        }}
                         initialState={{
                             pagination: {
                                 paginationModel: { page: 0, pageSize: 25 },
@@ -986,7 +1043,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers, o
                         checkboxSelection
                         disableRowSelectionOnClick
                         loading={loading}
-                        rowSelectionModel={selectedRows}
+                        rowSelectionModel={selectedRows || ([] as unknown as GridRowSelectionModel)}
                         onRowSelectionModelChange={(newSelection: GridRowSelectionModel) => {
                             setSelectedRows(newSelection);
                         }}
