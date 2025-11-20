@@ -108,6 +108,7 @@ const createStaticColumns = (handlersRef: React.MutableRefObject<HandlerRefs | n
         width: 80,
         sortable: false,
         filterable: false,
+        flex: 0,
         renderCell: (params) => (
             <Avatar sx={{ width: 32, height: 32, bgcolor: params.row.isActive === false ? 'grey.400' : 'primary.main' }}>
                 <PersonIcon fontSize="small" />
@@ -118,6 +119,7 @@ const createStaticColumns = (handlersRef: React.MutableRefObject<HandlerRefs | n
         field: 'name',
         headerName: '利用者名',
         width: 200,
+        flex: 0,
         editable: true,
         renderCell: (params) => (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -125,7 +127,7 @@ const createStaticColumns = (handlersRef: React.MutableRefObject<HandlerRefs | n
                     textDecoration: params.row.isActive === false ? 'line-through' : 'none',
                     color: params.row.isActive === false ? 'text.disabled' : 'text.primary'
                 }}>
-                    {params.value}
+                    {params.value || ''}
                 </Typography>
                 {params.row.trialUser && (
                     <Chip label="お試し" size="small" color="warning" />
@@ -136,18 +138,19 @@ const createStaticColumns = (handlersRef: React.MutableRefObject<HandlerRefs | n
     {
         field: 'group',
         headerName: 'グループ',
-        width: 120,
+        width: 150,
+        flex: 0,
         editable: true,
         renderCell: (params) => (
             <Chip
-                label={GROUP_DISPLAY_NAMES[params.value as Group]}
+                label={GROUP_DISPLAY_NAMES[params.value as Group] || String(params.value || '')}
                 size="small"
                 variant="outlined"
                 sx={{
-                    borderColor: GROUP_COLORS[params.value as Group],
-                    color: GROUP_COLORS[params.value as Group],
+                    borderColor: GROUP_COLORS[params.value as Group] || '#ccc',
+                    color: GROUP_COLORS[params.value as Group] || '#666',
                     fontWeight: 'bold',
-                    backgroundColor: alpha(GROUP_COLORS[params.value as Group], 0.1)
+                    backgroundColor: alpha(GROUP_COLORS[params.value as Group] || '#ccc', 0.1)
                 }}
             />
         )
@@ -155,28 +158,42 @@ const createStaticColumns = (handlersRef: React.MutableRefObject<HandlerRefs | n
     {
         field: 'price',
         headerName: '料金',
-        width: 100,
+        width: 120,
+        flex: 0,
         editable: true,
         renderCell: (params) => (
             <Typography variant="body2" color={params.row.isActive === false ? 'text.disabled' : 'text.primary'}>
-                ¥{params.value.toLocaleString()}
+                ¥{typeof params.value === 'number' ? params.value.toLocaleString() : '0'}
             </Typography>
         )
     },
     {
         field: 'createdAt',
         headerName: '登録日',
-        width: 120,
-        renderCell: (params) => (
-            <Typography variant="body2" color="text.secondary">
-                {new Date(params.value).toLocaleDateString('ja-JP')}
-            </Typography>
-        )
+        width: 150,
+        flex: 0,
+        renderCell: (params) => {
+            try {
+                const date = params.value ? new Date(params.value) : new Date();
+                return (
+                    <Typography variant="body2" color="text.secondary">
+                        {date.toLocaleDateString('ja-JP')}
+                    </Typography>
+                );
+            } catch {
+                return (
+                    <Typography variant="body2" color="text.secondary">
+                        -
+                    </Typography>
+                );
+            }
+        }
     },
     {
         field: 'isActive',
         headerName: '状態',
         width: 100,
+        flex: 0,
         renderCell: (params) => (
             <Chip
                 label={params.value !== false ? '有効' : '無効'}
@@ -189,10 +206,11 @@ const createStaticColumns = (handlersRef: React.MutableRefObject<HandlerRefs | n
         field: 'actions',
         type: 'actions',
         headerName: '操作',
-        width: 150,
+        width: 180,
+        flex: 0,
         getActions: (params) => {
             const handlers = handlersRef.current;
-            if (!handlers) return [];
+            if (!handlers || !params.row || !params.row.id) return [];
             return [
                 <GridActionsCellItem
                     key="edit"
@@ -271,16 +289,87 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers, o
         return stats;
     }, [users]);
 
-    // Filtered users with ID validation - only include users with valid, unique IDs
-    const filteredUsers = useMemo(() => {
-        const safeUsers = (users || []).filter(user => {
-            // Ensure user has a valid, non-empty ID
-            return user && user.id && typeof user.id === 'string' && user.id.trim() !== '';
+    // ULTRA-STRONG DATA SANITIZATION: Only pass completely valid data to DataGrid
+    // This prevents any corrupted data from reaching DataGrid and causing internal errors
+    const sanitizedAndFilteredUsers = useMemo(() => {
+        if (!users || !Array.isArray(users)) {
+            return [];
+        }
+
+        // Step 1: Filter out invalid entries (null, undefined, non-objects)
+        const validObjects = users.filter(user => {
+            return user !== null && user !== undefined && typeof user === 'object';
         });
-        
-        // Remove duplicates by ID (keep first occurrence)
+
+        // Step 2: Sanitize each user object - ensure all required fields exist and are correct type
+        const sanitizedUsers = validObjects
+            .map(user => {
+                try {
+                    // Validate and sanitize ID
+                    if (!user.id || typeof user.id !== 'string' || user.id.trim() === '') {
+                        return null;
+                    }
+                    const id = String(user.id).trim();
+
+                    // Validate and sanitize name
+                    if (!user.name || typeof user.name !== 'string' || user.name.trim() === '') {
+                        return null;
+                    }
+                    const name = String(user.name).trim();
+
+                    // Validate and sanitize group
+                    if (!user.group || typeof user.group !== 'string') {
+                        return null;
+                    }
+                    const group = String(user.group) as Group;
+
+                    // Validate and sanitize category
+                    if (!user.category || typeof user.category !== 'string') {
+                        return null;
+                    }
+                    const category = String(user.category) as UserCategory;
+
+                    // Validate and sanitize price (must be number)
+                    const price = typeof user.price === 'number' ? user.price : (typeof user.price === 'string' ? parseFloat(user.price) || 0 : 0);
+
+                    // Validate and sanitize displayNumber
+                    const displayNumber = typeof user.displayNumber === 'number' ? user.displayNumber : (typeof user.displayNumber === 'string' ? parseInt(user.displayNumber, 10) || 1 : 1);
+
+                    // Validate and sanitize createdAt
+                    const createdAt = user.createdAt && typeof user.createdAt === 'string' ? user.createdAt : new Date().toISOString();
+
+                    // Validate and sanitize isActive
+                    const isActive = user.isActive !== undefined ? user.isActive : true;
+
+                    // Validate and sanitize trialUser
+                    const trialUser = typeof user.trialUser === 'boolean' ? user.trialUser : false;
+
+                    // Validate and sanitize notes
+                    const notes = user.notes && typeof user.notes === 'string' ? user.notes : undefined;
+
+                    // Return sanitized user object
+                    return {
+                        id,
+                        name,
+                        group,
+                        category,
+                        price,
+                        displayNumber,
+                        createdAt,
+                        isActive,
+                        trialUser,
+                        notes
+                    } as User;
+                } catch (error) {
+                    // If any error occurs during sanitization, exclude this user
+                    return null;
+                }
+            })
+            .filter((user): user is User => user !== null);
+
+        // Step 3: Remove duplicates by ID (keep first occurrence)
         const seenIds = new Set<string>();
-        const uniqueUsers = safeUsers.filter(user => {
+        const uniqueUsers = sanitizedUsers.filter(user => {
             if (seenIds.has(user.id)) {
                 return false;
             }
@@ -288,6 +377,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers, o
             return true;
         });
 
+        // Step 4: Apply search and filter criteria
         return uniqueUsers.filter(user => {
             const matchesSearch = user.name.toLowerCase().includes(searchQuery.toLowerCase());
             const matchesGroup = selectedGroup === '' || user.group === selectedGroup;
@@ -642,7 +732,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers, o
     // Export/Import functions
     const handleExportUsers = () => {
         try {
-            exportUsersCSV(filteredUsers.length > 0 ? filteredUsers : users);
+            exportUsersCSV(sanitizedAndFilteredUsers.length > 0 ? sanitizedAndFilteredUsers : users);
             setSnackbar({
                 open: true,
                 message: '利用者データをCSVファイルとしてダウンロードしました',
@@ -1023,21 +1113,36 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers, o
                 </Box>
             )}
 
-            {/* Data Grid */}
-            <Box sx={{ height: 600, width: '100%' }}>
+            {/* Data Grid - Fixed size container with ultra-sanitized data */}
+            <Box 
+                sx={{ 
+                    height: '600px', 
+                    width: '100%',
+                    minHeight: '600px',
+                    maxHeight: '600px',
+                    position: 'relative',
+                    overflow: 'hidden'
+                }}
+            >
                 {loading ? (
-                    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                    <Box sx={{ 
+                        display: 'flex', 
+                        justifyContent: 'center', 
+                        alignItems: 'center', 
+                        height: '100%',
+                        width: '100%'
+                    }}>
                         <CircularProgress />
                     </Box>
-                ) : filteredUsers.length > 0 ? (
+                ) : sanitizedAndFilteredUsers.length > 0 ? (
                     <DataGrid
-                        key={`data-grid-${users ? users.length : 0}-${filteredUsers.length}`}
-                        rows={filteredUsers}
+                        key={`data-grid-${users ? users.length : 0}-${sanitizedAndFilteredUsers.length}`}
+                        rows={sanitizedAndFilteredUsers}
                         columns={columns}
                         getRowId={(row) => {
-                            // Ensure ID is always a valid string with fallback
+                            // Double-check: ID should always be valid after sanitization
                             if (row && row.id && typeof row.id === 'string' && row.id.trim() !== '') {
-                                return String(row.id);
+                                return String(row.id).trim();
                             }
                             // Fallback: generate a unique ID (should never happen with our validation)
                             return `fallback-${Math.random().toString(36).substr(2, 9)}`;
@@ -1048,25 +1153,28 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers, o
                             },
                         }}
                         pageSizeOptions={[25, 50, 100]}
-                        checkboxSelection
                         disableRowSelectionOnClick
                         disableVirtualization
                         loading={loading}
-                        rowSelectionModel={selectedRows || ([] as unknown as GridRowSelectionModel)}
-                        onRowSelectionModelChange={(newSelection: GridRowSelectionModel) => {
-                            setSelectedRows(newSelection);
-                        }}
                         slots={{
                             toolbar: GridToolbar
                         }}
                         sx={{
+                            height: '600px',
+                            width: '100%',
                             '& .MuiDataGrid-row:hover': {
                                 backgroundColor: 'action.hover'
                             }
                         }}
                     />
                 ) : (
-                    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                    <Box sx={{ 
+                        display: 'flex', 
+                        justifyContent: 'center', 
+                        alignItems: 'center', 
+                        height: '100%',
+                        width: '100%'
+                    }}>
                         <Alert severity="info">
                             表示する利用者がありません
                         </Alert>
