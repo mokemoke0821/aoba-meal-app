@@ -92,6 +92,131 @@ interface UserStats {
     byGroup: Record<Group, number>;
 }
 
+// Handler ref type for column actions
+interface HandlerRefs {
+    handleOpenDialog: (user?: User) => void;
+    handleToggleUserStatus: (userId: string) => void;
+    handleDeleteUser: (userId: string) => void;
+}
+
+// Static column definitions (outside component to prevent recreation)
+// Actions column will be added dynamically inside component using refs
+const createStaticColumns = (handlersRef: React.MutableRefObject<HandlerRefs | null>): GridColDef[] => [
+    {
+        field: 'avatar',
+        headerName: '',
+        width: 80,
+        sortable: false,
+        filterable: false,
+        renderCell: (params) => (
+            <Avatar sx={{ width: 32, height: 32, bgcolor: params.row.isActive === false ? 'grey.400' : 'primary.main' }}>
+                <PersonIcon fontSize="small" />
+            </Avatar>
+        )
+    },
+    {
+        field: 'name',
+        headerName: '利用者名',
+        width: 200,
+        editable: true,
+        renderCell: (params) => (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Typography variant="body2" sx={{
+                    textDecoration: params.row.isActive === false ? 'line-through' : 'none',
+                    color: params.row.isActive === false ? 'text.disabled' : 'text.primary'
+                }}>
+                    {params.value}
+                </Typography>
+                {params.row.trialUser && (
+                    <Chip label="お試し" size="small" color="warning" />
+                )}
+            </Box>
+        )
+    },
+    {
+        field: 'group',
+        headerName: 'グループ',
+        width: 120,
+        editable: true,
+        renderCell: (params) => (
+            <Chip
+                label={GROUP_DISPLAY_NAMES[params.value as Group]}
+                size="small"
+                variant="outlined"
+                sx={{
+                    borderColor: GROUP_COLORS[params.value as Group],
+                    color: GROUP_COLORS[params.value as Group],
+                    fontWeight: 'bold',
+                    backgroundColor: alpha(GROUP_COLORS[params.value as Group], 0.1)
+                }}
+            />
+        )
+    },
+    {
+        field: 'price',
+        headerName: '料金',
+        width: 100,
+        editable: true,
+        renderCell: (params) => (
+            <Typography variant="body2" color={params.row.isActive === false ? 'text.disabled' : 'text.primary'}>
+                ¥{params.value.toLocaleString()}
+            </Typography>
+        )
+    },
+    {
+        field: 'createdAt',
+        headerName: '登録日',
+        width: 120,
+        renderCell: (params) => (
+            <Typography variant="body2" color="text.secondary">
+                {new Date(params.value).toLocaleDateString('ja-JP')}
+            </Typography>
+        )
+    },
+    {
+        field: 'isActive',
+        headerName: '状態',
+        width: 100,
+        renderCell: (params) => (
+            <Chip
+                label={params.value !== false ? '有効' : '無効'}
+                size="small"
+                color={params.value !== false ? 'success' : 'default'}
+            />
+        )
+    },
+    {
+        field: 'actions',
+        type: 'actions',
+        headerName: '操作',
+        width: 150,
+        getActions: (params) => {
+            const handlers = handlersRef.current;
+            if (!handlers) return [];
+            return [
+                <GridActionsCellItem
+                    key="edit"
+                    icon={<EditIcon />}
+                    label="編集"
+                    onClick={() => handlers.handleOpenDialog(params.row)}
+                />,
+                <GridActionsCellItem
+                    key="toggle"
+                    icon={params.row.isActive !== false ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                    label={params.row.isActive !== false ? '無効化' : '有効化'}
+                    onClick={() => handlers.handleToggleUserStatus(params.row.id)}
+                />,
+                <GridActionsCellItem
+                    key="delete"
+                    icon={<DeleteIcon />}
+                    label="削除"
+                    onClick={() => handlers.handleDeleteUser(params.row.id)}
+                />
+            ];
+        }
+    }
+];
+
 const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers, onBack }) => {
     // State management
     const [openDialog, setOpenDialog] = useState(false);
@@ -108,11 +233,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers, o
     const [bulkRegisterGroup, setBulkRegisterGroup] = useState<Group>('グループB');
 
     // Handler refs for stable column definitions
-    const handlersRef = useRef<{
-        handleOpenDialog: (user?: User) => void;
-        handleToggleUserStatus: (userId: string) => void;
-        handleDeleteUser: (userId: string) => void;
-    } | null>(null);
+    const handlersRef = useRef<HandlerRefs | null>(null);
 
     // Form management
     const { handleSubmit, control, setValue, reset, formState: { errors } } = useForm<UserFormData>({
@@ -596,126 +717,12 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers, o
         event.target.value = '';
     };
 
-    // DataGrid columns - stable definition using refs to prevent recreation
-    const columns: GridColDef[] = useMemo(() => [
-        {
-            field: 'avatar',
-            headerName: '',
-            width: 80,
-            sortable: false,
-            filterable: false,
-            renderCell: (params) => (
-                <Avatar sx={{ width: 32, height: 32, bgcolor: params.row.isActive === false ? 'grey.400' : 'primary.main' }}>
-                    <PersonIcon fontSize="small" />
-                </Avatar>
-            )
-        },
-        {
-            field: 'name',
-            headerName: '利用者名',
-            width: 200,
-            editable: true,
-            renderCell: (params) => (
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Typography variant="body2" sx={{
-                        textDecoration: params.row.isActive === false ? 'line-through' : 'none',
-                        color: params.row.isActive === false ? 'text.disabled' : 'text.primary'
-                    }}>
-                        {params.value}
-                    </Typography>
-                    {params.row.trialUser && (
-                        <Chip label="お試し" size="small" color="warning" />
-                    )}
-                </Box>
-            )
-        },
-        {
-            field: 'group',
-            headerName: 'グループ',
-            width: 120,
-            editable: true,
-            renderCell: (params) => (
-                <Chip
-                    label={GROUP_DISPLAY_NAMES[params.value as Group]}
-                    size="small"
-                    variant="outlined"
-                    sx={{
-                        borderColor: GROUP_COLORS[params.value as Group],
-                        color: GROUP_COLORS[params.value as Group],
-                        fontWeight: 'bold',
-                        backgroundColor: alpha(GROUP_COLORS[params.value as Group], 0.1)
-                    }}
-                />
-            )
-        },
-        {
-            field: 'price',
-            headerName: '料金',
-            width: 100,
-            editable: true,
-            renderCell: (params) => (
-                <Typography variant="body2" color={params.row.isActive === false ? 'text.disabled' : 'text.primary'}>
-                    ¥{params.value.toLocaleString()}
-                </Typography>
-            )
-        },
-        {
-            field: 'createdAt',
-            headerName: '登録日',
-            width: 120,
-            renderCell: (params) => (
-                <Typography variant="body2" color="text.secondary">
-                    {new Date(params.value).toLocaleDateString('ja-JP')}
-                </Typography>
-            )
-        },
-        {
-            field: 'isActive',
-            headerName: '状態',
-            width: 100,
-            renderCell: (params) => (
-                <Chip
-                    label={params.value !== false ? '有効' : '無効'}
-                    size="small"
-                    color={params.value !== false ? 'success' : 'default'}
-                />
-            )
-        },
-        {
-            field: 'actions',
-            type: 'actions',
-            headerName: '操作',
-            width: 150,
-            getActions: (params) => {
-                const handlers = handlersRef.current;
-                if (!handlers) return [];
-                return [
-                    <GridActionsCellItem
-                        key="edit"
-                        icon={<EditIcon />}
-                        label="編集"
-                        onClick={() => handlers.handleOpenDialog(params.row)}
-                    />,
-                    <GridActionsCellItem
-                        key="toggle"
-                        icon={params.row.isActive !== false ? <VisibilityOffIcon /> : <VisibilityIcon />}
-                        label={params.row.isActive !== false ? '無効化' : '有効化'}
-                        onClick={() => handlers.handleToggleUserStatus(params.row.id)}
-                    />,
-                    <GridActionsCellItem
-                        key="delete"
-                        icon={<DeleteIcon />}
-                        label="削除"
-                        onClick={() => handlers.handleDeleteUser(params.row.id)}
-                    />
-                ];
-            }
-        }
-    ], []); // Empty dependency array - handlers accessed via ref
+    // Use static columns definition (created outside component to prevent recreation)
+    const columns = useMemo(() => createStaticColumns(handlersRef), []);
 
-    // Strict guard: Do not mount DataGrid until users data is fully loaded and valid
+    // COMPLETE RENDERING GUARD: Do not render DataGrid until users data is fully loaded and valid
     // This prevents DataGrid from initializing with undefined/null data, which causes internal Map/Set errors
-    if (!users || !Array.isArray(users) || users.length === 0) {
+    if (!users || !Array.isArray(users)) {
         // Show loading spinner while data is being fetched
         return (
             <Box sx={{ p: 3, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
@@ -1022,9 +1029,10 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers, o
                     <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
                         <CircularProgress />
                     </Box>
-                ) : (
+                ) : filteredUsers.length > 0 ? (
                     <DataGrid
-                        rows={filteredUsers || []}
+                        key={`data-grid-${users ? users.length : 0}-${filteredUsers.length}`}
+                        rows={filteredUsers}
                         columns={columns}
                         getRowId={(row) => {
                             // Ensure ID is always a valid string with fallback
@@ -1042,6 +1050,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers, o
                         pageSizeOptions={[25, 50, 100]}
                         checkboxSelection
                         disableRowSelectionOnClick
+                        disableVirtualization
                         loading={loading}
                         rowSelectionModel={selectedRows || ([] as unknown as GridRowSelectionModel)}
                         onRowSelectionModelChange={(newSelection: GridRowSelectionModel) => {
@@ -1056,6 +1065,12 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers, o
                             }
                         }}
                     />
+                ) : (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                        <Alert severity="info">
+                            表示する利用者がありません
+                        </Alert>
+                    </Box>
                 )}
             </Box>
 
