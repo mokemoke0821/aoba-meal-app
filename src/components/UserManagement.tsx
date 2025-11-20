@@ -299,15 +299,6 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers, o
         }
     }, [users, onUpdateUsers]);
 
-    // Update handler refs when handlers change (must be after all handlers are defined)
-    useEffect(() => {
-        handlersRef.current = {
-            handleOpenDialog,
-            handleToggleUserStatus,
-            handleDeleteUser
-        };
-    }, [handleOpenDialog, handleToggleUserStatus, handleDeleteUser]);
-
     // 一括登録処理
     const handleBulkRegister = () => {
         if (!bulkRegisterText.trim()) {
@@ -449,6 +440,15 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers, o
         setEditingUser(null);
         reset();
     };
+
+    // Update handler refs when handlers change (must be after all handlers are defined)
+    useEffect(() => {
+        handlersRef.current = {
+            handleOpenDialog,
+            handleToggleUserStatus,
+            handleDeleteUser
+        };
+    }, [handleOpenDialog, handleToggleUserStatus, handleDeleteUser]);
 
     // Bulk operations
     const handleBulkAction = (action: string) => {
