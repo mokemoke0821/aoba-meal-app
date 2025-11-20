@@ -901,10 +901,10 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers, o
             </Accordion>
 
             {/* Selected Actions */}
-            {(selectedRows as GridRowId[]).length > 0 && (
+            {(selectedRows as unknown as GridRowId[]).length > 0 && (
                 <Box sx={{ mb: 2, p: 2, bgcolor: 'action.selected', borderRadius: 1, border: '1px solid', borderColor: 'primary.main' }}>
                     <Typography variant="body2" color="primary" sx={{ mb: 1, fontWeight: 600 }}>
-                        {(selectedRows as GridRowId[]).length}名の利用者が選択されています
+                        {(selectedRows as unknown as GridRowId[]).length}名の利用者が選択されています
                     </Typography>
                     <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                         <Button 
@@ -1095,7 +1095,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers, o
                                 </Typography>
                             </Alert>
                             <Typography variant="body1" sx={{ mb: 1 }}>
-                                選択した<strong>{(selectedRows as GridRowId[]).length}名</strong>の利用者を削除しますか？
+                                選択した<strong>{(selectedRows as unknown as GridRowId[]).length}名</strong>の利用者を削除しますか？
                             </Typography>
                             <Typography variant="body2" color="text.secondary">
                                 削除された利用者のデータは完全に削除され、復元することはできません。
@@ -1104,7 +1104,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers, o
                     ) : (
                         <>
                             <Typography variant="body1">
-                                選択した{(selectedRows as GridRowId[]).length}名の利用者に対して以下の操作を実行しますか？
+                                選択した{(selectedRows as unknown as GridRowId[]).length}名の利用者に対して以下の操作を実行しますか？
                             </Typography>
                             <Typography sx={{ mt: 1, fontWeight: 'bold' }}>
                                 {bulkActionDialog.action === 'activate' && '一括有効化'}
