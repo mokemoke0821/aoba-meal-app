@@ -262,7 +262,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers, o
         handleCloseDialog();
     };
 
-    const handleDeleteUser = (userId: string) => {
+    const handleDeleteUser = useCallback((userId: string) => {
         const user = users.find(u => u.id === userId);
         if (!user) return;
 
@@ -276,7 +276,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers, o
                 severity: 'success'
             });
         }
-    };
+    }, [users, onUpdateUsers]);
 
     // 一括登録処理
     const handleBulkRegister = () => {
@@ -381,7 +381,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers, o
         setBulkRegisterExpanded(false);
     };
 
-    const handleToggleUserStatus = (userId: string) => {
+    const handleToggleUserStatus = useCallback((userId: string) => {
         const updatedUsers = users.map(user =>
             user.id === userId ? { ...user, isActive: !user.isActive } : user
         );
@@ -394,10 +394,10 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers, o
             message: `利用者「${user?.name}」を${status}にしました`,
             severity: 'info'
         });
-    };
+    }, [users, onUpdateUsers]);
 
     // Dialog handlers
-    const handleOpenDialog = (user?: User) => {
+    const handleOpenDialog = useCallback((user?: User) => {
         if (user) {
             setEditingUser(user);
             setValue('name', user.name);
@@ -412,7 +412,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers, o
             reset();
         }
         setOpenDialog(true);
-    };
+    }, [setValue, reset]);
 
     const handleCloseDialog = () => {
         setOpenDialog(false);
@@ -676,11 +676,16 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers, o
         }
     ], [handleOpenDialog, handleToggleUserStatus, handleDeleteUser]);
 
-    // Strict guard: Do not render DataGrid until users data is fully loaded
+    // Strict guard: Do not mount DataGrid until users data is fully loaded and valid
+    // This prevents DataGrid from initializing with undefined/null data, which causes internal Map/Set errors
     if (!users || !Array.isArray(users)) {
+        // Show loading spinner while data is being fetched
         return (
-            <Box sx={{ p: 3, display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
-                <CircularProgress />
+            <Box sx={{ p: 3, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+                <CircularProgress sx={{ mb: 2 }} />
+                <Typography variant="body2" color="text.secondary">
+                    データを読み込んでいます...
+                </Typography>
             </Box>
         );
     }
@@ -969,9 +974,9 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers, o
                     </Box>
                 ) : (
                     <DataGrid
-                        rows={filteredUsers}
+                        rows={filteredUsers || []}
                         columns={columns}
-                        getRowId={(row) => row.id}
+                        getRowId={(row) => String(row.id)}
                         initialState={{
                             pagination: {
                                 paginationModel: { page: 0, pageSize: 25 },
