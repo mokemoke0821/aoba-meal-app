@@ -49,7 +49,7 @@ import {
     GridRowSelectionModel,
     GridToolbar
 } from '@mui/x-data-grid';
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import {
     GROUP_COLORS,
@@ -566,8 +566,8 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers, o
         event.target.value = '';
     };
 
-    // DataGrid columns
-    const columns: GridColDef[] = [
+    // DataGrid columns (memoized to prevent recreation)
+    const columns: GridColDef[] = useMemo(() => [
         {
             field: 'avatar',
             headerName: '',
@@ -674,7 +674,16 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers, o
                 />
             ]
         }
-    ];
+    ], [handleOpenDialog, handleToggleUserStatus, handleDeleteUser]);
+
+    // Strict guard: Do not render DataGrid until users data is fully loaded
+    if (!users || !Array.isArray(users)) {
+        return (
+            <Box sx={{ p: 3, display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+                <CircularProgress />
+            </Box>
+        );
+    }
 
     return (
         <Box sx={{ p: 3 }}>
@@ -954,14 +963,15 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers, o
 
             {/* Data Grid */}
             <Box sx={{ height: 600, width: '100%' }}>
-                {loading || users === undefined ? (
+                {loading ? (
                     <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
                         <CircularProgress />
                     </Box>
                 ) : (
                     <DataGrid
-                        rows={filteredUsers || []}
+                        rows={filteredUsers}
                         columns={columns}
+                        getRowId={(row) => row.id}
                         initialState={{
                             pagination: {
                                 paginationModel: { page: 0, pageSize: 25 },
@@ -971,7 +981,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers, o
                         checkboxSelection
                         disableRowSelectionOnClick
                         loading={loading}
-                        rowSelectionModel={selectedRows || ([] as unknown as GridRowSelectionModel)}
+                        rowSelectionModel={selectedRows}
                         onRowSelectionModelChange={(newSelection: GridRowSelectionModel) => {
                             setSelectedRows(newSelection);
                         }}
