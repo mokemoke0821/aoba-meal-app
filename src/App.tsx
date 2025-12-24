@@ -18,7 +18,7 @@ import { register as registerServiceWorker } from './registerServiceWorker';
 import { User } from './types';
 import { loadBackupConfig, saveBackupToCustomPath } from './utils/storage';
 
-const theme = createTheme({
+export const theme = createTheme({
   palette: {
     primary: {
       main: '#1976d2',
@@ -73,7 +73,7 @@ const RatingInputWrapper: React.FC = () => {
   );
 };
 
-const AppContent: React.FC = () => {
+export const AppContent: React.FC = () => {
   const { state, dispatch } = useApp();
 
   const renderCurrentView = () => {
