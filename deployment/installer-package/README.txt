@@ -123,3 +123,4 @@ Permission is hereby granted, free of charge...
 © 2025 あおば給食摂食量管理アプリ
 
 
+

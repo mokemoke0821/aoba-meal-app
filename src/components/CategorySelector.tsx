@@ -7,16 +7,36 @@ import {
     Fab,
     Typography
 } from '@mui/material';
-import React from 'react';
+import React, { useState } from 'react';
 import { useApp } from '../contexts/AppContext';
 import { CATEGORY_CONFIG, UserCategory } from '../types';
+import { isPasscodeEnabled } from '../utils/securitySettings';
+import AdminPasscodeAuth from './AdminPasscodeAuth';
 
 const CategorySelector: React.FC = () => {
     const { dispatch } = useApp();
+    const [authDialogOpen, setAuthDialogOpen] = useState(false);
 
     const handleCategorySelect = (category: UserCategory) => {
         dispatch({ type: 'SET_SELECTED_CATEGORY', payload: category });
         dispatch({ type: 'SET_VIEW', payload: 'userSelect' });
+    };
+
+    const handleAdminClick = () => {
+        if (isPasscodeEnabled()) {
+            setAuthDialogOpen(true);
+        } else {
+            dispatch({ type: 'SET_VIEW', payload: 'adminPanel' });
+        }
+    };
+
+    const handleAuthSuccess = () => {
+        setAuthDialogOpen(false);
+        dispatch({ type: 'SET_VIEW', payload: 'adminPanel' });
+    };
+
+    const handleAuthClose = () => {
+        setAuthDialogOpen(false);
     };
 
     const categories = Object.values(CATEGORY_CONFIG);
@@ -37,10 +57,17 @@ const CategorySelector: React.FC = () => {
                         backgroundColor: '#616161',
                     }
                 }}
-                onClick={() => dispatch({ type: 'SET_VIEW', payload: 'adminPanel' })}
+                onClick={handleAdminClick}
             >
                 <SettingsIcon />
             </Fab>
+
+            {/* 認証モーダル */}
+            <AdminPasscodeAuth
+                open={authDialogOpen}
+                onClose={handleAuthClose}
+                onSuccess={handleAuthSuccess}
+            />
 
             <Container maxWidth="lg">
                 <Box sx={{ py: 6 }}>

@@ -529,3 +529,4 @@ manifest.jsonに `shortcuts` を追加して、よく使う機能への直接ア
 **作成者**: Claude (Sonnet 4.5)  
 **最終更新**: 2025年10月2日
 
+

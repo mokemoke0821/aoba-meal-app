@@ -1,8 +1,6 @@
 /**
  * ストレージアダプター
- * LocalStorageとGoogle Driveを統合し、シームレスなデータ管理を提供
- * 
- * ⚠️ Google Drive統合は現在無効化されています（v2.2.0で実装予定）
+ * LocalStorageを使用してデータを管理
  */
 
 import type { MealRecord, User } from '../types';
@@ -15,16 +13,8 @@ const KEYS = {
 };
 
 /**
- * Google Drive統合が有効かどうか（現在は常にfalse）
- */
-function isGoogleDriveEnabled(): boolean {
-    // Google Drive統合は一時的に無効化
-    return false;
-}
-
-/**
  * ユーザーデータを保存
- * LocalStorageに保存（Google Drive同期は無効化）
+ * LocalStorageに保存
  */
 export async function saveUsersWithSync(users: User[]): Promise<void> {
     try {
@@ -38,7 +28,7 @@ export async function saveUsersWithSync(users: User[]): Promise<void> {
 
 /**
  * 給食記録を保存
- * LocalStorageに保存（Google Drive同期は無効化）
+ * LocalStorageに保存
  */
 export async function saveMealRecordsWithSync(records: MealRecord[]): Promise<void> {
     try {
@@ -77,42 +67,6 @@ export function loadMealRecordsFromLocal(): MealRecord[] {
 }
 
 /**
- * Google Driveからデータを復元（現在は無効化）
- */
-export async function restoreFromGoogleDrive(fileId: string): Promise<{
-    users: User[];
-    mealRecords: MealRecord[];
-    currentMenu: any;
-}> {
-    throw new Error('Google Drive統合は現在無効化されています（v2.2.0で実装予定）');
-}
-
-/**
- * LocalStorageとGoogle Driveのデータをマージ（現在は無効化）
- */
-export async function mergeData(): Promise<{
-    users: User[];
-    mealRecords: MealRecord[];
-    conflicts: number;
-}> {
-    throw new Error('Google Drive統合は現在無効化されています（v2.2.0で実装予定）');
-}
-
-/**
- * 手動同期（現在は無効化）
- */
-export async function manualSync(): Promise<void> {
-    throw new Error('Google Drive統合は現在無効化されています（v2.2.0で実装予定）');
-}
-
-/**
- * 自動同期を設定（現在は無効化）
- */
-export function setupAutoSync(): () => void {
-    return () => {}; // 何もしないクリーンアップ関数
-}
-
-/**
  * データの整合性チェック
  */
 export function validateData(users: User[], records: MealRecord[]): {
@@ -147,104 +101,3 @@ export function validateData(users: User[], records: MealRecord[]): {
         errors,
     };
 }
-
-/**
- * バックアップからデータを復元し、LocalStorageに保存（現在は無効化）
- */
-export async function restoreAndSave(fileId: string): Promise<void> {
-    throw new Error('Google Drive統合は現在無効化されています（v2.2.0で実装予定）');
-}
-
-/* ==========================================
- * 以下は元の実装（v2.2.0で復活予定）
- * ==========================================
-
-import {
-    isAuthenticated,
-    isInitialized,
-} from '../services/googleDrive/auth';
-import {
-    downloadFile,
-    findOrCreateFolder,
-    loadSyncConfig,
-    performSync,
-    saveSyncConfig,
-    uploadFile,
-} from '../services/googleDrive/sync';
-
-function isGoogleDriveEnabled(): boolean {
-    const config = loadSyncConfig();
-    return config.enabled && isInitialized() && isAuthenticated();
-}
-
-export async function saveUsersWithSync(users: User[]): Promise<void> {
-    localStorage.setItem(KEYS.USERS, JSON.stringify(users));
-    if (isGoogleDriveEnabled()) {
-        await performSync();
-    }
-}
-
-export async function saveMealRecordsWithSync(records: MealRecord[]): Promise<void> {
-    localStorage.setItem(KEYS.MEAL_RECORDS, JSON.stringify(records));
-    if (isGoogleDriveEnabled()) {
-        await performSync();
-    }
-}
-
-export async function restoreFromGoogleDrive(fileId: string): Promise<...> {
-    if (!isAuthenticated()) {
-        throw new Error('Google Driveにサインインしてください');
-    }
-    const fileContent = await downloadFile(fileId);
-    const data = JSON.parse(fileContent);
-    return { users: data.users || [], mealRecords: data.mealRecords || [], currentMenu: data.currentMenu || null };
-}
-
-export async function mergeData(): Promise<...> {
-    if (!isAuthenticated()) {
-        throw new Error('Google Driveにサインインしてください');
-    }
-    const localUsers = loadUsersFromLocal();
-    const localRecords = loadMealRecordsFromLocal();
-    const config = loadSyncConfig();
-    if (!config.folderId) {
-        const folderId = await findOrCreateFolder();
-        config.folderId = folderId;
-        saveSyncConfig(config);
-    }
-    // ... マージロジック ...
-    return { users: mergedUsers, mealRecords: mergedRecords, conflicts };
-}
-
-export async function manualSync(): Promise<void> {
-    if (!isAuthenticated()) {
-        throw new Error('Google Driveにサインインしてください');
-    }
-    await performSync();
-}
-
-export function setupAutoSync(): () => void {
-    const config = loadSyncConfig();
-    if (!config.autoSync || !config.enabled) {
-        return () => {};
-    }
-    const intervalId = setInterval(async () => {
-        if (isGoogleDriveEnabled()) {
-            await performSync();
-        }
-    }, config.syncInterval);
-    return () => { clearInterval(intervalId); };
-}
-
-export async function restoreAndSave(fileId: string): Promise<void> {
-    const { users, mealRecords, currentMenu } = await restoreFromGoogleDrive(fileId);
-    const validation = validateData(users, mealRecords);
-    if (!validation.valid) {
-        throw new Error(`データの整合性チェックに失敗しました:\n${validation.errors.join('\n')}`);
-    }
-    localStorage.setItem(KEYS.USERS, JSON.stringify(users));
-    localStorage.setItem(KEYS.MEAL_RECORDS, JSON.stringify(mealRecords));
-    localStorage.setItem(KEYS.CURRENT_MENU, JSON.stringify(currentMenu));
-}
-
-========================================== */

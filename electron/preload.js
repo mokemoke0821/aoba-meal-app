@@ -20,3 +20,4 @@ console.log('📦 Electron版で実行中');
 console.log('💻 Platform:', process.platform);
 
 
+
